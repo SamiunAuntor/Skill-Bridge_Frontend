@@ -16,6 +16,7 @@ export default function Hero() {
               src={heroImage}
               alt="Mentor Portrait"
               fill
+              sizes="(max-width: 1024px) 100vw, 38vw"
               className="object-cover"
               priority
             />

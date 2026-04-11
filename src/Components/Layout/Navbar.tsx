@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react"; // Using Lucide for cleaner lines
 import ThemeToggle from "@/Components/Theme/ThemeToggle";
+import NavbarSession from "@/Components/Layout/NavbarSession";
 
 const navLinks = [
   { href: "#", label: "Find Tutors" },
@@ -40,18 +41,7 @@ export default function Navbar() {
         {/* Desktop Actions */}
         <div className="hidden items-center gap-3 lg:flex">
           <ThemeToggle />
-          <Link
-            href="/login"
-            className="rounded-xl px-5 py-2 font-headline text-sm font-semibold text-primary transition-all hover:bg-surface-container-low"
-          >
-            Log In
-          </Link>
-          <Link
-            href="/register"
-            className="rounded-xl bg-primary px-6 py-2.5 font-headline text-sm font-semibold text-on-primary shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
-          >
-            Sign Up
-          </Link>
+          <NavbarSession variant="desktop" />
         </div>
 
         {/* Mobile Toggle & Theme Toggle */}
@@ -84,20 +74,10 @@ export default function Navbar() {
             </Link>
           ))}
           <hr className="border-outline-variant/20" />
-          <div className="flex flex-col gap-3 pt-2">
-            <Link
-              href="/login"
-              className="flex h-12 items-center justify-center rounded-xl font-bold text-primary"
-            >
-              Log In
-            </Link>
-            <Link
-              href="/register"
-              className="flex h-12 items-center justify-center rounded-xl bg-primary font-bold text-on-primary shadow-md"
-            >
-              Sign Up
-            </Link>
-          </div>
+          <NavbarSession
+            variant="mobile"
+            onNavigate={() => setIsOpen(false)}
+          />
         </div>
       </div>
     </nav>
