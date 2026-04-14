@@ -2,16 +2,15 @@ import {
   BadgeCheck,
   BookOpenCheck,
   FlaskConical,
-  Lock,
   MessageSquareQuote,
   Sigma,
   Sparkles,
   TrendingUp,
 } from "lucide-react";
 import { notFound } from "next/navigation";
+import TutorBookingSidebar from "@/Components/Tutors/TutorBookingSidebar";
 import { TutorApiError, getTutorById } from "@/lib/tutor-api";
 import {
-  TutorAvailabilitySlot,
   TutorCategory,
   TutorDetailResponse,
   TutorEducation,
@@ -30,22 +29,6 @@ type TutorProfilePageProps = {
 };
 
 const masteryIcons = [Sigma, FlaskConical, TrendingUp];
-const fallbackSlotDays = ["M", "T", "W", "T", "F", "S", "S"];
-const fallbackSlotDates = [
-  { label: "28", disabled: true },
-  { label: "29", disabled: true },
-  { label: "30", disabled: true },
-  { label: "1", active: true },
-  { label: "2" },
-  { label: "3" },
-  { label: "4" },
-];
-const fallbackTimeSlots = [
-  { label: "09:00 AM" },
-  { label: "11:30 AM" },
-  { label: "02:00 PM", active: true },
-  { label: "04:30 PM" },
-];
 
 function formatHoursTaught(totalHoursTaught: number): string {
   if (totalHoursTaught >= 100) {
@@ -118,65 +101,6 @@ function buildMasteryItems(
     subtitle: "Guided tutoring support",
     iconIndex: index,
   }));
-}
-
-function buildCalendarData(slots: TutorAvailabilitySlot[]) {
-  if (slots.length === 0) {
-    return {
-      monthLabel: "Upcoming",
-      slotDays: fallbackSlotDays,
-      slotDates: fallbackSlotDates,
-      timeSlots: fallbackTimeSlots,
-    };
-  }
-
-  const uniqueDates = new Map<
-    string,
-    { label: string; weekday: string; date: Date }
-  >();
-
-  for (const slot of slots) {
-    const slotDate = new Date(slot.startTime);
-    const key = slotDate.toISOString().slice(0, 10);
-
-    if (!uniqueDates.has(key) && uniqueDates.size < 7) {
-      uniqueDates.set(key, {
-        label: String(slotDate.getDate()),
-        weekday: new Intl.DateTimeFormat("en-US", {
-          weekday: "short",
-        })
-          .format(slotDate)
-          .slice(0, 1)
-          .toUpperCase(),
-        date: slotDate,
-      });
-    }
-  }
-
-  const visibleDates = [...uniqueDates.values()];
-  const monthLabel = new Intl.DateTimeFormat("en-US", {
-    month: "long",
-    year: "numeric",
-  }).format(visibleDates[0]?.date ?? new Date());
-
-  const timeSlots = slots.slice(0, 4).map((slot, index) => ({
-    label: new Intl.DateTimeFormat("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    }).format(new Date(slot.startTime)),
-    active: index === 0,
-  }));
-
-  return {
-    monthLabel,
-    slotDays: visibleDates.map((item) => item.weekday),
-    slotDates: visibleDates.map((item, index) => ({
-      label: item.label,
-      active: index === 0,
-    })),
-    timeSlots: timeSlots.length > 0 ? timeSlots : fallbackTimeSlots,
-  };
 }
 
 function TestimonialCard({ testimonial }: { testimonial: TutorTestimonial }) {
@@ -266,9 +190,6 @@ export default async function TutorProfilePage({
   const tutor = tutorData.tutor;
   const profileSubjects = buildProfileSubjects(tutor.categories, tutor.expertise);
   const masteryItems = buildMasteryItems(tutor.categories, tutor.expertise);
-  const { monthLabel, slotDays, slotDates, timeSlots } = buildCalendarData(
-    tutor.availableSlots
-  );
   const testimonials =
     tutor.testimonials.length > 0
       ? tutor.testimonials
@@ -447,89 +368,11 @@ export default async function TutorProfilePage({
             </section>
           </div>
 
-          <aside className="self-start lg:col-span-4 lg:flex lg:justify-end">
-            <div className="w-full max-w-[21rem] overflow-hidden rounded-2xl border border-outline-variant/10 bg-surface-container-lowest shadow-[0px_18px_36px_rgba(0,51,88,0.08)]">
-              <div className="bg-primary p-5 text-on-primary">
-                <div className="flex items-end justify-between">
-                  <div>
-                    <span className="font-headline text-[2.2rem] font-black">
-                      ${Math.round(tutor.hourlyRate)}
-                    </span>
-                    <span className="ml-1 text-xs font-medium text-on-primary-container">
-                      / 60 min session
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 text-[10px] font-semibold backdrop-blur-sm">
-                    <Sparkles className="h-3 w-3" />
-                    Instant Booking
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-5 p-5">
-                <div>
-                  <h3 className="mb-3 flex items-center justify-between text-[14px] font-bold text-primary">
-                    <span>Select Date</span>
-                    <span className="text-[11px] font-semibold text-secondary">
-                      {monthLabel}
-                    </span>
-                  </h3>
-
-                  <div className="mb-2 grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-on-surface-variant">
-                    {slotDays.map((day, index) => (
-                      <div key={`${day}-${index}`}>{day}</div>
-                    ))}
-                  </div>
-
-                  <div className="grid grid-cols-7 gap-1">
-                    {slotDates.map((day, index) => (
-                      <button
-                        key={`${day.label}-${index}`}
-                        className={`flex h-8 items-center justify-center rounded-md text-[12px] font-medium ${
-                          "disabled" in day && day.disabled
-                            ? "cursor-not-allowed text-on-surface-variant/40"
-                            : day.active
-                              ? "bg-secondary-container font-bold text-on-secondary-container ring-2 ring-secondary ring-offset-2"
-                              : "text-primary transition-colors hover:bg-surface-container-low"
-                        }`}
-                      >
-                        {day.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="mb-3 text-[14px] font-bold text-primary">
-                    Available Slots
-                  </h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {timeSlots.map((slot) => (
-                      <button
-                        key={slot.label}
-                        className={`rounded-md px-3.5 py-2.5 text-[12px] font-semibold transition-colors ${
-                          slot.active
-                            ? "bg-primary text-on-primary shadow-sm"
-                            : "border border-outline-variant/30 text-on-surface-variant hover:bg-surface-container-low"
-                        }`}
-                      >
-                        {slot.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <button className="w-full rounded-md bg-gradient-to-r from-primary to-primary-container py-3 text-[14px] font-bold text-on-primary shadow-lg transition-all hover:shadow-xl active:scale-[0.99]">
-                  Book a Session
-                </button>
-
-                <div className="flex items-center justify-center gap-2.5 pt-2 text-[10px] font-medium text-on-surface-variant">
-                  <Lock className="h-3.5 w-3.5" />
-                  Secure payment & 100% Satisfaction Guarantee
-                </div>
-              </div>
-            </div>
-          </aside>
+          <TutorBookingSidebar
+            tutorId={tutor.id}
+            hourlyRate={tutor.hourlyRate}
+            availableSlots={tutor.availableSlots}
+          />
         </div>
       </div>
     </section>

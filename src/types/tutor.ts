@@ -83,9 +83,10 @@ export interface TutorTestimonial {
 
 export interface TutorAvailabilitySlot {
   id: string;
-  date: string;
-  startTime: string;
-  endTime: string;
+  tutorId?: string;
+  startAt: string;
+  endAt: string;
+  isBooked?: boolean;
 }
 
 export interface TutorDetailResponse {
@@ -110,6 +111,18 @@ export interface TutorDetailResponse {
     testimonials: TutorTestimonial[];
     availableSlots: TutorAvailabilitySlot[];
   };
+}
+
+export interface AvailabilitySlotItem {
+  id: string;
+  tutorId: string;
+  startAt: string;
+  endAt: string;
+  isBooked: boolean;
+}
+
+export interface AvailabilityListResponse {
+  slots: AvailabilitySlotItem[];
 }
 
 export interface TutorEditableProfileEducation {
