@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import PasswordVisibilityToggle from "@/Components/Auth/PasswordVisibilityToggle";
 import { authClient } from "@/lib/auth-client";
 import { formatAuthError, isAuthClientError } from "@/lib/auth-errors";
 
@@ -17,7 +18,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 const fieldClass = (invalid: boolean) =>
-  `w-full rounded-md border-none bg-surface-container-highest px-4 py-3 text-on-surface focus:ring-2 focus:ring-surface-tint/40 ${
+  `h-14 w-full rounded-md border-none bg-surface-container-highest px-4 text-base leading-normal text-on-surface placeholder:leading-normal focus:ring-2 focus:ring-surface-tint/40 ${
     invalid ? "ring-2 ring-red-400/70" : ""
   }`;
 
@@ -157,16 +158,10 @@ export default function LoginForm() {
               type={showPassword ? "text" : "password"}
               {...register("password")}
             />
-            <button
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant"
-              type="button"
-              aria-label={showPassword ? "Hide password" : "Show password"}
-              onClick={() => setShowPassword((v) => !v)}
-            >
-              <span className="material-symbols-outlined text-sm">
-                {showPassword ? "visibility_off" : "visibility"}
-              </span>
-            </button>
+            <PasswordVisibilityToggle
+              visible={showPassword}
+              onToggle={() => setShowPassword((v) => !v)}
+            />
           </div>
           {errors.password && (
             <p className="text-sm text-red-700">{errors.password.message}</p>

@@ -14,7 +14,7 @@ const forgotSchema = z.object({
 type ForgotFormValues = z.infer<typeof forgotSchema>;
 
 const fieldClass = (invalid: boolean) =>
-  `w-full rounded-md border-none bg-surface-container-highest px-4 py-3 text-on-surface focus:ring-2 focus:ring-surface-tint/40 ${
+  `h-14 w-full rounded-md border-none bg-surface-container-highest px-4 text-base leading-normal text-on-surface placeholder:leading-normal focus:ring-2 focus:ring-surface-tint/40 ${
     invalid ? "ring-2 ring-red-400/70" : ""
   }`;
 

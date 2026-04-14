@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import PasswordVisibilityToggle from "@/Components/Auth/PasswordVisibilityToggle";
 import { authClient } from "@/lib/auth-client";
 import { formatAuthError } from "@/lib/auth-errors";
 import { REGISTER_ROLES, type RegisterRole } from "@/types/auth";
@@ -38,7 +39,7 @@ function buildSignUpPayload(values: RegisterFormValues) {
 }
 
 const fieldClass = (invalid: boolean) =>
-  `w-full rounded-md border-none bg-surface-container-highest px-4 py-3 text-on-surface focus:ring-2 focus:ring-surface-tint/40 ${
+  `h-14 w-full rounded-md border-none bg-surface-container-highest px-4 text-base leading-normal text-on-surface placeholder:leading-normal focus:ring-2 focus:ring-surface-tint/40 ${
     invalid ? "ring-2 ring-red-400/70" : ""
   }`;
 
@@ -108,11 +109,11 @@ export default function RegisterForm() {
                 value="student"
                 {...register("role")}
               />
-              <div className="flex items-center justify-center gap-2 rounded-lg border-2 border-transparent bg-surface-container-highest p-4 transition-all peer-checked:border-primary peer-checked:bg-primary-fixed">
-                <span className="material-symbols-outlined text-primary">
+              <div className="flex items-center justify-center gap-2 rounded-lg border-2 border-transparent bg-surface-container-highest p-4 transition-all peer-checked:border-primary peer-checked:bg-primary-fixed dark:peer-checked:bg-primary/20">
+                <span className="material-symbols-outlined text-primary dark:peer-checked:text-primary-fixed">
                   school
                 </span>
-                <span className="font-headline text-sm font-bold text-primary">
+                <span className="font-headline text-sm font-bold text-primary dark:peer-checked:text-primary-fixed">
                   Student
                 </span>
               </div>
@@ -124,11 +125,11 @@ export default function RegisterForm() {
                 value="tutor"
                 {...register("role")}
               />
-              <div className="flex items-center justify-center gap-2 rounded-lg border-2 border-transparent bg-surface-container-highest p-4 transition-all peer-checked:border-primary peer-checked:bg-primary-fixed">
-                <span className="material-symbols-outlined text-primary">
+              <div className="flex items-center justify-center gap-2 rounded-lg border-2 border-transparent bg-surface-container-highest p-4 transition-all peer-checked:border-primary peer-checked:bg-primary-fixed dark:peer-checked:bg-primary/20">
+                <span className="material-symbols-outlined text-primary dark:peer-checked:text-primary-fixed">
                   architecture
                 </span>
-                <span className="font-headline text-sm font-bold text-primary">
+                <span className="font-headline text-sm font-bold text-primary dark:peer-checked:text-primary-fixed">
                   Tutor
                 </span>
               </div>
@@ -216,16 +217,10 @@ export default function RegisterForm() {
               type={showPassword ? "text" : "password"}
               {...register("password")}
             />
-            <button
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant"
-              type="button"
-              aria-label={showPassword ? "Hide password" : "Show password"}
-              onClick={() => setShowPassword((v) => !v)}
-            >
-              <span className="material-symbols-outlined text-sm">
-                {showPassword ? "visibility_off" : "visibility"}
-              </span>
-            </button>
+            <PasswordVisibilityToggle
+              visible={showPassword}
+              onToggle={() => setShowPassword((v) => !v)}
+            />
           </div>
           {errors.password && (
             <p className="text-sm text-red-700">{errors.password.message}</p>
@@ -235,7 +230,14 @@ export default function RegisterForm() {
           </p>
         </div>
 
-        <div className="flex items-start gap-3 rounded-xl bg-tertiary-fixed/30 p-4">
+        <div
+          className="flex items-start gap-3 rounded-xl p-4 shadow-sm dark:shadow-none"
+          style={{
+            backgroundColor: "var(--surface-container-lowest)",
+            border: "1px solid var(--outline-variant)",
+            color: "var(--on-surface-variant)",
+          }}
+        >
           <div className="mt-1 flex h-5 items-center">
             <input
               className="h-4 w-4 rounded border-outline-variant text-primary focus:ring-primary"
@@ -244,9 +246,13 @@ export default function RegisterForm() {
               {...register("terms")}
             />
           </div>
-          <div className="text-sm">
+          <div
+            className="text-sm"
+            style={{ color: "var(--on-surface-variant)" }}
+          >
             <label
-              className="leading-none font-medium text-on-tertiary-fixed-variant"
+              className="leading-none font-medium"
+              style={{ color: "var(--on-surface-variant)" }}
               htmlFor="terms"
             >
               I agree to the Honor Code and Privacy Protocols of SkillBridge.
@@ -264,44 +270,6 @@ export default function RegisterForm() {
         >
           {isSubmitting ? "Creating account..." : "Create Account"}
         </button>
-
-        <div className="relative py-4">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-surface-variant" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-surface px-4 font-medium tracking-widest text-on-surface-variant">
-              Or Continue With
-            </span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <button
-            className="flex cursor-not-allowed items-center justify-center gap-2 rounded-md border-none bg-surface-container-lowest px-4 py-3 opacity-50 shadow-sm"
-            disabled
-            title="Coming soon"
-            type="button"
-          >
-            <img
-              alt=""
-              className="h-4 w-4"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0Kg-e3hqJvvtI0q42kK5u4N01M9KP6yEAw7vEtZDFurJcdHHL9nT5DvKfM3D1XbL77FpYTi7DN0OggSKAAU2epPD4SI03UZ8HIihRZKZp-Ce43bYsg3D4HEgPBeRBGaal_3dLEZiGFvoriwgZ8qfCiX3NaWoLvD76LP0lXIbhDBRz0fCC3fn22OQL1ZuWR4_caT5cndW6-cYgRkyzQtmTgnyUYvW_zIYRSxOo6CUkeGjWXKP1X-nSnRID8yu-xmCeu0jIrxW_h7E"
-            />
-            <span className="text-sm font-medium text-on-surface">Google</span>
-          </button>
-          <button
-            className="flex cursor-not-allowed items-center justify-center gap-2 rounded-md border-none bg-surface-container-lowest px-4 py-3 opacity-50 shadow-sm"
-            disabled
-            title="Coming soon"
-            type="button"
-          >
-            <span className="material-symbols-outlined text-lg text-on-surface">
-              ios
-            </span>
-            <span className="text-sm font-medium text-on-surface">Apple</span>
-          </button>
-        </div>
       </form>
 
       <p className="text-center text-sm text-on-surface-variant">
