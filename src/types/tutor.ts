@@ -110,3 +110,62 @@ export interface TutorDetailResponse {
     availableSlots: TutorAvailabilitySlot[];
   };
 }
+
+export interface TutorEditableProfileEducation {
+  id: string;
+  degree: string;
+  institution: string;
+  fieldOfStudy: string;
+  startYear: number;
+  endYear: number | null;
+  description: string | null;
+}
+
+export interface TutorEditableProfileExpertise {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface TutorEditableProfile {
+  id: string;
+  userId: string;
+  displayName: string;
+  email: string;
+  avatarUrl: string | null;
+  bio: string;
+  hourlyRate: number;
+  experienceYears: number;
+  categoryIds: string[];
+  expertise: TutorEditableProfileExpertise[];
+  education: TutorEditableProfileEducation[];
+}
+
+export interface TutorEditableProfileResponse {
+  profile: TutorEditableProfile;
+  availableCategories: TutorCategory[];
+}
+
+export interface TutorProfileUpdateExpertiseInput {
+  id?: string;
+  name: string;
+}
+
+export interface TutorProfileUpdateEducationInput {
+  id?: string;
+  degree: string;
+  institution: string;
+  fieldOfStudy?: string;
+  startYear: number;
+  endYear?: number | null;
+  description?: string | null;
+}
+
+export interface TutorProfileUpdateInput {
+  bio: string;
+  hourlyRate: number;
+  experienceYears: number;
+  categoryIds: string[];
+  expertise: TutorProfileUpdateExpertiseInput[];
+  education: TutorProfileUpdateEducationInput[];
+}

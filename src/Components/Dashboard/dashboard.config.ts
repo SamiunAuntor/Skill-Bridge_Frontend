@@ -9,6 +9,7 @@ export type DashboardNavItem = {
 export const dashboardNavByRole: Record<UserRole, DashboardNavItem[]> = {
   tutor: [
     { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
+    { href: "/dashboard/profile", label: "Profile", icon: "person" },
     { href: "/dashboard/sessions", label: "Sessions", icon: "calendar_month" },
     {
       href: "/dashboard/availability",

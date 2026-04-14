@@ -56,8 +56,8 @@ export default function DashboardShell({ children }: DashboardShellProps) {
 
   return (
     <div className="min-h-screen bg-surface">
-      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[260px_1fr]">
-        <aside className="flex flex-col border-b border-outline-variant/10 bg-surface-container-lowest px-6 py-8 lg:border-b-0 lg:border-r">
+      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[260px_1fr] lg:items-start">
+        <aside className="flex flex-col border-b border-outline-variant/10 bg-surface-container-lowest px-6 py-8 lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r">
           <div className="mb-10">
             <Link
               href="/"
