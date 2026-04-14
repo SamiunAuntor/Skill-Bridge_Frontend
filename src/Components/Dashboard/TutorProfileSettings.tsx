@@ -1,11 +1,13 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Camera, LoaderCircle } from "lucide-react";
 import {
   getMyTutorProfile,
   TutorProfileApiError,
   updateMyTutorProfile,
 } from "@/lib/tutor-profile-api";
+import { ImageUploadError, uploadImage } from "@/lib/upload-image";
 import {
   TutorEditableProfileResponse,
   TutorProfileUpdateEducationInput,
@@ -15,8 +17,11 @@ import {
 
 type ProfileFormState = TutorProfileUpdateInput;
 
+const sectionCardClass =
+  "rounded-[1.5rem] border border-outline-variant/20 bg-surface-container-lowest p-7 shadow-[0px_16px_40px_rgba(0,51,88,0.08)] dark:border-outline-variant/10 dark:bg-surface-container-low dark:shadow-[0px_12px_32px_rgba(0,0,0,0.24)]";
+
 const inputClass =
-  "w-full rounded-xl border border-outline-variant/20 bg-white px-4 py-3 text-on-surface shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15";
+  "w-full rounded-xl border border-outline-variant/30 bg-white px-4 py-3 text-on-surface shadow-sm shadow-slate-900/5 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15 dark:border-outline-variant/30 dark:bg-surface-container dark:shadow-none";
 
 const textAreaClass = `${inputClass} min-h-32 resize-y`;
 
@@ -39,6 +44,7 @@ function mapProfileToFormState(
   data: TutorEditableProfileResponse["profile"]
 ): ProfileFormState {
   return {
+    profileImageUrl: data.profileImageUrl,
     bio: data.bio,
     hourlyRate: data.hourlyRate,
     experienceYears: data.experienceYears,
@@ -79,6 +85,7 @@ export default function TutorProfileSettings() {
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -125,6 +132,7 @@ export default function TutorProfileSettings() {
     }
 
     const checks = [
+      Boolean(formState.profileImageUrl?.trim()),
       formState.bio.trim().length > 0,
       formState.hourlyRate > 0,
       formState.experienceYears > 0,
@@ -157,6 +165,7 @@ export default function TutorProfileSettings() {
 
     try {
       const normalizedPayload: TutorProfileUpdateInput = {
+        profileImageUrl: formState.profileImageUrl,
         bio: formState.bio.trim(),
         hourlyRate: Number(formState.hourlyRate) || 0,
         experienceYears: Number(formState.experienceYears) || 0,
@@ -197,7 +206,7 @@ export default function TutorProfileSettings() {
 
   if (isLoading) {
     return (
-      <section className="rounded-[1.75rem] bg-surface-container-low p-8 shadow-[0px_12px_32px_rgba(0,51,88,0.06)]">
+      <section className="rounded-[1.75rem] border border-outline-variant/20 bg-surface-container-lowest p-8 shadow-[0px_16px_40px_rgba(0,51,88,0.08)] dark:border-outline-variant/10 dark:bg-surface-container-low dark:shadow-[0px_12px_32px_rgba(0,0,0,0.24)]">
         <p className="text-sm text-on-surface-variant">Loading tutor profile...</p>
       </section>
     );
@@ -219,7 +228,7 @@ export default function TutorProfileSettings() {
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
-      <section className="rounded-[1.75rem] bg-surface-container-low p-8 shadow-[0px_12px_32px_rgba(0,51,88,0.06)]">
+      <section className="rounded-[1.75rem] border border-outline-variant/20 bg-surface-container-lowest p-8 shadow-[0px_16px_40px_rgba(0,51,88,0.08)] dark:border-outline-variant/10 dark:bg-surface-container-low dark:shadow-[0px_12px_32px_rgba(0,0,0,0.24)]">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h2 className="font-headline text-4xl font-extrabold tracking-tight text-primary">
@@ -269,7 +278,83 @@ export default function TutorProfileSettings() {
 
       <section className="grid gap-6 xl:grid-cols-[1.15fr_1fr]">
         <div className="space-y-6">
-          <article className="rounded-[1.5rem] bg-surface-container-low p-7 shadow-[0px_12px_32px_rgba(0,51,88,0.06)]">
+          <article className={sectionCardClass}>
+            <div className="flex flex-col gap-5 md:flex-row md:items-center">
+              <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-3xl bg-surface-container-highest shadow-sm">
+                {formState.profileImageUrl ? (
+                  <img
+                    alt="Tutor profile preview"
+                    className="h-full w-full object-cover"
+                    src={formState.profileImageUrl}
+                  />
+                ) : (
+                  <span className="material-symbols-outlined text-4xl text-on-surface-variant">
+                    account_circle
+                  </span>
+                )}
+              </div>
+
+              <div className="flex-1 space-y-3">
+                <div>
+                  <h3 className="font-headline text-2xl font-bold text-primary">
+                    Profile Photo
+                  </h3>
+                  <p className="mt-1 text-sm text-on-surface-variant">
+                    Upload a clear headshot for your public tutor card and profile.
+                  </p>
+                </div>
+
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-on-primary transition hover:opacity-90">
+                  {isUploadingImage ? (
+                    <LoaderCircle className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Camera className="h-4 w-4" />
+                  )}
+                  <span>
+                    {isUploadingImage ? "Uploading..." : "Upload New Image"}
+                  </span>
+                  <input
+                    className="sr-only"
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={async (event) => {
+                      const file = event.target.files?.[0];
+                      event.target.value = "";
+
+                      if (!file) {
+                        return;
+                      }
+
+                      setErrorMessage(null);
+                      setSuccessMessage(null);
+                      setIsUploadingImage(true);
+
+                      try {
+                        const result = await uploadImage(file);
+                        updateFormState((current) => ({
+                          ...current,
+                          profileImageUrl: result.secureUrl,
+                        }));
+                        setSuccessMessage(
+                          "Profile image uploaded. Save profile to keep it."
+                        );
+                      } catch (error) {
+                        setErrorMessage(
+                          error instanceof ImageUploadError
+                            ? error.message
+                            : "Unable to upload profile image."
+                        );
+                      } finally {
+                        setIsUploadingImage(false);
+                      }
+                    }}
+                  />
+                </label>
+              </div>
+            </div>
+          </article>
+
+          <article className={sectionCardClass}>
             <h3 className="font-headline text-2xl font-bold text-primary">
               Professional Summary
             </h3>
@@ -293,7 +378,7 @@ export default function TutorProfileSettings() {
             </div>
           </article>
 
-          <article className="rounded-[1.5rem] bg-surface-container-low p-7 shadow-[0px_12px_32px_rgba(0,51,88,0.06)]">
+          <article className={sectionCardClass}>
             <h3 className="font-headline text-2xl font-bold text-primary">
               Teaching Details
             </h3>
@@ -377,7 +462,7 @@ export default function TutorProfileSettings() {
             </div>
           </article>
 
-          <article className="rounded-[1.5rem] bg-surface-container-low p-7 shadow-[0px_12px_32px_rgba(0,51,88,0.06)]">
+          <article className={sectionCardClass}>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <h3 className="font-headline text-2xl font-bold text-primary">
                 Areas of Expertise
@@ -400,7 +485,7 @@ export default function TutorProfileSettings() {
               {formState.expertise.map((item, index) => (
                 <div
                   key={item.id ?? `expertise-${index}`}
-                  className="flex flex-col gap-3 rounded-2xl bg-white p-4 shadow-sm md:flex-row"
+                  className="flex flex-col gap-3 rounded-2xl border border-outline-variant/25 bg-white p-4 shadow-sm shadow-slate-900/5 md:flex-row dark:border-outline-variant/20 dark:bg-surface-container dark:shadow-none"
                 >
                   <input
                     className={inputClass}
@@ -438,7 +523,7 @@ export default function TutorProfileSettings() {
           </article>
         </div>
 
-        <article className="rounded-[1.5rem] bg-surface-container-low p-7 shadow-[0px_12px_32px_rgba(0,51,88,0.06)]">
+        <article className={sectionCardClass}>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="font-headline text-2xl font-bold text-primary">
               Education
@@ -461,7 +546,7 @@ export default function TutorProfileSettings() {
             {formState.education.map((item, index) => (
               <article
                 key={item.id ?? `education-${index}`}
-                className="rounded-2xl bg-white p-5 shadow-sm"
+                className="rounded-2xl border border-outline-variant/25 bg-white p-5 shadow-sm shadow-slate-900/5 dark:border-outline-variant/20 dark:bg-surface-container dark:shadow-none"
               >
                 <p className="text-sm font-bold text-primary">
                   Education History {index + 1}

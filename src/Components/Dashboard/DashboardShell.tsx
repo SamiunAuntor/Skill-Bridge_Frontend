@@ -53,6 +53,7 @@ export default function DashboardShell({ children }: DashboardShellProps) {
   const role = (user.role as UserRole | undefined) ?? "student";
   const navItems = dashboardNavByRole[role];
   const displayName = getDisplayName(user);
+  const avatarSrc = user.image?.trim();
   const sidebarActionClass =
     "flex w-full items-center justify-center gap-3 rounded-2xl border border-outline-variant/20 bg-surface px-4 py-3 text-center text-sm font-semibold text-on-surface-variant shadow-sm transition-all hover:border-primary/20 hover:bg-surface-container-low hover:text-primary";
 
@@ -117,8 +118,8 @@ export default function DashboardShell({ children }: DashboardShellProps) {
           </div>
         </aside>
 
-        <div className="min-w-0 bg-surface px-5 py-6 md:px-8 md:py-7">
-          <header className="mb-10 flex flex-col gap-4 border-b border-outline-variant/10 pb-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0 bg-surface px-5 pb-6 md:px-8 md:pb-7">
+          <header className="sticky top-0 z-30 -mx-5 mb-10 flex flex-col gap-4 border-b border-outline-variant/25 bg-surface/95 px-5 pb-5 pt-6 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between md:-mx-8 md:px-8 md:pt-7">
             <h1 className="font-headline text-3xl font-extrabold tracking-tight text-primary">
               {getRoleHeading(role)}
             </h1>
@@ -134,14 +135,24 @@ export default function DashboardShell({ children }: DashboardShellProps) {
               </button>
 
               <div className="flex items-center gap-3 rounded-full bg-surface-container-low px-3 py-2">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-black text-on-primary">
-                  {displayName
-                    .split(/\s+/)
-                    .filter(Boolean)
-                    .slice(0, 2)
-                    .map((part) => part[0]?.toUpperCase() ?? "")
-                    .join("")}
-                </div>
+                {avatarSrc ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- external user-uploaded URLs vary by host
+                  <img
+                    src={avatarSrc}
+                    alt=""
+                    className="h-10 w-10 rounded-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-black text-on-primary">
+                    {displayName
+                      .split(/\s+/)
+                      .filter(Boolean)
+                      .slice(0, 2)
+                      .map((part) => part[0]?.toUpperCase() ?? "")
+                      .join("")}
+                  </div>
+                )}
                 <div>
                   <p className="font-headline text-sm font-bold text-primary">
                     {displayName}

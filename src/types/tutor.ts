@@ -133,6 +133,7 @@ export interface TutorEditableProfile {
   displayName: string;
   email: string;
   avatarUrl: string | null;
+  profileImageUrl: string | null;
   bio: string;
   hourlyRate: number;
   experienceYears: number;
@@ -162,6 +163,7 @@ export interface TutorProfileUpdateEducationInput {
 }
 
 export interface TutorProfileUpdateInput {
+  profileImageUrl?: string | null;
   bio: string;
   hourlyRate: number;
   experienceYears: number;
