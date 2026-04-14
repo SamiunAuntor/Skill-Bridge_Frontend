@@ -3,11 +3,19 @@ import Link from "next/link";
 const footerColumns = [
   {
     title: "Platform",
-    links: ["Find Tutors", "Subjects", "Pricing", "Become a Tutor"],
+    links: [
+      { label: "Find Tutors", href: "/tutors" },
+      { label: "Become a Tutor", href: "#" },
+      { label: "Subjects", href: "#" },
+    ],
   },
   {
-    title: "Support",
-    links: ["Help Center", "Terms of Service", "Privacy Policy", "Cookie Policy"],
+    title: "Company",
+    links: [
+      { label: "Terms of Service", href: "#" },
+      { label: "Privacy Policy", href: "#" },
+      { label: "Help Center", href: "#" },
+    ],
   },
 ];
 
@@ -20,20 +28,9 @@ export default function Footer() {
             SkillBridge
           </span>
           <p className="mb-6 text-sm leading-relaxed text-[#c1c7d0]">
-            Empowering the next generation of intellectual architects through
-            premium, verified mentorship and expert tutoring across the globe.
+            Empowering learners through elite mentorship and architectural
+            precision in education.
           </p>
-          <div className="flex gap-4">
-            {["language", "share"].map((icon) => (
-              <a
-                key={icon}
-                href="#"
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 transition-colors hover:bg-secondary"
-              >
-                <span className="material-symbols-outlined text-sm">{icon}</span>
-              </a>
-            ))}
-          </div>
         </div>
 
         {footerColumns.map((column) => (
@@ -43,12 +40,12 @@ export default function Footer() {
             </h4>
             <ul className="space-y-4">
               {column.links.map((link) => (
-                <li key={link}>
+                <li key={link.label}>
                   <Link
-                    href="#"
+                    href={link.href}
                     className="block text-sm text-[#c1c7d0] transition-transform duration-300 hover:translate-x-1 hover:text-[#68fadd]"
                   >
-                    {link}
+                    {link.label}
                   </Link>
                 </li>
               ))}
@@ -58,20 +55,18 @@ export default function Footer() {
 
         <div>
           <h4 className="mb-6 text-xs font-bold uppercase tracking-widest text-white">
-            Contact
+            Newsletter
           </h4>
-          <ul className="space-y-4">
-            <li className="flex items-center gap-3 text-sm text-[#c1c7d0]">
-              <span className="material-symbols-outlined text-sm">mail</span>
-              hello@skillbridge.edu
-            </li>
-            <li className="flex items-center gap-3 text-sm text-[#c1c7d0]">
-              <span className="material-symbols-outlined text-sm">
-                location_on
-              </span>
-              123 Learning Lane, Knowledge City
-            </li>
-          </ul>
+          <div className="flex gap-2">
+            <input
+              type="email"
+              placeholder="Your email"
+              className="w-full rounded-md border-none bg-white/10 px-4 py-2 text-sm text-white placeholder:text-[#c1c7d0]/60 focus:ring-1 focus:ring-[#68fadd]"
+            />
+            <button className="rounded-md bg-secondary px-3 text-on-secondary">
+              <span className="material-symbols-outlined">send</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -79,17 +74,6 @@ export default function Footer() {
         <p className="text-sm text-[#c1c7d0]">
           © 2024 SkillBridge. The Intellectual Architect.
         </p>
-        <div className="flex gap-8">
-          {["Accessibility", "Security", "Legal"].map((item) => (
-            <Link
-              key={item}
-              href="#"
-              className="text-xs text-[#c1c7d0] transition-colors hover:text-white"
-            >
-              {item}
-            </Link>
-          ))}
-        </div>
       </div>
     </footer>
   );
