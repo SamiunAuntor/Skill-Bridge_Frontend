@@ -22,7 +22,7 @@ export default function Navbar() {
     <nav className="fixed top-0 z-50 w-full bg-background/80 shadow-[0px_4px_20px_rgba(0,51,88,0.04)] backdrop-blur-md transition-colors duration-300">
       <div className="mx-auto flex h-20 w-11/12 max-w-[1440px] items-center justify-between">
         <Link href="/" className="text-2xl font-black tracking-tighter text-primary">
-          SkillBridge
+          Skill Bridge
         </Link>
 
         <div className="hidden items-center space-x-8 lg:flex">
@@ -33,11 +33,10 @@ export default function Navbar() {
               <Link
                 key={link.label}
                 href={link.href}
-                className={`font-headline text-sm font-semibold tracking-tight transition-colors hover:text-secondary ${
-                  isActive
+                className={`font-headline text-sm font-semibold tracking-tight transition-colors hover:text-secondary ${isActive
                     ? "border-b-2 border-secondary pb-1 text-primary"
                     : "text-on-surface-variant"
-                }`}
+                  }`}
               >
                 {link.label}
               </Link>
@@ -63,11 +62,10 @@ export default function Navbar() {
       </div>
 
       <div
-        className={`absolute left-0 top-20 w-full origin-top transform bg-surface-container-lowest p-6 shadow-xl transition-all duration-300 lg:hidden ${
-          isOpen
+        className={`absolute left-0 top-20 w-full origin-top transform bg-surface-container-lowest p-6 shadow-xl transition-all duration-300 lg:hidden ${isOpen
             ? "scale-y-100 opacity-100"
             : "pointer-events-none scale-y-95 opacity-0"
-        }`}
+          }`}
       >
         <div className="flex flex-col space-y-4">
           {navLinks.map((link) => {
@@ -78,9 +76,8 @@ export default function Navbar() {
                 key={link.label}
                 href={link.href}
                 onClick={() => setIsOpen(false)}
-                className={`rounded-lg p-3 font-headline text-lg font-bold transition-colors hover:bg-surface-container-low ${
-                  isActive ? "text-secondary" : "text-primary"
-                }`}
+                className={`rounded-lg p-3 font-headline text-lg font-bold transition-colors hover:bg-surface-container-low ${isActive ? "text-secondary" : "text-primary"
+                  }`}
               >
                 {link.label}
               </Link>

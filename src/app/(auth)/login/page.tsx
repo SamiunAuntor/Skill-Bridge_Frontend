@@ -6,7 +6,7 @@ export default function LoginPage() {
     <Suspense
       fallback={
         <div className="py-8 text-center text-sm text-on-surface-variant">
-          Loading…
+          Loading...
         </div>
       }
     >

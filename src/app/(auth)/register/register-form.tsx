@@ -26,7 +26,6 @@ const registerSchema = z.object({
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
-/** Satisfies Better Auth sign-up body; `role` is narrowed beyond `string`. */
 function buildSignUpPayload(values: RegisterFormValues) {
   const payload = {
     name: `${values.firstName} ${values.lastName}`.trim(),
@@ -83,7 +82,7 @@ export default function RegisterForm() {
       <div className="space-y-2 text-center lg:hidden">
         <h1 className="text-2xl font-bold text-primary">Join SkillBridge</h1>
         <p className="text-sm text-on-surface-variant">
-          Create your account—we&apos;ll email you a verification link.
+          Create your account and we&apos;ll email you a verification link.
         </p>
       </div>
 
@@ -186,13 +185,13 @@ export default function RegisterForm() {
             className="block text-sm font-medium text-on-surface"
             htmlFor="email"
           >
-            Academic Email
+            Email
           </label>
           <input
             id="email"
             autoComplete="email"
             className={fieldClass(!!errors.email)}
-            placeholder="name@atheneum.edu"
+            placeholder="name@skillbridge.com"
             type="email"
             {...register("email")}
           />
@@ -213,12 +212,12 @@ export default function RegisterForm() {
               id="password"
               autoComplete="new-password"
               className={`${fieldClass(!!errors.password)} pr-12`}
-              placeholder="••••••••"
+              placeholder="********"
               type={showPassword ? "text" : "password"}
               {...register("password")}
             />
             <button
-              className="absolute top-1/2 right-4 -translate-y-1/2 text-on-surface-variant"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant"
               type="button"
               aria-label={showPassword ? "Hide password" : "Show password"}
               onClick={() => setShowPassword((v) => !v)}
@@ -263,7 +262,7 @@ export default function RegisterForm() {
           disabled={isSubmitting}
           type="submit"
         >
-          {isSubmitting ? "Creating account…" : "Join The Atheneum"}
+          {isSubmitting ? "Creating account..." : "Create Account"}
         </button>
 
         <div className="relative py-4">

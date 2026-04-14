@@ -52,7 +52,7 @@ export default function LoginForm() {
       if (signErr) {
         if (isAuthClientError(signErr) && signErr.status === 403) {
           setApiError(
-            "Please verify your email before signing in. Check your inbox—we sent you a new verification link."
+            "Please verify your email before signing in. Check your inbox; we sent you a new verification link."
           );
         } else {
           setApiError(signErr.message || "Could not sign in.");
@@ -71,7 +71,7 @@ export default function LoginForm() {
       <div className="space-y-2 text-center lg:hidden">
         <h1 className="text-2xl font-bold text-primary">Welcome back</h1>
         <p className="text-sm text-on-surface-variant">
-          Continue your journey in the Digital Atheneum.
+          Continue your learning journey with SkillBridge.
         </p>
       </div>
 
@@ -124,7 +124,7 @@ export default function LoginForm() {
             id="login-email"
             autoComplete="email"
             className={fieldClass(!!errors.email)}
-            placeholder="name@atheneum.edu"
+            placeholder="name@skillbridge.com"
             type="email"
             {...register("email")}
           />
@@ -153,12 +153,12 @@ export default function LoginForm() {
               id="login-password"
               autoComplete="current-password"
               className={`${fieldClass(!!errors.password)} pr-12`}
-              placeholder="••••••••"
+              placeholder="********"
               type={showPassword ? "text" : "password"}
               {...register("password")}
             />
             <button
-              className="absolute top-1/2 right-4 -translate-y-1/2 text-on-surface-variant"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant"
               type="button"
               aria-label={showPassword ? "Hide password" : "Show password"}
               onClick={() => setShowPassword((v) => !v)}
@@ -178,7 +178,7 @@ export default function LoginForm() {
           disabled={isSubmitting}
           type="submit"
         >
-          {isSubmitting ? "Signing in…" : "Sign In"}
+          {isSubmitting ? "Signing in..." : "Sign In"}
         </button>
       </form>
 

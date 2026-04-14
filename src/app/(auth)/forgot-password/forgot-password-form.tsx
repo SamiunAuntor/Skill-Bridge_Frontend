@@ -81,7 +81,7 @@ export default function ForgotPasswordForm() {
           id="forgot-email"
           autoComplete="email"
           className={fieldClass(!!errors.email)}
-          placeholder="name@atheneum.edu"
+          placeholder="name@skillbridge.com"
           type="email"
           {...register("email")}
         />
@@ -94,7 +94,7 @@ export default function ForgotPasswordForm() {
         disabled={isSubmitting}
         type="submit"
       >
-        {isSubmitting ? "Sending…" : "Send reset link"}
+        {isSubmitting ? "Sending..." : "Send reset link"}
       </button>
     </form>
   );

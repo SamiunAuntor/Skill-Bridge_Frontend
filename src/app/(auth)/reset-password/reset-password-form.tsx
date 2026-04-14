@@ -121,12 +121,12 @@ export default function ResetPasswordForm() {
             id="new-password"
             autoComplete="new-password"
             className={`${fieldClass(!!errors.password)} pr-12`}
-            placeholder="••••••••"
+            placeholder="********"
             type={showPassword ? "text" : "password"}
             {...register("password")}
           />
           <button
-            className="absolute top-1/2 right-4 -translate-y-1/2 text-on-surface-variant"
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant"
             type="button"
             aria-label={showPassword ? "Hide password" : "Show password"}
             onClick={() => setShowPassword((v) => !v)}
@@ -146,7 +146,7 @@ export default function ResetPasswordForm() {
         disabled={isSubmitting}
         type="submit"
       >
-        {isSubmitting ? "Updating…" : "Update password"}
+        {isSubmitting ? "Updating..." : "Update password"}
       </button>
     </form>
   );
