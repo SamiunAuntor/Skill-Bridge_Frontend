@@ -25,6 +25,10 @@ const inputClass =
 
 const textAreaClass = `${inputClass} min-h-32 resize-y`;
 
+function normalizeText(value: string | null | undefined): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
 function createBlankExpertise(): TutorProfileUpdateExpertiseInput {
   return { name: "" };
 }
@@ -45,7 +49,8 @@ function mapProfileToFormState(
 ): ProfileFormState {
   return {
     profileImageUrl: data.profileImageUrl,
-    bio: data.bio,
+    professionalTitle: data.professionalTitle ?? "",
+    bio: data.bio ?? "",
     hourlyRate: data.hourlyRate,
     experienceYears: data.experienceYears,
     categoryIds: data.categoryIds,
@@ -128,17 +133,21 @@ export default function TutorProfileSettings() {
 
   const completionStats = useMemo(() => {
     if (!formState) {
-      return { completed: 0, total: 5 };
+      return { completed: 0, total: 7 };
     }
 
     const checks = [
-      Boolean(formState.profileImageUrl?.trim()),
-      formState.bio.trim().length > 0,
+      Boolean(normalizeText(formState.profileImageUrl)),
+      normalizeText(formState.professionalTitle).length > 0,
+      normalizeText(formState.bio).length > 0,
       formState.hourlyRate > 0,
       formState.experienceYears > 0,
-      formState.categoryIds.length > 0 || formState.expertise.some((item) => item.name.trim()),
+      formState.categoryIds.length > 0 ||
+        formState.expertise.some((item) => normalizeText(item.name).length > 0),
       formState.education.some(
-        (item) => item.degree.trim() && item.institution.trim()
+        (item) =>
+          normalizeText(item.degree).length > 0 &&
+          normalizeText(item.institution).length > 0
       ),
     ];
 
@@ -166,25 +175,26 @@ export default function TutorProfileSettings() {
     try {
       const normalizedPayload: TutorProfileUpdateInput = {
         profileImageUrl: formState.profileImageUrl,
-        bio: formState.bio.trim(),
+        professionalTitle: normalizeText(formState.professionalTitle),
+        bio: normalizeText(formState.bio),
         hourlyRate: Number(formState.hourlyRate) || 0,
         experienceYears: Number(formState.experienceYears) || 0,
         categoryIds: formState.categoryIds,
         expertise: formState.expertise
           .map((item) => ({
             ...(item.id ? { id: item.id } : {}),
-            name: item.name.trim(),
+            name: normalizeText(item.name),
           }))
           .filter((item) => item.name.length > 0),
         education: formState.education
           .map((item) => ({
             ...(item.id ? { id: item.id } : {}),
-            degree: item.degree.trim(),
-            institution: item.institution.trim(),
-            fieldOfStudy: item.fieldOfStudy?.trim() || "",
+            degree: normalizeText(item.degree),
+            institution: normalizeText(item.institution),
+            fieldOfStudy: normalizeText(item.fieldOfStudy),
             startYear: Number(item.startYear),
             ...(item.endYear ? { endYear: Number(item.endYear) } : {}),
-            description: item.description?.trim() || "",
+            description: normalizeText(item.description),
           }))
           .filter((item) => item.degree.length > 0 && item.institution.length > 0),
       };
@@ -358,6 +368,27 @@ export default function TutorProfileSettings() {
             <h3 className="font-headline text-[1.7rem] font-bold text-primary">
               Professional Summary
             </h3>
+
+            <div className="mt-5 space-y-2">
+              <label
+                className="block text-[13px] font-semibold text-on-surface"
+                htmlFor="professionalTitle"
+              >
+                Professional Title
+              </label>
+              <input
+                id="professionalTitle"
+                className={inputClass}
+                value={formState.professionalTitle}
+                onChange={(event) =>
+                  updateFormState((current) => ({
+                    ...current,
+                    professionalTitle: event.target.value,
+                  }))
+                }
+                placeholder="Senior Researcher & Lecturer"
+              />
+            </div>
 
             <div className="mt-5 space-y-2">
               <label className="block text-[13px] font-semibold text-on-surface" htmlFor="bio">

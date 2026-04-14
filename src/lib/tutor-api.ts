@@ -100,25 +100,7 @@ export async function getTutorById(id: string): Promise<TutorDetailResponse> {
 }
 
 export async function getTutorSubjectOptions(): Promise<TutorCategory[]> {
-  const listResponse = await getTutors({
-    page: 1,
-    limit: 100,
-    sortBy: "recommended",
-  });
-
-  const uniqueSubjects = new Map<string, TutorCategory>();
-
-  for (const tutor of listResponse.tutors) {
-    for (const category of tutor.categories) {
-      if (!uniqueSubjects.has(category.slug)) {
-        uniqueSubjects.set(category.slug, category);
-      }
-    }
-  }
-
-  return [...uniqueSubjects.values()].sort((left, right) =>
-    left.name.localeCompare(right.name)
-  );
+  return fetchTutorApi<TutorCategory[]>(`/api/tutors/subjects`, 300);
 }
 
 export const tutorSortLabels: Record<TutorSortOption, string> = {

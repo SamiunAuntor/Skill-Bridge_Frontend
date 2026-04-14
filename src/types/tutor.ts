@@ -22,6 +22,7 @@ export interface TutorCard {
   id: string;
   userId: string;
   displayName: string;
+  professionalTitle: string;
   avatarUrl: string | null;
   bio: string;
   hourlyRate: number;
@@ -93,6 +94,7 @@ export interface TutorDetailResponse {
     id: string;
     userId: string;
     displayName: string;
+    professionalTitle: string;
     email: string;
     avatarUrl: string | null;
     bio: string;
@@ -134,6 +136,7 @@ export interface TutorEditableProfile {
   email: string;
   avatarUrl: string | null;
   profileImageUrl: string | null;
+  professionalTitle: string;
   bio: string;
   hourlyRate: number;
   experienceYears: number;
@@ -164,6 +167,7 @@ export interface TutorProfileUpdateEducationInput {
 
 export interface TutorProfileUpdateInput {
   profileImageUrl?: string | null;
+  professionalTitle: string;
   bio: string;
   hourlyRate: number;
   experienceYears: number;
