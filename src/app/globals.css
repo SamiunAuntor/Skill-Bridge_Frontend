@@ -174,6 +174,10 @@ body {
   background: linear-gradient(135deg, #f6fafe 0%, #f0f4f8 100%);
 }
 
+html.dark .tonal-transition {
+  background: linear-gradient(135deg, #0a141b 0%, #10202a 55%, #132833 100%);
+}
+
 .signature-cta {
   background: linear-gradient(to bottom, #003358, #004a7c);
 }

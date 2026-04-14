@@ -53,6 +53,8 @@ export default function DashboardShell({ children }: DashboardShellProps) {
   const role = (user.role as UserRole | undefined) ?? "student";
   const navItems = dashboardNavByRole[role];
   const displayName = getDisplayName(user);
+  const sidebarActionClass =
+    "flex w-full items-center justify-center gap-3 rounded-2xl border border-outline-variant/20 bg-surface px-4 py-3 text-center text-sm font-semibold text-on-surface-variant shadow-sm transition-all hover:border-primary/20 hover:bg-surface-container-low hover:text-primary";
 
   return (
     <div className="min-h-screen bg-surface">
@@ -92,12 +94,12 @@ export default function DashboardShell({ children }: DashboardShellProps) {
           </nav>
 
           <div className="mt-8 space-y-4 border-t border-outline-variant/20 pt-6">
-            <ThemeToggle />
+            <ThemeToggle fullWidth />
             <Link
               href="#"
-              className="flex items-center px-4 py-2 text-sm text-on-surface-variant transition-colors hover:text-primary"
+              className={sidebarActionClass}
             >
-              <span className="material-symbols-outlined mr-3 text-lg">help</span>
+              <span className="material-symbols-outlined text-lg">help</span>
               Help Center
             </Link>
             <button
@@ -107,9 +109,9 @@ export default function DashboardShell({ children }: DashboardShellProps) {
                 router.replace("/");
                 router.refresh();
               }}
-              className="flex w-full items-center px-4 py-2 text-left text-sm text-on-surface-variant transition-colors hover:text-primary"
+              className={sidebarActionClass}
             >
-              <span className="material-symbols-outlined mr-3 text-lg">logout</span>
+              <span className="material-symbols-outlined text-lg">logout</span>
               Logout
             </button>
           </div>

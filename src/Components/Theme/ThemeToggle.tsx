@@ -3,6 +3,9 @@
 import { useSyncExternalStore } from "react";
 
 type Theme = "light" | "dark";
+type ThemeToggleProps = {
+  fullWidth?: boolean;
+};
 
 function applyTheme(theme: Theme) {
   document.documentElement.classList.remove("light", "dark");
@@ -28,7 +31,7 @@ function getSnapshot(): Theme {
   return document.documentElement.classList.contains("dark") ? "dark" : "light";
 }
 
-export default function ThemeToggle() {
+export default function ThemeToggle({ fullWidth = false }: ThemeToggleProps) {
   const theme = useSyncExternalStore(subscribe, getSnapshot, () => "light");
   const isDark = theme === "dark";
 
@@ -40,7 +43,9 @@ export default function ThemeToggle() {
     <button
       type="button"
       onClick={handleToggle}
-      className="inline-flex items-center gap-2 rounded-full border border-outline-variant/60 bg-surface-container-low px-3 py-2 text-sm font-semibold text-primary transition-colors hover:bg-surface-container"
+      className={`inline-flex items-center justify-center gap-2 rounded-full border border-outline-variant/60 bg-surface-container-low px-4 py-3 text-sm font-semibold text-primary transition-colors hover:bg-surface-container ${
+        fullWidth ? "w-full" : ""
+      }`}
       aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
       title={`Switch to ${isDark ? "light" : "dark"} mode`}
     >
