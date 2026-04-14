@@ -91,13 +91,13 @@ export default function TutorDashboardHome() {
     <div className="space-y-10">
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-4">
         <article className="relative overflow-hidden rounded-[1.5rem] bg-primary px-8 py-8 text-on-primary-container xl:col-span-2">
-          <p className="text-sm font-medium text-on-primary-container/80">
+          <p className="text-[13px] font-medium text-on-primary-container/80">
             Total Earnings
           </p>
-          <h2 className="mt-2 font-headline text-5xl font-extrabold text-white">
+          <h2 className="mt-2 font-headline text-[2.6rem] font-extrabold text-white">
             $12,480.00
           </h2>
-          <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-secondary/20 px-3 py-1 text-xs font-semibold text-secondary-fixed">
+          <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-secondary/20 px-3 py-1 text-[11px] font-semibold text-secondary-fixed">
             <span className="material-symbols-outlined text-base">trending_up</span>
             +14.2% from last month
           </div>
@@ -110,8 +110,8 @@ export default function TutorDashboardHome() {
           <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-primary-fixed text-primary">
             <span className="material-symbols-outlined">history_edu</span>
           </div>
-          <p className="text-sm font-medium text-on-surface-variant">Hours Taught</p>
-          <h3 className="mt-1 font-headline text-3xl font-bold text-primary">
+          <p className="text-[13px] font-medium text-on-surface-variant">Hours Taught</p>
+          <h3 className="mt-1 font-headline text-[2rem] font-bold text-primary">
             342.5
           </h3>
           <p className="mt-2 text-xs text-on-surface-variant">Target: 400h</p>
@@ -126,8 +126,8 @@ export default function TutorDashboardHome() {
               star
             </span>
           </div>
-          <p className="text-sm font-medium text-on-surface-variant">Average Rating</p>
-          <h3 className="mt-1 font-headline text-3xl font-bold text-primary">
+          <p className="text-[13px] font-medium text-on-surface-variant">Average Rating</p>
+          <h3 className="mt-1 font-headline text-[2rem] font-bold text-primary">
             4.92
           </h3>
           <p className="mt-2 text-xs text-on-surface-variant">from 128 reviews</p>
@@ -137,7 +137,7 @@ export default function TutorDashboardHome() {
       <div className="grid grid-cols-1 gap-10 xl:grid-cols-[2fr_1fr]">
         <section className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="font-headline text-3xl font-bold text-primary">
+            <h2 className="font-headline text-[2rem] font-bold text-primary">
               Upcoming Sessions
             </h2>
             <Link
@@ -164,7 +164,7 @@ export default function TutorDashboardHome() {
                     </span>
                   </div>
                   <div>
-                    <h3 className="font-headline text-xl font-bold text-on-surface">
+                    <h3 className="font-headline text-[1.05rem] font-bold text-on-surface">
                       {sessionItem.title}
                     </h3>
                     <p className="mt-1 flex items-center gap-1 text-sm text-on-surface-variant">
@@ -195,7 +195,7 @@ export default function TutorDashboardHome() {
         </section>
 
         <section className="space-y-6">
-          <h2 className="font-headline text-3xl font-bold text-primary">
+          <h2 className="font-headline text-[2rem] font-bold text-primary">
             Availability
           </h2>
 
@@ -239,7 +239,7 @@ export default function TutorDashboardHome() {
       </div>
 
       <section className="space-y-6">
-        <h2 className="font-headline text-3xl font-bold text-primary">
+        <h2 className="font-headline text-[2rem] font-bold text-primary">
           Recent Feedback
         </h2>
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

@@ -18,10 +18,10 @@ import {
 type ProfileFormState = TutorProfileUpdateInput;
 
 const sectionCardClass =
-  "rounded-[1.5rem] border border-outline-variant/20 bg-surface-container-lowest p-7 shadow-[0px_16px_40px_rgba(0,51,88,0.08)] dark:border-outline-variant/10 dark:bg-surface-container-low dark:shadow-[0px_12px_32px_rgba(0,0,0,0.24)]";
+  "rounded-[1.5rem] border border-outline-variant/25 bg-surface-container p-7 shadow-[0px_16px_40px_rgba(0,51,88,0.08)] dark:border-outline-variant/10 dark:bg-surface-container-low dark:shadow-[0px_12px_32px_rgba(0,0,0,0.24)]";
 
 const inputClass =
-  "w-full rounded-xl border border-outline-variant/30 bg-white px-4 py-3 text-on-surface shadow-sm shadow-slate-900/5 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15 dark:border-outline-variant/30 dark:bg-surface-container dark:shadow-none";
+  "w-full rounded-xl border border-outline-variant/30 bg-white px-4 py-3 text-[15px] text-on-surface shadow-sm shadow-slate-900/5 outline-none transition placeholder:text-[15px] focus:border-primary focus:ring-2 focus:ring-primary/15 dark:border-outline-variant/30 dark:bg-surface-container dark:shadow-none";
 
 const textAreaClass = `${inputClass} min-h-32 resize-y`;
 
@@ -206,7 +206,7 @@ export default function TutorProfileSettings() {
 
   if (isLoading) {
     return (
-      <section className="rounded-[1.75rem] border border-outline-variant/20 bg-surface-container-lowest p-8 shadow-[0px_16px_40px_rgba(0,51,88,0.08)] dark:border-outline-variant/10 dark:bg-surface-container-low dark:shadow-[0px_12px_32px_rgba(0,0,0,0.24)]">
+      <section className="rounded-[1.75rem] border border-outline-variant/25 bg-surface-container p-8 shadow-[0px_16px_40px_rgba(0,51,88,0.08)] dark:border-outline-variant/10 dark:bg-surface-container-low dark:shadow-[0px_12px_32px_rgba(0,0,0,0.24)]">
         <p className="text-sm text-on-surface-variant">Loading tutor profile...</p>
       </section>
     );
@@ -228,13 +228,13 @@ export default function TutorProfileSettings() {
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
-      <section className="rounded-[1.75rem] border border-outline-variant/20 bg-surface-container-lowest p-8 shadow-[0px_16px_40px_rgba(0,51,88,0.08)] dark:border-outline-variant/10 dark:bg-surface-container-low dark:shadow-[0px_12px_32px_rgba(0,0,0,0.24)]">
+      <section className="rounded-[1.75rem] border border-outline-variant/25 bg-surface-container p-8 shadow-[0px_16px_40px_rgba(0,51,88,0.08)] dark:border-outline-variant/10 dark:bg-surface-container-low dark:shadow-[0px_12px_32px_rgba(0,0,0,0.24)]">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h2 className="font-headline text-4xl font-extrabold tracking-tight text-primary">
+            <h2 className="font-headline text-[2.1rem] font-extrabold tracking-tight text-primary">
               Build your public tutoring identity
             </h2>
-            <p className="mt-2 text-sm text-on-surface-variant">
+            <p className="mt-2 text-[13px] text-on-surface-variant">
               Set up the information students will see on your public profile.
             </p>
           </div>
@@ -242,14 +242,14 @@ export default function TutorProfileSettings() {
           <button
             type="submit"
             disabled={isSaving}
-            className="rounded-xl bg-primary px-6 py-3 font-headline text-base font-bold text-on-primary transition hover:opacity-90 disabled:opacity-60"
+            className="rounded-xl bg-primary px-6 py-3 font-headline text-[15px] font-bold text-on-primary transition hover:opacity-90 disabled:opacity-60"
           >
             {isSaving ? "Saving..." : "Save Profile"}
           </button>
         </div>
 
         <div className="mt-6 rounded-2xl bg-primary-fixed/40 p-4">
-          <div className="flex items-center justify-between text-sm font-semibold text-primary">
+          <div className="flex items-center justify-between text-[13px] font-semibold text-primary">
             <span>
               Completion {completionStats.completed}/{completionStats.total}
             </span>
@@ -296,15 +296,15 @@ export default function TutorProfileSettings() {
 
               <div className="flex-1 space-y-3">
                 <div>
-                  <h3 className="font-headline text-2xl font-bold text-primary">
+                  <h3 className="font-headline text-[1.7rem] font-bold text-primary">
                     Profile Photo
                   </h3>
-                  <p className="mt-1 text-sm text-on-surface-variant">
+                  <p className="mt-1 text-[13px] text-on-surface-variant">
                     Upload a clear headshot for your public tutor card and profile.
                   </p>
                 </div>
 
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-on-primary transition hover:opacity-90">
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-primary px-4 py-3 text-[13px] font-bold text-on-primary transition hover:opacity-90">
                   {isUploadingImage ? (
                     <LoaderCircle className="h-4 w-4 animate-spin" />
                   ) : (
@@ -355,12 +355,12 @@ export default function TutorProfileSettings() {
           </article>
 
           <article className={sectionCardClass}>
-            <h3 className="font-headline text-2xl font-bold text-primary">
+            <h3 className="font-headline text-[1.7rem] font-bold text-primary">
               Professional Summary
             </h3>
 
             <div className="mt-5 space-y-2">
-              <label className="block text-sm font-semibold text-on-surface" htmlFor="bio">
+              <label className="block text-[13px] font-semibold text-on-surface" htmlFor="bio">
                 Bio
               </label>
               <textarea
@@ -379,13 +379,13 @@ export default function TutorProfileSettings() {
           </article>
 
           <article className={sectionCardClass}>
-            <h3 className="font-headline text-2xl font-bold text-primary">
+            <h3 className="font-headline text-[1.7rem] font-bold text-primary">
               Teaching Details
             </h3>
 
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-on-surface" htmlFor="rate">
+                <label className="block text-[13px] font-semibold text-on-surface" htmlFor="rate">
                   Hourly Rate ($)
                 </label>
                 <input
@@ -406,7 +406,7 @@ export default function TutorProfileSettings() {
 
               <div className="space-y-2">
                 <label
-                  className="block text-sm font-semibold text-on-surface"
+                  className="block text-[13px] font-semibold text-on-surface"
                   htmlFor="experience"
                 >
                   Experience Years
@@ -429,7 +429,7 @@ export default function TutorProfileSettings() {
             </div>
 
             <div className="mt-5 space-y-3">
-              <label className="block text-sm font-semibold text-on-surface">
+              <label className="block text-[13px] font-semibold text-on-surface">
                 Categories
               </label>
               <div className="flex flex-wrap gap-3">
@@ -464,9 +464,9 @@ export default function TutorProfileSettings() {
 
           <article className={sectionCardClass}>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <h3 className="font-headline text-2xl font-bold text-primary">
-                Areas of Expertise
-              </h3>
+                <h3 className="font-headline text-[1.7rem] font-bold text-primary">
+                  Areas of Expertise
+                </h3>
               <button
                 type="button"
                 onClick={() =>
@@ -475,7 +475,7 @@ export default function TutorProfileSettings() {
                     expertise: [...current.expertise, createBlankExpertise()],
                   }))
                 }
-                className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-on-primary"
+                className="rounded-xl bg-primary px-4 py-2 text-[13px] font-bold text-on-primary"
               >
                 Add Expertise
               </button>
@@ -513,7 +513,7 @@ export default function TutorProfileSettings() {
                             : [createBlankExpertise()],
                       }))
                     }
-                    className="rounded-xl bg-error-container px-4 py-3 text-sm font-semibold text-on-error-container md:min-w-32"
+                    className="rounded-xl bg-error-container px-4 py-3 text-[13px] font-semibold text-on-error-container md:min-w-32"
                   >
                     Remove
                   </button>
@@ -525,7 +525,7 @@ export default function TutorProfileSettings() {
 
         <article className={sectionCardClass}>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <h3 className="font-headline text-2xl font-bold text-primary">
+            <h3 className="font-headline text-[1.7rem] font-bold text-primary">
               Education
             </h3>
             <button
@@ -536,7 +536,7 @@ export default function TutorProfileSettings() {
                   education: [...current.education, createBlankEducation()],
                 }))
               }
-              className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-on-primary"
+              className="rounded-xl bg-primary px-4 py-2 text-[13px] font-bold text-on-primary"
             >
               Add Education
             </button>
@@ -548,13 +548,13 @@ export default function TutorProfileSettings() {
                 key={item.id ?? `education-${index}`}
                 className="rounded-2xl border border-outline-variant/25 bg-white p-5 shadow-sm shadow-slate-900/5 dark:border-outline-variant/20 dark:bg-surface-container dark:shadow-none"
               >
-                <p className="text-sm font-bold text-primary">
+                <p className="text-[13px] font-bold text-primary">
                   Education History {index + 1}
                 </p>
 
                 <div className="mt-4 space-y-4">
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-on-surface">
+                    <label className="block text-[13px] font-semibold text-on-surface">
                       Degree
                     </label>
                     <input
@@ -574,7 +574,7 @@ export default function TutorProfileSettings() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-on-surface">
+                    <label className="block text-[13px] font-semibold text-on-surface">
                       Institution
                     </label>
                     <input
@@ -594,7 +594,7 @@ export default function TutorProfileSettings() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-on-surface">
+                    <label className="block text-[13px] font-semibold text-on-surface">
                       Field of Study
                     </label>
                     <input
@@ -615,7 +615,7 @@ export default function TutorProfileSettings() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="block text-sm font-semibold text-on-surface">
+                      <label className="block text-[13px] font-semibold text-on-surface">
                         Start Year
                       </label>
                       <input
@@ -641,7 +641,7 @@ export default function TutorProfileSettings() {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="block text-sm font-semibold text-on-surface">
+                      <label className="block text-[13px] font-semibold text-on-surface">
                         End Year
                       </label>
                       <input
@@ -670,7 +670,7 @@ export default function TutorProfileSettings() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-on-surface">
+                    <label className="block text-[13px] font-semibold text-on-surface">
                       Description
                     </label>
                     <textarea
@@ -701,7 +701,7 @@ export default function TutorProfileSettings() {
                           : [createBlankEducation()],
                     }))
                   }
-                  className="mt-5 w-full rounded-xl border border-error-container bg-error-container/50 px-4 py-3 text-sm font-semibold text-on-error-container"
+                  className="mt-5 w-full rounded-xl border border-error-container bg-error-container/50 px-4 py-3 text-[13px] font-semibold text-on-error-container"
                 >
                   Remove Education
                 </button>

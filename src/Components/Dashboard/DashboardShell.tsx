@@ -55,16 +55,16 @@ export default function DashboardShell({ children }: DashboardShellProps) {
   const displayName = getDisplayName(user);
   const avatarSrc = user.image?.trim();
   const sidebarActionClass =
-    "flex w-full items-center justify-center gap-3 rounded-2xl border border-outline-variant/20 bg-surface px-4 py-3 text-center text-sm font-semibold text-on-surface-variant shadow-sm transition-all hover:border-primary/20 hover:bg-surface-container-low hover:text-primary";
+    "flex w-full items-center justify-center gap-3 rounded-2xl border border-outline-variant/20 bg-surface px-4 py-3 text-center text-[13px] font-semibold text-on-surface-variant shadow-sm transition-all hover:border-primary/20 hover:bg-surface-container-low hover:text-primary";
 
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="min-h-screen bg-surface-container-low dark:bg-surface">
       <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[260px_1fr] lg:items-start">
         <aside className="flex flex-col border-b border-outline-variant/10 bg-surface-container-lowest px-6 py-8 lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r">
           <div className="mb-10">
             <Link
               href="/"
-              className="font-headline text-3xl font-black tracking-tight text-primary"
+              className="font-headline text-[2rem] font-black tracking-tight text-primary"
             >
               SkillBridge
             </Link>
@@ -81,7 +81,7 @@ export default function DashboardShell({ children }: DashboardShellProps) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center rounded-r-full px-4 py-3 font-headline text-base font-semibold transition-all duration-300 ${
+                  className={`flex items-center rounded-r-full px-4 py-3 font-headline text-[1.05rem] font-semibold transition-all duration-300 ${
                     isActive
                       ? "bg-primary-fixed text-primary"
                       : "text-on-surface-variant hover:bg-surface-container-low hover:text-primary"
@@ -120,7 +120,7 @@ export default function DashboardShell({ children }: DashboardShellProps) {
 
         <div className="min-w-0 bg-surface px-5 pb-6 md:px-8 md:pb-7">
           <header className="sticky top-0 z-30 -mx-5 mb-10 flex flex-col gap-4 border-b border-outline-variant/25 bg-surface/95 px-5 pb-5 pt-6 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between md:-mx-8 md:px-8 md:pt-7">
-            <h1 className="font-headline text-3xl font-extrabold tracking-tight text-primary">
+            <h1 className="font-headline text-[2.2rem] font-extrabold tracking-tight text-primary">
               {getRoleHeading(role)}
             </h1>
 
@@ -140,11 +140,11 @@ export default function DashboardShell({ children }: DashboardShellProps) {
                   <img
                     src={avatarSrc}
                     alt=""
-                    className="h-10 w-10 rounded-full object-cover"
+                    className="h-9 w-9 rounded-full object-cover"
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-black text-on-primary">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-[13px] font-black text-on-primary">
                     {displayName
                       .split(/\s+/)
                       .filter(Boolean)
@@ -154,10 +154,10 @@ export default function DashboardShell({ children }: DashboardShellProps) {
                   </div>
                 )}
                 <div>
-                  <p className="font-headline text-sm font-bold text-primary">
+                  <p className="font-headline text-[13px] font-bold text-primary">
                     {displayName}
                   </p>
-                  <p className="text-xs text-on-surface-variant">{role}</p>
+                  <p className="text-[11px] text-on-surface-variant">{role}</p>
                 </div>
               </div>
             </div>
