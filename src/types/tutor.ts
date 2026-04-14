@@ -41,7 +41,6 @@ export interface TutorListFilters {
   minPrice?: number;
   maxPrice?: number;
   minRating?: number;
-  availability?: boolean;
   sortBy: TutorSortOption;
   page: number;
   limit: number;

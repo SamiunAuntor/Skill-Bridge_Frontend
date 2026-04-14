@@ -32,7 +32,6 @@ function parseSearchFilters(
   params: Record<string, string | string[] | undefined>
 ): TutorListFilters {
   const sortBy = getStringValue(params.sortBy) as TutorSortOption | undefined;
-  const availabilityParam = getStringValue(params.availability);
   const minRating = getPositiveNumber(getStringValue(params.minRating));
 
   return {
@@ -40,12 +39,6 @@ function parseSearchFilters(
     minPrice: getPositiveNumber(getStringValue(params.minPrice)),
     maxPrice: getPositiveNumber(getStringValue(params.maxPrice)),
     minRating: minRating && minRating <= 5 ? minRating : undefined,
-    availability:
-      availabilityParam === "true"
-        ? true
-        : availabilityParam === "false"
-          ? false
-          : undefined,
     sortBy:
       sortBy &&
       [
@@ -59,7 +52,7 @@ function parseSearchFilters(
         ? sortBy
         : "recommended",
     page: getPositiveNumber(getStringValue(params.page)) ?? 1,
-    limit: getPositiveNumber(getStringValue(params.limit)) ?? 9,
+    limit: getPositiveNumber(getStringValue(params.limit)) ?? 10,
   };
 }
 
@@ -74,9 +67,6 @@ function buildPaginationSearchParams(filters: TutorListFilters) {
       : {}),
     ...(typeof filters.minRating === "number"
       ? { minRating: String(filters.minRating) }
-      : {}),
-    ...(typeof filters.availability === "boolean"
-      ? { availability: String(filters.availability) }
       : {}),
     sortBy: filters.sortBy,
     limit: String(filters.limit),
@@ -122,7 +112,6 @@ export default async function TutorsPage({
 
   const listData = listResult.data;
   const subjectOptions = subjectOptionsResult.data;
-  const [featuredTutor, ...otherTutors] = listData.tutors;
   const activeSubject = subjectOptions.find(
     (subject) => subject.slug === listData.filters.subject
   );
@@ -156,9 +145,12 @@ export default async function TutorsPage({
           {listData.tutors.length > 0 ? (
             <>
               <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-                {featuredTutor ? <TutorCard tutor={featuredTutor} featured /> : null}
-                {otherTutors.map((tutor) => (
-                  <TutorCard key={tutor.id} tutor={tutor} />
+                {listData.tutors.map((tutor, index) => (
+                  <TutorCard
+                    key={tutor.id}
+                    tutor={tutor}
+                    featured={index % 5 === 0}
+                  />
                 ))}
               </div>
 

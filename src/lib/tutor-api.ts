@@ -40,9 +40,6 @@ function buildSearchParams(filters: Partial<TutorListFilters>): URLSearchParams 
   if (typeof filters.minRating === "number") {
     searchParams.set("minRating", String(filters.minRating));
   }
-  if (typeof filters.availability === "boolean") {
-    searchParams.set("availability", String(filters.availability));
-  }
   if (filters.sortBy) searchParams.set("sortBy", filters.sortBy);
   if (typeof filters.page === "number") {
     searchParams.set("page", String(filters.page));

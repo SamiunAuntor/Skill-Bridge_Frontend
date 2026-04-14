@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Star } from "lucide-react";
 import { TutorCard as TutorCardData } from "@/types/tutor";
 
 type TutorCardProps = {
@@ -104,12 +105,7 @@ export default function TutorCard({ tutor, featured = false }: TutorCardProps) {
                     </span>
                   </p>
                   <p className="mt-1 flex items-center gap-1 text-sm font-semibold text-on-surface-variant md:justify-end">
-                    <span
-                      className="material-symbols-outlined text-secondary"
-                      style={{ fontVariationSettings: '"FILL" 1' }}
-                    >
-                      star
-                    </span>
+                    <Star className="h-4 w-4 fill-secondary text-secondary" />
                     {tutor.averageRating.toFixed(1)} ({tutor.totalReviews} reviews)
                   </p>
                 </div>
@@ -126,12 +122,6 @@ export default function TutorCard({ tutor, featured = false }: TutorCardProps) {
                 className="rounded-xl bg-primary px-8 py-3 text-center font-headline text-sm font-bold text-on-primary transition-transform hover:translate-y-[-1px]"
               >
                 View Profile
-              </Link>
-              <Link
-                href={`/tutors/${tutor.id}`}
-                className="rounded-xl border border-outline-variant/30 px-8 py-3 text-center text-sm font-bold text-primary transition-colors hover:bg-surface-container-low"
-              >
-                Book Trial
               </Link>
               <p className="text-xs font-medium uppercase tracking-[0.18em] text-on-surface-variant sm:ml-auto">
                 {formatAvailabilityLabel(tutor.nextAvailableSlot)}
@@ -153,19 +143,14 @@ export default function TutorCard({ tutor, featured = false }: TutorCardProps) {
               {tutor.displayName}
             </h3>
             <div className="flex items-center gap-1 text-sm font-semibold text-secondary">
-              <span
-                className="material-symbols-outlined text-base"
-                style={{ fontVariationSettings: '"FILL" 1' }}
-              >
-                star
-              </span>
+              <Star className="h-4 w-4 fill-secondary text-secondary" />
               {tutor.averageRating.toFixed(1)} ({tutor.totalReviews} reviews)
             </div>
           </div>
         </div>
 
         <div className="mb-4 flex flex-wrap gap-2">
-          {tags.slice(0, 2).map((tag) => (
+          {tags.slice(0, 3).map((tag) => (
             <span
               key={tag.id}
               className="rounded-full bg-tertiary-fixed px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-on-tertiary-fixed-variant"
@@ -194,10 +179,9 @@ export default function TutorCard({ tutor, featured = false }: TutorCardProps) {
         </div>
         <Link
           href={`/tutors/${tutor.id}`}
-          className="flex items-center gap-1 text-sm font-bold text-primary transition-all hover:gap-2"
+          className="rounded-xl bg-primary px-6 py-3 text-center font-headline text-sm font-bold text-on-primary transition-transform hover:translate-y-[-1px]"
         >
           View Profile
-          <span className="material-symbols-outlined text-sm">arrow_forward</span>
         </Link>
       </div>
     </article>

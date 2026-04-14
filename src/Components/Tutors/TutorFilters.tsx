@@ -16,8 +16,9 @@ type RatingOption = {
 
 const ratingOptions: RatingOption[] = [
   { label: "Any" },
-  { label: "4★ +" , value: 4 },
-  { label: "4.5★ +", value: 4.5 },
+  { label: "3+", value: 3 },
+  { label: "4+", value: 4 },
+  { label: "4.5+", value: 4.5 },
 ];
 
 function updateParams(
@@ -60,7 +61,6 @@ export default function TutorFilters({
   );
 
   const selectedSubject = filters.subject;
-  const selectedAvailability = filters.availability ? "upcoming" : "any";
 
   function apply(updates: Record<string, string | undefined>) {
     startTransition(() =>
@@ -96,39 +96,41 @@ export default function TutorFilters({
           <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-on-surface-variant">
             Subject
           </h3>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {subjectOptions.length > 0 ? (
-              subjectOptions.map((subject) => {
-                const isActive = selectedSubject === subject.slug;
+              <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+                {subjectOptions.map((subject) => {
+                  const isActive = selectedSubject === subject.slug;
 
-                return (
-                  <button
-                    key={subject.id}
-                    type="button"
-                    onClick={() =>
-                      apply({
-                        subject: isActive ? undefined : subject.slug,
-                      })
-                    }
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors hover:bg-surface-container-highest"
-                  >
-                    <span
-                      className={`flex h-5 w-5 items-center justify-center rounded-md border ${
-                        isActive
-                          ? "border-secondary bg-secondary text-on-secondary"
-                          : "border-outline-variant bg-surface-container-lowest text-transparent"
-                      }`}
+                  return (
+                    <button
+                      key={subject.id}
+                      type="button"
+                      onClick={() =>
+                        apply({
+                          subject: isActive ? undefined : subject.slug,
+                        })
+                      }
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors hover:bg-surface-container-highest"
                     >
-                      <span className="material-symbols-outlined text-sm">
-                        check
+                      <span
+                        className={`flex h-5 w-5 items-center justify-center rounded-md border ${
+                          isActive
+                            ? "border-secondary bg-secondary text-on-secondary"
+                            : "border-outline-variant bg-surface-container-lowest text-transparent"
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-sm">
+                          check
+                        </span>
                       </span>
-                    </span>
-                    <span className="text-sm font-medium text-on-surface-variant">
-                      {subject.name}
-                    </span>
-                  </button>
-                );
-              })
+                      <span className="text-sm font-medium text-on-surface-variant">
+                        {subject.name}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             ) : (
               <p className="text-sm text-on-surface-variant">
                 Subject options will appear when tutors are available.
@@ -174,7 +176,7 @@ export default function TutorFilters({
           <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-on-surface-variant">
             Rating
           </h3>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {ratingOptions.map((option) => {
               const isActive =
                 option.value === undefined
@@ -204,25 +206,6 @@ export default function TutorFilters({
               );
             })}
           </div>
-        </section>
-
-        <section className="space-y-4">
-          <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-on-surface-variant">
-            Availability
-          </h3>
-          <select
-            value={selectedAvailability}
-            onChange={(event) =>
-              apply({
-                availability:
-                  event.target.value === "upcoming" ? "true" : undefined,
-              })
-            }
-            className="w-full rounded-xl border-none bg-surface-container-highest px-4 py-3 text-sm text-on-surface focus:ring-2 focus:ring-surface-tint/40"
-          >
-            <option value="any">Any Time</option>
-            <option value="upcoming">Has Upcoming Slots</option>
-          </select>
         </section>
 
         <button

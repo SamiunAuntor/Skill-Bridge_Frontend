@@ -496,7 +496,7 @@ export default function TutorProfileSettings() {
           <article className={sectionCardClass}>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <h3 className="font-headline text-[1.7rem] font-bold text-primary">
-                  Areas of Expertise
+                  Subjects
                 </h3>
               <button
                 type="button"
@@ -508,7 +508,7 @@ export default function TutorProfileSettings() {
                 }
                 className="rounded-xl bg-primary px-4 py-2 text-[13px] font-bold text-on-primary"
               >
-                Add Expertise
+                Add Subject
               </button>
             </div>
 
@@ -531,7 +531,7 @@ export default function TutorProfileSettings() {
                         ),
                       }))
                     }
-                    placeholder="Add expertise..."
+                    placeholder="Add subject..."
                   />
                   <button
                     type="button"
