@@ -1,9 +1,9 @@
 "use client";
 
-import { LogOut } from "lucide-react";
+import { LayoutDashboard, LogOut } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { authClient, type AuthSessionUser } from "@/lib/auth-client";
 
@@ -17,6 +17,7 @@ export default function NavbarSession({
   onNavigate,
 }: NavbarSessionProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { data: session, isPending } = authClient.useSession();
   const [menuOpen, setMenuOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -96,6 +97,7 @@ export default function NavbarSession({
   const user: AuthSessionUser = session.user;
   const displayName = user.name?.trim() || user.email || "Account";
   const avatarSrc = user.image?.trim();
+  const dashboardHref = "/dashboard";
 
   const avatarButton = (
     <button
@@ -168,6 +170,14 @@ export default function NavbarSession({
           <LogOut size={18} />
           Sign out
         </button>
+        <Link
+          href={dashboardHref}
+          onClick={onNavigate}
+          className="flex h-12 items-center justify-center gap-2 rounded-xl font-bold text-primary transition-colors hover:bg-surface-container-low"
+        >
+          <LayoutDashboard size={18} />
+          Dashboard
+        </Link>
       </div>
     );
   }
@@ -190,6 +200,19 @@ export default function NavbarSession({
               </p>
             ) : null}
           </div>
+          <Link
+            href={dashboardHref}
+            role="menuitem"
+            onClick={() => setMenuOpen(false)}
+            className={`flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-semibold transition-colors hover:bg-surface-container-low ${
+              pathname.startsWith("/dashboard")
+                ? "text-primary"
+                : "text-on-surface"
+            }`}
+          >
+            <LayoutDashboard size={18} className="text-on-surface-variant" />
+            Dashboard
+          </Link>
           <button
             type="button"
             role="menuitem"

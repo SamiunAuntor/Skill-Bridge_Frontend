@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Manrope } from "next/font/google";
 
-import Footer from "@/Components/Layout/Footer";
-import Navbar from "@/Components/Layout/Navbar";
-
 import "./globals.css";
 import "swiper/css";
 import "swiper/css/pagination";
@@ -50,11 +47,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.variable} ${manrope.variable} bg-background text-on-background antialiased`}>
-        <div className="min-h-screen bg-background text-on-background">
-          <Navbar />
-          <main className="pt-20">{children}</main>
-          <Footer />
-        </div>
+        {children}
       </body>
     </html>
   );
