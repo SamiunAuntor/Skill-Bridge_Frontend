@@ -14,6 +14,7 @@ import { authClient } from "@/lib/auth-client";
 import {
   BookingApiError,
   cancelBooking,
+  createReview,
   getMySessions,
   joinSession,
 } from "@/lib/booking-api";
@@ -262,6 +263,78 @@ export default function DashboardSessionsList() {
     });
   }
 
+  async function handleLeaveReview(item: DashboardSessionItem) {
+    const counterpart = getCounterpartyLabel(role, item);
+
+    const result = await Swal.fire({
+      title: "Leave a review",
+      html: `
+        <div style="display:flex;flex-direction:column;gap:12px;text-align:left;">
+          <label style="font-size:13px;font-weight:600;color:#1d3b66;">Rating</label>
+          <select id="review-rating" class="swal2-select" style="margin:0;width:100%;">
+            <option value="5" selected>5 - Excellent</option>
+            <option value="4">4 - Very good</option>
+            <option value="3">3 - Good</option>
+            <option value="2">2 - Fair</option>
+            <option value="1">1 - Poor</option>
+          </select>
+          <label style="font-size:13px;font-weight:600;color:#1d3b66;">Comment (optional)</label>
+          <textarea id="review-comment" class="swal2-textarea" placeholder="Share a few words about your learning experience with ${counterpart}." style="margin:0;width:100%;min-height:120px;"></textarea>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: "Submit Review",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#1d3b66",
+      cancelButtonColor: "#7b8794",
+      focusConfirm: false,
+      preConfirm: async () => {
+        const ratingValue = (document.getElementById("review-rating") as HTMLSelectElement | null)?.value;
+        const commentValue = (document.getElementById("review-comment") as HTMLTextAreaElement | null)?.value ?? "";
+        const rating = Number(ratingValue);
+
+        if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+          Swal.showValidationMessage("Please select a rating between 1 and 5.");
+          return null;
+        }
+
+        try {
+          return await createReview({
+            bookingId: item.bookingId,
+            rating,
+            comment: commentValue.trim() || undefined,
+          });
+        } catch (error) {
+          Swal.showValidationMessage(toFriendlyError(error));
+          return null;
+        }
+      },
+    });
+
+    if (!result.isConfirmed || !result.value) {
+      return;
+    }
+
+    setSessions((current) =>
+      current.map((sessionItem) =>
+        sessionItem.bookingId === item.bookingId
+          ? {
+              ...sessionItem,
+              reviewId: result.value.review.id,
+              canLeaveReview: false,
+            }
+          : sessionItem
+      )
+    );
+
+    await Swal.fire({
+      icon: "success",
+      title: "Review submitted",
+      text: "Thanks for sharing your feedback.",
+      confirmButtonColor: "#1d3b66",
+    });
+  }
+
   if (loading) {
     return <DashboardPageLoader label="Loading sessions..." />;
   }
@@ -443,6 +516,19 @@ export default function DashboardSessionsList() {
                           </button>
                         ) : null}
                       </div>
+                    </div>
+                  ) : null}
+
+                  {role === "student" && item.canLeaveReview ? (
+                    <div className="mt-auto border-t border-outline-variant/14 pt-3">
+                      <button
+                        type="button"
+                        onClick={() => void handleLeaveReview(item)}
+                        disabled={isPending}
+                        className="w-full rounded-xl border border-secondary/20 bg-secondary-container px-4 py-2.5 text-[13px] font-semibold text-on-secondary-container transition-colors hover:bg-secondary-container/85 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        Leave Review
+                      </button>
                     </div>
                   ) : null}
                 </div>

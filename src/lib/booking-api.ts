@@ -145,3 +145,40 @@ export async function joinSession(bookingId: string): Promise<{
     meetingJoinUrl: string;
   }>(response);
 }
+
+export async function createReview(payload: {
+  bookingId: string;
+  rating: number;
+  comment?: string;
+}): Promise<{
+  review: {
+    id: string;
+    bookingId: string;
+    studentId: string;
+    tutorId: string;
+    rating: number;
+    comment: string | null;
+    createdAt: string;
+  };
+}> {
+  const response = await fetch(`${apiBaseUrl}/api/reviews`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  return parseApiResponse<{
+    review: {
+      id: string;
+      bookingId: string;
+      studentId: string;
+      tutorId: string;
+      rating: number;
+      comment: string | null;
+      createdAt: string;
+    };
+  }>(response);
+}

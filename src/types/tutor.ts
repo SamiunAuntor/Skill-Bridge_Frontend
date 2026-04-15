@@ -144,6 +144,7 @@ export interface BookingConfirmationResponse {
 export interface DashboardSessionItem {
   bookingId: string;
   sessionId: string;
+  reviewId: string | null;
   bookingStatus: "confirmed" | "completed" | "cancelled" | "no_show";
   sessionStatus: "scheduled" | "ongoing" | "completed" | "cancelled";
   sessionDate: string;
@@ -156,6 +157,7 @@ export interface DashboardSessionItem {
   meetingId: string | null;
   meetingJoinUrl: string | null;
   meetingPassword: string | null;
+  canLeaveReview: boolean;
   student: {
     id: string;
     name: string;
