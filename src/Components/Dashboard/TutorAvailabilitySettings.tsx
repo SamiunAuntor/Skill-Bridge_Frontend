@@ -1,13 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import Swal from "sweetalert2";
-import { CalendarDays, Clock3, Plus, Trash2 } from "lucide-react";
+import { CalendarDays, Clock3, Pencil, Plus, Trash2, X } from "lucide-react";
+import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
 import {
   AvailabilityApiError,
   createAvailabilitySlot,
   deleteAvailabilitySlot,
   getMyAvailability,
+  updateAvailabilitySlot,
 } from "@/lib/availability-api";
 import type { AvailabilitySlotItem } from "@/types/tutor";
 
@@ -15,6 +23,18 @@ type GroupedAvailability = {
   dateKey: string;
   dateLabel: string;
   slots: AvailabilitySlotItem[];
+};
+
+type SlotVisualStatus = {
+  label: string;
+  helper: string;
+  badgeClass: string;
+  containerClass: string;
+  lightBadgeStyle: {
+    backgroundColor: string;
+    color: string;
+    borderColor: string;
+  };
 };
 
 function formatTimeRange(startAt: string, endAt: string): string {
@@ -65,15 +85,36 @@ function toApiErrorMessage(error: unknown): string {
   return "Something went wrong while updating availability.";
 }
 
+function subscribeTheme(callback: () => void) {
+  window.addEventListener("themechange", callback);
+
+  return () => {
+    window.removeEventListener("themechange", callback);
+  };
+}
+
+function getThemeSnapshot(): "light" | "dark" {
+  if (typeof document === "undefined") {
+    return "light";
+  }
+
+  return document.documentElement.classList.contains("dark") ? "dark" : "light";
+}
+
 function getSlotStatus(slot: AvailabilitySlotItem) {
   if (slot.isBooked) {
     return {
       label: "Booked",
       helper: "A student has already reserved this slot.",
       badgeClass:
-        "bg-primary-fixed text-on-primary-fixed-variant dark:bg-primary/20 dark:text-primary-fixed",
+        "dark:bg-primary/20 dark:text-primary-fixed",
       containerClass:
         "border-primary/15 bg-primary-fixed/35 dark:border-primary/20 dark:bg-primary/10",
+      lightBadgeStyle: {
+        backgroundColor: "#c6d7f3",
+        color: "#143a68",
+        borderColor: "#9eb8e6",
+      },
     };
   }
 
@@ -81,19 +122,27 @@ function getSlotStatus(slot: AvailabilitySlotItem) {
     label: "Open",
     helper: "Available for student booking.",
     badgeClass:
-      "bg-secondary-container text-on-secondary-container dark:bg-secondary/20 dark:text-secondary-fixed",
+      "dark:bg-secondary/20 dark:text-secondary-fixed",
     containerClass:
       "border-outline-variant/15 bg-surface-container-lowest dark:bg-surface-container-low",
+    lightBadgeStyle: {
+      backgroundColor: "#bff4e6",
+      color: "#0f5e55",
+      borderColor: "#7fe2c8",
+    },
   };
 }
 
 export default function TutorAvailabilitySettings() {
+  const theme = useSyncExternalStore(subscribeTheme, getThemeSnapshot, () => "light");
+  const formSectionRef = useRef<HTMLElement | null>(null);
   const [slots, setSlots] = useState<AvailabilitySlotItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedStartTime, setSelectedStartTime] = useState("");
   const [selectedEndTime, setSelectedEndTime] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingSlotId, setEditingSlotId] = useState<string | null>(null);
 
   const groupedSlots = useMemo(() => groupSlotsByDate(slots), [slots]);
 
@@ -144,6 +193,38 @@ export default function TutorAvailabilitySettings() {
     };
   }, []);
 
+  function populateFormFromSlot(slot: AvailabilitySlotItem) {
+    const startDate = new Date(slot.startAt);
+    const endDate = new Date(slot.endAt);
+
+    setEditingSlotId(slot.id);
+    setSelectedDate(startDate.toISOString().slice(0, 10));
+    setSelectedStartTime(
+      `${String(startDate.getHours()).padStart(2, "0")}:${String(
+        startDate.getMinutes()
+      ).padStart(2, "0")}`
+    );
+    setSelectedEndTime(
+      `${String(endDate.getHours()).padStart(2, "0")}:${String(
+        endDate.getMinutes()
+      ).padStart(2, "0")}`
+    );
+
+    requestAnimationFrame(() => {
+      formSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  }
+
+  function resetForm() {
+    setEditingSlotId(null);
+    setSelectedDate("");
+    setSelectedStartTime("");
+    setSelectedEndTime("");
+  }
+
   async function handleCreateSlot(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -187,31 +268,55 @@ export default function TutorAvailabilitySettings() {
     setIsSubmitting(true);
 
     try {
-      const createdSlot = await createAvailabilitySlot({
+      const payload = {
         startAt: startAt.toISOString(),
         endAt: endAt.toISOString(),
-      });
+      };
 
-      setSlots((currentSlots) =>
-        [...currentSlots, createdSlot].sort(
-          (left, right) =>
-            new Date(left.startAt).getTime() - new Date(right.startAt).getTime()
-        )
-      );
-      setSelectedDate("");
-      setSelectedStartTime("");
-      setSelectedEndTime("");
+      if (editingSlotId) {
+        const updatedSlot = await updateAvailabilitySlot(editingSlotId, payload);
 
-      await Swal.fire({
-        icon: "success",
-        title: "Availability added",
-        text: "The new time slot is now visible in your upcoming availability.",
-        confirmButtonColor: "#1d3b66",
-      });
+        setSlots((currentSlots) =>
+          currentSlots
+            .map((currentSlot) =>
+              currentSlot.id === updatedSlot.id ? updatedSlot : currentSlot
+            )
+            .sort(
+              (left, right) =>
+                new Date(left.startAt).getTime() - new Date(right.startAt).getTime()
+            )
+        );
+
+        resetForm();
+
+        await Swal.fire({
+          icon: "success",
+          title: "Availability updated",
+          text: "The slot time has been updated successfully.",
+          confirmButtonColor: "#1d3b66",
+        });
+      } else {
+        const createdSlot = await createAvailabilitySlot(payload);
+
+        setSlots((currentSlots) =>
+          [...currentSlots, createdSlot].sort(
+            (left, right) =>
+              new Date(left.startAt).getTime() - new Date(right.startAt).getTime()
+          )
+        );
+        resetForm();
+
+        await Swal.fire({
+          icon: "success",
+          title: "Availability added",
+          text: "The new time slot is now visible in your upcoming availability.",
+          confirmButtonColor: "#1d3b66",
+        });
+      }
     } catch (error) {
       await Swal.fire({
         icon: "error",
-        title: "Could not create slot",
+        title: editingSlotId ? "Could not update slot" : "Could not create slot",
         text: toApiErrorMessage(error),
         confirmButtonColor: "#1d3b66",
       });
@@ -268,7 +373,10 @@ export default function TutorAvailabilitySettings() {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-[1.75rem] border border-outline-variant/20 bg-surface-container-lowest p-8 shadow-[0px_16px_40px_rgba(0,51,88,0.08)]">
+      <section
+        ref={formSectionRef}
+        className="rounded-[1.75rem] border border-outline-variant/20 bg-surface-container-lowest p-8 shadow-[0px_16px_40px_rgba(0,51,88,0.08)]"
+      >
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <h1 className="font-headline text-3xl font-extrabold tracking-tight text-primary">
@@ -278,7 +386,7 @@ export default function TutorAvailabilitySettings() {
               Add future slots that students can see on your public tutor profile.
             </p>
           </div>
-          <div className="rounded-2xl bg-primary-fixed px-4 py-3 text-right">
+          <div className="flex min-w-[140px] flex-col items-center justify-center rounded-2xl bg-primary-fixed px-4 py-3 text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-on-primary-fixed-variant">
               Upcoming Slots
             </p>
@@ -332,14 +440,37 @@ export default function TutorAvailabilitySettings() {
             </div>
           </label>
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="mt-auto inline-flex h-[54px] items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-sm font-bold text-on-primary transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <Plus className="h-4 w-4" />
-            {isSubmitting ? "Adding..." : "Add Slot"}
-          </button>
+          <div className="mt-auto flex items-center gap-3">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="inline-flex h-[54px] items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-sm font-bold text-on-primary transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {editingSlotId ? (
+                <Pencil className="h-4 w-4" />
+              ) : (
+                <Plus className="h-4 w-4" />
+              )}
+              {isSubmitting
+                ? editingSlotId
+                  ? "Saving..."
+                  : "Adding..."
+                : editingSlotId
+                ? "Save Changes"
+                : "Add Slot"}
+            </button>
+            {editingSlotId ? (
+              <button
+                type="button"
+                onClick={resetForm}
+                disabled={isSubmitting}
+                className="inline-flex h-[54px] items-center justify-center gap-2 rounded-2xl border border-outline-variant/25 bg-surface px-5 text-sm font-semibold text-primary transition-colors hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <X className="h-4 w-4" />
+                Cancel
+              </button>
+            ) : null}
+          </div>
         </form>
       </section>
 
@@ -354,9 +485,7 @@ export default function TutorAvailabilitySettings() {
         </div>
 
         {isLoading ? (
-          <div className="rounded-2xl bg-surface-container-low p-6 text-sm text-on-surface-variant">
-            Loading your upcoming slots...
-          </div>
+          <DashboardPageLoader label="Loading availability..." />
         ) : groupedSlots.length > 0 ? (
           <div className="space-y-5">
             {groupedSlots.map((group) => (
@@ -368,7 +497,17 @@ export default function TutorAvailabilitySettings() {
                   <h3 className="font-headline text-lg font-bold text-primary">
                     {group.dateLabel}
                   </h3>
-                  <span className="rounded-full bg-secondary-container px-3 py-1 text-xs font-semibold text-on-secondary-container">
+                  <span
+                    className="rounded-full px-3 py-1 text-xs font-semibold dark:bg-secondary-container dark:text-on-secondary-container"
+                    style={
+                      theme === "dark"
+                        ? undefined
+                        : {
+                            backgroundColor: "#d8fbf1",
+                            color: "#0f766e",
+                          }
+                    }
+                  >
                     {group.slots.length} slot{group.slots.length === 1 ? "" : "s"}
                   </span>
                 </div>
@@ -393,15 +532,35 @@ export default function TutorAvailabilitySettings() {
                       </div>
                       <div className="flex items-center gap-3 self-start sm:self-auto">
                         <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${status.badgeClass}`}
+                          className={`rounded-full border px-3 py-1 text-xs font-semibold ${status.badgeClass}`}
+                          style={
+                            theme === "dark"
+                              ? undefined
+                              : {
+                                  backgroundColor: status.lightBadgeStyle.backgroundColor,
+                                  color: status.lightBadgeStyle.color,
+                                  borderColor: status.lightBadgeStyle.borderColor,
+                                }
+                          }
                         >
                           {status.label}
                         </span>
+                        {!slot.isBooked ? (
+                          <button
+                            type="button"
+                            onClick={() => populateFormFromSlot(slot)}
+                            disabled={isSubmitting}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-outline-variant/25 bg-surface px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-45"
+                          >
+                            <Pencil className="h-4 w-4" />
+                            Edit
+                          </button>
+                        ) : null}
                         <button
                           type="button"
                           onClick={() => void handleDeleteSlot(slot)}
                           disabled={isSubmitting || slot.isBooked}
-                          className="inline-flex items-center justify-center gap-2 rounded-xl bg-error-container px-4 py-2 text-sm font-semibold text-on-error-container transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
+                          className="inline-flex items-center justify-center gap-2 rounded-xl bg-error-container px-4 py-2 text-sm font-semibold text-on-error-container transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:bg-[#f3d9d7] disabled:text-[#9b6f6b] dark:disabled:bg-[#4c1d1d] dark:disabled:text-[#f0b7b2]"
                         >
                           <Trash2 className="h-4 w-4" />
                           Delete

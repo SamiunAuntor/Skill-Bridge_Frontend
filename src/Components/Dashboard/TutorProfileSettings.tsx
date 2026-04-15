@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Camera, LoaderCircle } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
 import {
   getMyTutorProfile,
   TutorProfileApiError,
@@ -221,11 +222,7 @@ export default function TutorProfileSettings() {
   }
 
   if (isLoading) {
-    return (
-      <section className="rounded-[1.75rem] border border-outline-variant/25 bg-surface-container p-8 shadow-[0px_16px_40px_rgba(0,51,88,0.08)] dark:border-outline-variant/10 dark:bg-surface-container-low dark:shadow-[0px_12px_32px_rgba(0,0,0,0.24)]">
-        <p className="text-sm text-on-surface-variant">Loading tutor profile...</p>
-      </section>
-    );
+    return <DashboardPageLoader label="Loading tutor profile..." />;
   }
 
   if (!formState || !profileData) {

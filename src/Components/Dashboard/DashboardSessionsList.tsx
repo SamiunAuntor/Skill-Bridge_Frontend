@@ -10,6 +10,7 @@ import {
   UserRound,
   Video,
 } from "lucide-react";
+import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
 import { authClient } from "@/lib/auth-client";
 import {
   BookingApiError,
@@ -311,11 +312,7 @@ export default function DashboardSessionsList() {
   }
 
   if (loading) {
-    return (
-      <div className="rounded-[1.75rem] border border-outline-variant/14 bg-surface-container-lowest p-6 text-sm text-on-surface-variant shadow-[0px_18px_40px_rgba(0,51,88,0.08)]">
-        Loading sessions...
-      </div>
-    );
+    return <DashboardPageLoader label="Loading sessions..." />;
   }
 
   return (

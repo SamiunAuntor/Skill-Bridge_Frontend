@@ -55,7 +55,7 @@ export default function DashboardShell({ children }: DashboardShellProps) {
   const displayName = getDisplayName(user);
   const avatarSrc = user.image?.trim();
   const sidebarActionClass =
-    "flex w-full items-center justify-center gap-3 rounded-2xl border border-outline-variant/20 bg-surface px-4 py-3 text-center text-[13px] font-semibold text-on-surface-variant shadow-sm transition-all hover:border-primary/20 hover:bg-surface-container-low hover:text-primary";
+    "flex w-full items-center justify-center gap-3 rounded-2xl border border-outline-variant/20 bg-surface px-4 py-3 text-center text-[11px] font-semibold text-on-surface-variant shadow-sm transition-all hover:border-primary/20 hover:bg-surface-container-low hover:text-primary";
 
   return (
     <div className="min-h-screen bg-surface-container-low dark:bg-surface">
@@ -64,11 +64,11 @@ export default function DashboardShell({ children }: DashboardShellProps) {
           <div className="mb-10">
             <Link
               href="/"
-              className="font-headline text-[2rem] font-black tracking-tight text-primary"
+              className="font-headline text-[1.6rem] font-black tracking-tight text-primary"
             >
-              SkillBridge
+              Skilll Bridge
             </Link>
-            <p className="mt-1 text-xs font-medium uppercase tracking-[0.18em] text-on-surface-variant">
+            <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.18em] text-on-surface-variant">
               Academic Excellence
             </p>
           </div>
@@ -81,13 +81,13 @@ export default function DashboardShell({ children }: DashboardShellProps) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center rounded-r-full px-4 py-3 font-headline text-[1.05rem] font-semibold transition-all duration-300 ${
+                  className={`flex items-center rounded-r-full px-4 py-3 font-headline text-[0.85rem] font-semibold transition-all duration-300 ${
                     isActive
                       ? "bg-primary-fixed text-primary"
                       : "text-on-surface-variant hover:bg-surface-container-low hover:text-primary"
                   }`}
                 >
-                  <span className="material-symbols-outlined mr-3">{item.icon}</span>
+                  <span className="material-symbols-outlined mr-3 text-[20px]">{item.icon}</span>
                   {item.label}
                 </Link>
               );
@@ -96,13 +96,6 @@ export default function DashboardShell({ children }: DashboardShellProps) {
 
           <div className="mt-8 space-y-4 border-t border-outline-variant/20 pt-6">
             <ThemeToggle fullWidth />
-            <Link
-              href="#"
-              className={sidebarActionClass}
-            >
-              <span className="material-symbols-outlined text-lg">help</span>
-              Help Center
-            </Link>
             <button
               type="button"
               onClick={async () => {
@@ -112,15 +105,15 @@ export default function DashboardShell({ children }: DashboardShellProps) {
               }}
               className={sidebarActionClass}
             >
-              <span className="material-symbols-outlined text-lg">logout</span>
+              <span className="material-symbols-outlined text-[18px]">logout</span>
               Logout
             </button>
           </div>
         </aside>
 
         <div className="min-w-0 bg-surface px-5 pb-6 md:px-8 md:pb-7">
-          <header className="sticky top-0 z-30 -mx-5 mb-10 flex flex-col gap-4 border-b border-outline-variant/25 bg-surface/95 px-5 pb-5 pt-6 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between md:-mx-8 md:px-8 md:pt-7">
-            <h1 className="font-headline text-[2.2rem] font-extrabold tracking-tight text-primary">
+          <header className="sticky top-0 z-30 -mx-5 mb-8 flex flex-col gap-3 border-b border-outline-variant/25 bg-surface/95 px-5 pb-4 pt-4 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between md:-mx-8 md:px-8 md:pt-5">
+            <h1 className="font-headline text-[1.4rem] font-extrabold tracking-tight text-primary">
               {getRoleHeading(role)}
             </h1>
 
@@ -130,7 +123,7 @@ export default function DashboardShell({ children }: DashboardShellProps) {
                 className="relative text-on-surface-variant transition-colors hover:text-primary"
                 aria-label="Notifications"
               >
-                <span className="material-symbols-outlined">notifications</span>
+                <span className="material-symbols-outlined text-[22px]">notifications</span>
                 <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-error" />
               </button>
 

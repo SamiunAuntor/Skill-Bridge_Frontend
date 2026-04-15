@@ -81,6 +81,25 @@ export async function deleteAvailabilitySlot(slotId: string): Promise<void> {
   await parseApiResponse<null>(response);
 }
 
+export async function updateAvailabilitySlot(
+  slotId: string,
+  payload: {
+    startAt: string;
+    endAt: string;
+  }
+): Promise<AvailabilitySlotItem> {
+  const response = await fetch(`${apiBaseUrl}/api/availability/me/${slotId}`, {
+    method: "PUT",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  return parseApiResponse<AvailabilitySlotItem>(response);
+}
+
 export async function getTutorAvailability(
   tutorId: string
 ): Promise<AvailabilityListResponse> {

@@ -43,13 +43,13 @@ export default function ThemeToggle({ fullWidth = false }: ThemeToggleProps) {
     <button
       type="button"
       onClick={handleToggle}
-      className={`inline-flex items-center justify-center gap-2 rounded-full border border-outline-variant/60 bg-surface-container-low px-4 py-3 text-sm font-semibold text-primary transition-colors hover:bg-surface-container ${
+      className={`inline-flex items-center justify-center gap-2 rounded-full border border-outline-variant/60 bg-surface-container-low px-4 py-3 text-[11px] font-semibold text-primary transition-colors hover:bg-surface-container ${
         fullWidth ? "w-full" : ""
       }`}
       aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
       title={`Switch to ${isDark ? "light" : "dark"} mode`}
     >
-      <span className="material-symbols-outlined text-[18px]">
+      <span className="material-symbols-outlined text-[16px]">
         {isDark ? "light_mode" : "dark_mode"}
       </span>
       <span>{isDark ? "Light" : "Dark"}</span>
