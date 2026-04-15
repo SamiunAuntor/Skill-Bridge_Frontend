@@ -1,10 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 import { Lock, Sparkles } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import BookingConfirmationModal from "@/Components/Tutors/BookingConfirmationModal";
+import { BookingApiError, createBooking } from "@/lib/booking-api";
 import { TutorAvailabilitySlot } from "@/types/tutor";
 
 type TutorBookingSidebarProps = {
@@ -75,6 +77,30 @@ function formatDateLabel(isoString: string): string {
   }).format(new Date(isoString));
 }
 
+function formatAmount(amount: number): string {
+  return `$${amount.toFixed(2)}`;
+}
+
+function calculateSlotPrice(hourlyRate: number, slot: TutorAvailabilitySlot): number {
+  const durationHours =
+    (new Date(slot.endAt).getTime() - new Date(slot.startAt).getTime()) /
+    (1000 * 60 * 60);
+
+  return Number((hourlyRate * Math.max(durationHours, 0)).toFixed(2));
+}
+
+function toBookingErrorMessage(error: unknown): string {
+  if (error instanceof BookingApiError) {
+    return error.message;
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "Unable to create this booking right now.";
+}
+
 export default function TutorBookingSidebar({
   tutorId,
   hourlyRate,
@@ -82,9 +108,12 @@ export default function TutorBookingSidebar({
 }: TutorBookingSidebarProps) {
   const router = useRouter();
   const { data: session, isPending: sessionPending } = authClient.useSession();
+  const [slots, setSlots] = useState(availableSlots);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBookingPending, startBookingTransition] = useTransition();
   const groupedSlots = useMemo(
-    () => groupSlotsByDate(availableSlots).slice(0, 7),
-    [availableSlots]
+    () => groupSlotsByDate(slots).slice(0, 7),
+    [slots]
   );
   const [selectedDateKey, setSelectedDateKey] = useState(
     groupedSlots[0]?.dateKey ?? ""
@@ -101,7 +130,33 @@ export default function TutorBookingSidebar({
     selectedDate?.slots[0] ??
     null;
 
-  async function handleBookSession() {
+  useEffect(() => {
+    setSlots(availableSlots);
+  }, [availableSlots]);
+
+  useEffect(() => {
+    const nextDateKey = groupedSlots[0]?.dateKey ?? "";
+    const currentDateStillExists = groupedSlots.some(
+      (group) => group.dateKey === selectedDateKey
+    );
+
+    if (!currentDateStillExists) {
+      setSelectedDateKey(nextDateKey);
+      setSelectedSlotId(groupedSlots[0]?.slots[0]?.id ?? "");
+      return;
+    }
+
+    const currentGroup = groupedSlots.find((group) => group.dateKey === selectedDateKey);
+    const currentSlotStillExists = currentGroup?.slots.some(
+      (slot) => slot.id === selectedSlotId
+    );
+
+    if (!currentSlotStillExists) {
+      setSelectedSlotId(currentGroup?.slots[0]?.id ?? "");
+    }
+  }, [groupedSlots, selectedDateKey, selectedSlotId]);
+
+  async function handleBookClick() {
     if (!selectedSlotId || !selectedSlot) {
       return;
     }
@@ -125,37 +180,64 @@ export default function TutorBookingSidebar({
       return;
     }
 
-    const confirmation = await Swal.fire({
-      title: "Confirm Booking",
-      html: `
-        <div style="text-align:left;font-size:14px;line-height:1.7">
-          <p><strong>Date:</strong> ${formatDateLabel(selectedSlot.startAt)}</p>
-          <p><strong>Time:</strong> ${formatTimeLabel(selectedSlot.startAt)} - ${formatTimeLabel(selectedSlot.endAt)}</p>
-          <p><strong>Rate:</strong> ${formatCurrency(hourlyRate)} / 60 min session</p>
-        </div>
-      `,
-      showCancelButton: true,
-      confirmButtonText: "Confirm Booking",
-      cancelButtonText: "Cancel",
-      confirmButtonColor: "#1d3b66",
-      cancelButtonColor: "#6b7280",
-    });
+    setIsModalOpen(true);
+  }
 
-    if (!confirmation.isConfirmed) {
+  function handleCloseModal() {
+    if (isBookingPending) {
       return;
     }
 
-    await Swal.fire({
-      icon: "info",
-      title: "Booking flow is next",
-      text: "The slot selection is now correct for logged-in students. The booking creation endpoint will be wired in the next step.",
-      confirmButtonColor: "#1d3b66",
+    setIsModalOpen(false);
+  }
+
+  function handleConfirmBooking() {
+    if (!selectedSlot) {
+      return;
+    }
+
+    startBookingTransition(() => {
+      void (async () => {
+        try {
+          const result = await createBooking({
+            tutorId,
+            slotId: selectedSlot.id,
+          });
+
+          setSlots((currentSlots) =>
+            currentSlots.filter((slot) => slot.id !== selectedSlot.id)
+          );
+          setIsModalOpen(false);
+
+          await Swal.fire({
+            icon: "success",
+            title: "Booking confirmed",
+            html: `
+              <div style="text-align:left;font-size:14px;line-height:1.7">
+                <p><strong>Amount:</strong> ${formatAmount(result.booking.priceAtBooking)}</p>
+                <p><strong>Date:</strong> ${formatDateLabel(result.booking.startTime)}</p>
+                <p><strong>Time:</strong> ${formatTimeLabel(result.booking.startTime)} - ${formatTimeLabel(result.booking.endTime)}</p>
+                <p style="margin-top:8px;color:#5f6368;">Payment gateway integration will be added later. This booking is currently marked as paid by the direct-booking flow.</p>
+              </div>
+            `,
+            confirmButtonColor: "#1d3b66",
+          });
+        } catch (error) {
+          await Swal.fire({
+            icon: "error",
+            title: "Booking failed",
+            text: toBookingErrorMessage(error),
+            confirmButtonColor: "#1d3b66",
+          });
+        }
+      })();
     });
   }
 
   return (
-    <aside className="self-start lg:col-span-4 lg:flex lg:justify-end">
-      <div className="w-full max-w-[21rem] overflow-hidden rounded-2xl border border-outline-variant/10 bg-surface-container-lowest shadow-[0px_18px_36px_rgba(0,51,88,0.08)]">
+    <>
+      <aside className="self-start lg:col-span-4 lg:flex lg:justify-end">
+        <div className="w-full max-w-[21rem] overflow-hidden rounded-2xl border border-outline-variant/10 bg-surface-container-lowest shadow-[0px_18px_36px_rgba(0,51,88,0.08)]">
         <div className="flex items-end justify-between bg-primary p-5 text-on-primary">
           <div>
             <p className="font-headline text-[2.2rem] font-black">
@@ -255,14 +337,18 @@ export default function TutorBookingSidebar({
 
           <button
             type="button"
-            onClick={() => void handleBookSession()}
+            onClick={() => void handleBookClick()}
             className={`block w-full rounded-md px-4 py-3 text-center font-headline text-[14px] font-bold shadow-lg transition-all ${
-              selectedSlotId && !sessionPending
+              selectedSlotId && !sessionPending && !isBookingPending
                 ? "bg-gradient-to-r from-primary to-primary-container text-on-primary hover:shadow-xl"
                 : "pointer-events-none bg-surface-container-high text-on-surface-variant"
             }`}
           >
-            {sessionPending ? "Checking account..." : "Book a Session"}
+            {sessionPending
+              ? "Checking account..."
+              : isBookingPending
+                ? "Confirming..."
+                : "Book a Session"}
           </button>
 
           <p className="flex items-center justify-center gap-2.5 pt-2 text-center text-[10px] font-medium text-on-surface-variant">
@@ -272,5 +358,24 @@ export default function TutorBookingSidebar({
         </div>
       </div>
     </aside>
+
+      <BookingConfirmationModal
+        isOpen={isModalOpen && !!selectedSlot}
+        dateLabel={selectedSlot ? formatDateLabel(selectedSlot.startAt) : ""}
+        timeLabel={
+          selectedSlot
+            ? `${formatTimeLabel(selectedSlot.startAt)} - ${formatTimeLabel(selectedSlot.endAt)}`
+            : ""
+        }
+        amountLabel={
+          selectedSlot
+            ? formatAmount(calculateSlotPrice(hourlyRate, selectedSlot))
+            : ""
+        }
+        isSubmitting={isBookingPending}
+        onClose={handleCloseModal}
+        onConfirm={handleConfirmBooking}
+      />
+    </>
   );
 }
