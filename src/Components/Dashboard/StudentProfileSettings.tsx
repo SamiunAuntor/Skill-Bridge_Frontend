@@ -127,37 +127,37 @@ export default function StudentProfileSettings() {
   }
 
   return (
-    <section className="rounded-[1.75rem] border border-outline-variant/14 bg-surface-container-lowest p-6 shadow-[0px_18px_40px_rgba(0,51,88,0.08)]">
+    <section className="rounded-[1.5rem] border border-outline-variant/14 bg-surface-container-lowest p-5 shadow-[0px_18px_40px_rgba(0,51,88,0.08)]">
       <div className="mb-6">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
           Student Profile
         </p>
-        <h2 className="mt-3 font-headline text-3xl font-bold text-primary">
+        <h2 className="mt-2.5 font-headline text-[2rem] font-bold text-primary">
           Edit Your Info
         </h2>
-        <p className="mt-3 max-w-2xl text-on-surface-variant">
+        <p className="mt-2.5 max-w-2xl text-[14px] text-on-surface-variant">
           Update the basic information tied to your student account.
         </p>
       </div>
 
-      <form onSubmit={handleSave} className="space-y-6">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-center">
+      <form onSubmit={handleSave} className="space-y-5">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
           <div className="flex items-center gap-4">
             {profileImageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={profileImageUrl}
                 alt=""
-                className="h-20 w-20 rounded-2xl object-cover"
+                className="h-16 w-16 rounded-2xl object-cover"
                 referrerPolicy="no-referrer"
               />
             ) : (
-              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary-fixed text-primary">
-                <UserRound className="h-8 w-8" />
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-fixed text-primary">
+                <UserRound className="h-7 w-7" />
               </div>
             )}
 
-            <label className="inline-flex cursor-pointer items-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-on-primary transition-colors hover:bg-primary/90">
+            <label className="inline-flex cursor-pointer items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-[13px] font-semibold text-on-primary transition-colors hover:bg-primary/90">
               <Camera className="h-4 w-4" />
               {isUploading ? "Uploading..." : "Upload Photo"}
               <input
@@ -171,24 +171,24 @@ export default function StudentProfileSettings() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <label className="space-y-2">
-            <span className="text-sm font-semibold text-primary">Full Name</span>
-            <div className="flex items-center gap-3 rounded-2xl border border-outline-variant/20 bg-surface px-4 py-3">
+            <span className="text-[13px] font-semibold text-primary">Full Name</span>
+            <div className="flex items-center gap-3 rounded-2xl border border-outline-variant/20 bg-surface px-4 py-2.5">
               <UserRound className="h-5 w-5 text-secondary" />
               <input
                 type="text"
                 value={displayName}
                 onChange={(event) => setDisplayName(event.target.value)}
-                className="w-full border-none bg-transparent text-sm text-on-surface outline-none focus:ring-0"
+                className="w-full border-none bg-transparent text-[13px] text-on-surface outline-none focus:ring-0"
                 placeholder="Your full name"
               />
             </div>
           </label>
 
           <label className="space-y-2">
-            <span className="text-sm font-semibold text-primary">Email</span>
-            <div className="flex items-center gap-3 rounded-2xl border border-outline-variant/20 bg-surface px-4 py-3 text-sm text-on-surface-variant">
+            <span className="text-[13px] font-semibold text-primary">Email</span>
+            <div className="flex items-center gap-3 rounded-2xl border border-outline-variant/20 bg-surface px-4 py-2.5 text-[13px] text-on-surface-variant">
               <Mail className="h-5 w-5 text-secondary" />
               <span>{session?.user.email ?? "No email available"}</span>
             </div>
@@ -199,7 +199,7 @@ export default function StudentProfileSettings() {
           <button
             type="submit"
             disabled={isSaving || isUploading || !hasChanges}
-            className="rounded-2xl bg-primary px-6 py-3 text-sm font-bold text-on-primary transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-2xl bg-primary px-6 py-2.5 text-[13px] font-bold text-on-primary transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSaving ? "Saving..." : "Save Changes"}
           </button>

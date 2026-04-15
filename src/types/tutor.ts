@@ -168,8 +168,26 @@ export interface DashboardSessionItem {
   };
 }
 
+export type DashboardSessionSortOption =
+  | "time_asc"
+  | "time_desc"
+  | "amount_high"
+  | "amount_low"
+  | "upcoming_only"
+  | "completed_only"
+  | "cancelled_only";
+
 export interface DashboardSessionListResponse {
   sessions: DashboardSessionItem[];
+  stats: {
+    upcoming: number;
+    completed: number;
+    cancelled: number;
+  };
+  filters: {
+    search: string;
+    sortBy: DashboardSessionSortOption;
+  };
 }
 
 export interface TutorEditableProfileEducation {

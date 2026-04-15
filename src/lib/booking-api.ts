@@ -1,5 +1,6 @@
 import {
   BookingConfirmationResponse,
+  DashboardSessionSortOption,
   DashboardSessionListResponse,
 } from "@/types/tutor";
 
@@ -65,12 +66,29 @@ export async function createBooking(payload: {
   return parseApiResponse<BookingConfirmationResponse>(response);
 }
 
-export async function getMySessions(): Promise<DashboardSessionListResponse> {
-  const response = await fetch(`${apiBaseUrl}/api/bookings/me/sessions`, {
+export async function getMySessions(params?: {
+  search?: string;
+  sortBy?: DashboardSessionSortOption;
+}): Promise<DashboardSessionListResponse> {
+  const searchParams = new URLSearchParams();
+
+  if (params?.search?.trim()) {
+    searchParams.set("q", params.search.trim());
+  }
+
+  if (params?.sortBy) {
+    searchParams.set("sortBy", params.sortBy);
+  }
+
+  const queryString = searchParams.toString();
+  const response = await fetch(
+    `${apiBaseUrl}/api/bookings/me/sessions${queryString ? `?${queryString}` : ""}`,
+    {
     method: "GET",
     credentials: "include",
     cache: "no-store",
-  });
+    }
+  );
 
   return parseApiResponse<DashboardSessionListResponse>(response);
 }

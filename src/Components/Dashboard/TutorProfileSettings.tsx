@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import Swal from "sweetalert2";
 import { Camera, LoaderCircle } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
@@ -20,15 +21,66 @@ import {
 type ProfileFormState = TutorProfileUpdateInput;
 
 const sectionCardClass =
-  "rounded-[1.5rem] border border-outline-variant/25 bg-surface-container p-7 shadow-[0px_16px_40px_rgba(0,51,88,0.08)] dark:border-outline-variant/10 dark:bg-surface-container-low dark:shadow-[0px_12px_32px_rgba(0,0,0,0.24)]";
+  "rounded-[1.35rem] border border-outline-variant/25 bg-surface-container p-6 shadow-[0px_16px_40px_rgba(0,51,88,0.08)] dark:border-outline-variant/10 dark:bg-surface-container-low dark:shadow-[0px_12px_32px_rgba(0,0,0,0.24)]";
 
 const inputClass =
-  "w-full rounded-xl border border-outline-variant/30 bg-white px-4 py-3 text-[15px] text-on-surface shadow-sm shadow-slate-900/5 outline-none transition placeholder:text-[15px] focus:border-primary focus:ring-2 focus:ring-primary/15 dark:border-outline-variant/30 dark:bg-surface-container dark:shadow-none";
+  "w-full rounded-xl border border-outline-variant/30 bg-white px-3.5 py-2.5 text-[13px] text-on-surface shadow-sm shadow-slate-900/5 outline-none transition placeholder:text-[13px] focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-70 dark:border-outline-variant/30 dark:bg-surface-container dark:shadow-none";
 
 const textAreaClass = `${inputClass} min-h-32 resize-y`;
 
 function normalizeText(value: string | null | undefined): string {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function toFriendlyTutorProfileError(error: unknown): string {
+  const message =
+    error instanceof TutorProfileApiError
+      ? error.message
+      : error instanceof Error
+      ? error.message
+      : "We couldn’t update your tutor profile right now. Please try again.";
+
+  if (/^education\[\d+\]\.startYear cannot be greater than endYear\.$/i.test(message)) {
+    return "One education entry has a start year later than its end year.";
+  }
+
+  if (/^education\[\d+\]\.startYear must be a valid year\.$/i.test(message)) {
+    return "Please enter a valid education start year.";
+  }
+
+  if (/^education\[\d+\]\.endYear must be a valid year\.$/i.test(message)) {
+    return "Please enter a valid education end year.";
+  }
+
+  if (/^education\[\d+\]\.degree is required\.$/i.test(message)) {
+    return "Each education entry needs a degree name.";
+  }
+
+  if (/^education\[\d+\]\.institution is required\.$/i.test(message)) {
+    return "Each education entry needs an institution name.";
+  }
+
+  if (/^expertise\[\d+\]\.name is required\.$/i.test(message)) {
+    return "Each subject entry needs a subject name.";
+  }
+
+  if (/^categoryIds\[\d+\] must be a valid category id\.$/i.test(message)) {
+    return "One of the selected categories is invalid. Please reselect your categories.";
+  }
+
+  if (/^One or more selected categories are invalid\.$/i.test(message)) {
+    return "One or more selected categories are invalid. Please reselect them.";
+  }
+
+  if (/^At least one subject is required\.$/i.test(message)) {
+    return "Please add at least one subject before saving your profile.";
+  }
+
+  if (/^bio must be at least 20 characters long\.$/i.test(message)) {
+    return "Your bio must be at least 20 characters long.";
+  }
+
+  return message;
 }
 
 function createBlankExpertise(): TutorProfileUpdateExpertiseInput {
@@ -75,6 +127,30 @@ function mapProfileToFormState(
   };
 }
 
+function serializeFormState(state: ProfileFormState): string {
+  return JSON.stringify({
+    profileImageUrl: state.profileImageUrl ?? null,
+    professionalTitle: normalizeText(state.professionalTitle),
+    bio: normalizeText(state.bio),
+    hourlyRate: Number(state.hourlyRate) || 0,
+    experienceYears: Number(state.experienceYears) || 0,
+    categoryIds: [...state.categoryIds].sort(),
+    expertise: state.expertise.map((item) => ({
+      id: item.id ?? null,
+      name: normalizeText(item.name),
+    })),
+    education: state.education.map((item) => ({
+      id: item.id ?? null,
+      degree: normalizeText(item.degree),
+      institution: normalizeText(item.institution),
+      fieldOfStudy: normalizeText(item.fieldOfStudy),
+      startYear: Number(item.startYear),
+      endYear: item.endYear ?? null,
+      description: normalizeText(item.description),
+    })),
+  });
+}
+
 function getCompletionRatio(completed: number, total: number): number {
   if (total === 0) {
     return 0;
@@ -89,11 +165,12 @@ export default function TutorProfileSettings() {
     null
   );
   const [formState, setFormState] = useState<ProfileFormState | null>(null);
+  const [initialFormState, setInitialFormState] = useState<ProfileFormState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   if (session?.user?.role && session.user.role !== "tutor") {
     return null;
@@ -113,7 +190,9 @@ export default function TutorProfileSettings() {
         }
 
         setProfileData(response);
-        setFormState(mapProfileToFormState(response.profile));
+        const mappedState = mapProfileToFormState(response.profile);
+        setFormState(mappedState);
+        setInitialFormState(mappedState);
       } catch (error) {
         if (!isMounted) {
           return;
@@ -164,20 +243,123 @@ export default function TutorProfileSettings() {
     };
   }, [formState]);
 
+  const hasChanges = useMemo(() => {
+    if (!formState || !initialFormState) {
+      return false;
+    }
+
+    return serializeFormState(formState) !== serializeFormState(initialFormState);
+  }, [formState, initialFormState]);
+
+  const isInteractionDisabled = !isEditing || isSaving;
+
   function updateFormState(updater: (current: ProfileFormState) => ProfileFormState) {
     setFormState((current) => (current ? updater(current) : current));
+  }
+
+  function handleStartEditing() {
+    setErrorMessage(null);
+    setIsEditing(true);
+  }
+
+  async function handleCancelEditing() {
+    if (hasChanges) {
+      const confirmation = await Swal.fire({
+        icon: "warning",
+        title: "Discard your changes?",
+        text: "Any unsaved profile changes will be lost.",
+        showCancelButton: true,
+        confirmButtonText: "Discard changes",
+        cancelButtonText: "Keep editing",
+        confirmButtonColor: "#9f1d1d",
+        cancelButtonColor: "#1d3b66",
+      });
+
+      if (!confirmation.isConfirmed) {
+        return;
+      }
+    }
+
+    if (initialFormState) {
+      setFormState(initialFormState);
+    }
+    setIsEditing(false);
+    setErrorMessage(null);
+  }
+
+  async function handleRemoveExpertise(index: number) {
+    const confirmation = await Swal.fire({
+      icon: "warning",
+      title: "Remove this subject?",
+      text: "This subject will be removed from your public tutoring profile.",
+      showCancelButton: true,
+      confirmButtonText: "Remove subject",
+      cancelButtonText: "Keep subject",
+      confirmButtonColor: "#9f1d1d",
+      cancelButtonColor: "#1d3b66",
+    });
+
+    if (!confirmation.isConfirmed) {
+      return;
+    }
+
+    updateFormState((current) => ({
+      ...current,
+      expertise:
+        current.expertise.length > 1
+          ? current.expertise.filter((_, expertiseIndex) => expertiseIndex !== index)
+          : [createBlankExpertise()],
+    }));
+  }
+
+  async function handleRemoveEducation(index: number) {
+    const confirmation = await Swal.fire({
+      icon: "warning",
+      title: "Remove this education item?",
+      text: "This academic record will be removed from your public tutoring profile.",
+      showCancelButton: true,
+      confirmButtonText: "Remove education",
+      cancelButtonText: "Keep education",
+      confirmButtonColor: "#9f1d1d",
+      cancelButtonColor: "#1d3b66",
+    });
+
+    if (!confirmation.isConfirmed) {
+      return;
+    }
+
+    updateFormState((current) => ({
+      ...current,
+      education:
+        current.education.length > 1
+          ? current.education.filter((_, educationIndex) => educationIndex !== index)
+          : [createBlankEducation()],
+    }));
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!formState) {
+    if (!formState || !isEditing) {
+      return;
+    }
+
+    if (!hasChanges) {
+      return;
+    }
+
+    if (normalizeText(formState.bio).length < 20) {
+      await Swal.fire({
+        icon: "warning",
+        title: "Bio is too short",
+        text: "Please write at least 20 characters so students get a meaningful introduction.",
+        confirmButtonColor: "#1d3b66",
+      });
       return;
     }
 
     setIsSaving(true);
     setErrorMessage(null);
-    setSuccessMessage(null);
 
     try {
       const normalizedPayload: TutorProfileUpdateInput = {
@@ -207,15 +389,25 @@ export default function TutorProfileSettings() {
       };
 
       const response = await updateMyTutorProfile(normalizedPayload);
+      const mappedState = mapProfileToFormState(response.profile);
       setProfileData(response);
-      setFormState(mapProfileToFormState(response.profile));
-      setSuccessMessage("Profile updated successfully.");
+      setFormState(mappedState);
+      setInitialFormState(mappedState);
+      setIsEditing(false);
+
+      await Swal.fire({
+        icon: "success",
+        title: "Profile updated",
+        text: "Your tutor profile changes have been saved successfully.",
+        confirmButtonColor: "#1d3b66",
+      });
     } catch (error) {
-      setErrorMessage(
-        error instanceof TutorProfileApiError
-          ? error.message
-          : "Unable to update tutor profile."
-      );
+      await Swal.fire({
+        icon: "error",
+        title: "Profile update failed",
+        text: toFriendlyTutorProfileError(error),
+        confirmButtonColor: "#1d3b66",
+      });
     } finally {
       setIsSaving(false);
     }
@@ -241,59 +433,11 @@ export default function TutorProfileSettings() {
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
-      <section className="rounded-[1.75rem] border border-outline-variant/25 bg-surface-container p-8 shadow-[0px_16px_40px_rgba(0,51,88,0.08)] dark:border-outline-variant/10 dark:bg-surface-container-low dark:shadow-[0px_12px_32px_rgba(0,0,0,0.24)]">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h2 className="font-headline text-[2.1rem] font-extrabold tracking-tight text-primary">
-              Build your public tutoring identity
-            </h2>
-            <p className="mt-2 text-[13px] text-on-surface-variant">
-              Set up the information students will see on your public profile.
-            </p>
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSaving}
-            className="rounded-xl bg-primary px-6 py-3 font-headline text-[15px] font-bold text-on-primary transition hover:opacity-90 disabled:opacity-60"
-          >
-            {isSaving ? "Saving..." : "Save Profile"}
-          </button>
-        </div>
-
-        <div className="mt-6 rounded-2xl bg-primary-fixed/40 p-4">
-          <div className="flex items-center justify-between text-[13px] font-semibold text-primary">
-            <span>
-              Completion {completionStats.completed}/{completionStats.total}
-            </span>
-            <span>{completionPercentage}%</span>
-          </div>
-          <div className="mt-3 h-3 overflow-hidden rounded-full bg-white/70">
-            <div
-              className="h-full rounded-full bg-primary transition-all duration-300"
-              style={{ width: `${completionPercentage}%` }}
-            />
-          </div>
-        </div>
-
-        {errorMessage ? (
-          <div className="mt-5 rounded-xl bg-error-container px-4 py-3 text-sm text-on-error-container">
-            {errorMessage}
-          </div>
-        ) : null}
-
-        {successMessage ? (
-          <div className="mt-5 rounded-xl bg-secondary-fixed/40 px-4 py-3 text-sm text-on-secondary-fixed">
-            {successMessage}
-          </div>
-        ) : null}
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-[1.15fr_1fr]">
-        <div className="space-y-6">
-          <article className={sectionCardClass}>
-            <div className="flex flex-col gap-5 md:flex-row md:items-center">
-              <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-3xl bg-surface-container-highest shadow-sm">
+      <section className="rounded-[1.55rem] border border-outline-variant/25 bg-surface-container p-6 shadow-[0px_16px_40px_rgba(0,51,88,0.08)] dark:border-outline-variant/10 dark:bg-surface-container-low dark:shadow-[0px_12px_32px_rgba(0,0,0,0.24)]">
+        <div className="grid gap-5 lg:grid-cols-[0.3fr_0.7fr]">
+          <article className="rounded-[1.35rem] border border-outline-variant/20 bg-surface-container-lowest p-5">
+            <div className="flex flex-col items-center gap-4 text-center">
+              <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-3xl bg-surface-container-highest shadow-sm">
                 {formState.profileImageUrl ? (
                   <img
                     alt="Tutor profile preview"
@@ -307,68 +451,141 @@ export default function TutorProfileSettings() {
                 )}
               </div>
 
-              <div className="flex-1 space-y-3">
-                <div>
-                  <h3 className="font-headline text-[1.7rem] font-bold text-primary">
-                    Profile Photo
-                  </h3>
-                  <p className="mt-1 text-[13px] text-on-surface-variant">
-                    Upload a clear headshot for your public tutor card and profile.
-                  </p>
-                </div>
+              <div>
+                <h3 className="font-headline text-[1.35rem] font-bold text-primary">
+                  Profile Photo
+                </h3>
+                <p className="mt-1 text-[12px] text-on-surface-variant">
+                  Upload a clear tutor headshot.
+                </p>
+              </div>
 
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-primary px-4 py-3 text-[13px] font-bold text-on-primary transition hover:opacity-90">
-                  {isUploadingImage ? (
-                    <LoaderCircle className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Camera className="h-4 w-4" />
-                  )}
-                  <span>
-                    {isUploadingImage ? "Uploading..." : "Upload New Image"}
-                  </span>
-                  <input
-                    className="sr-only"
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp"
-                    onChange={async (event) => {
-                      const file = event.target.files?.[0];
-                      event.target.value = "";
+              <label
+                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-[12px] font-bold transition ${
+                  isInteractionDisabled || isUploadingImage
+                    ? "cursor-not-allowed bg-surface-container-high text-on-surface-variant opacity-70"
+                    : "cursor-pointer bg-primary text-on-primary hover:opacity-90"
+                }`}
+              >
+                {isUploadingImage ? (
+                  <LoaderCircle className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Camera className="h-4 w-4" />
+                )}
+                <span>
+                  {isUploadingImage ? "Uploading..." : "Upload New Image"}
+                </span>
+                <input
+                  className="sr-only"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  disabled={isInteractionDisabled || isUploadingImage}
+                  onChange={async (event) => {
+                    const file = event.target.files?.[0];
+                    event.target.value = "";
 
-                      if (!file) {
-                        return;
-                      }
+                    if (!file) {
+                      return;
+                    }
 
-                      setErrorMessage(null);
-                      setSuccessMessage(null);
-                      setIsUploadingImage(true);
+                    setErrorMessage(null);
+                    setIsUploadingImage(true);
 
-                      try {
-                        const result = await uploadImage(file);
-                        updateFormState((current) => ({
-                          ...current,
-                          profileImageUrl: result.secureUrl,
-                        }));
-                        setSuccessMessage(
-                          "Profile image uploaded. Save profile to keep it."
-                        );
-                      } catch (error) {
-                        setErrorMessage(
+                    try {
+                      const result = await uploadImage(file);
+                      updateFormState((current) => ({
+                        ...current,
+                        profileImageUrl: result.secureUrl,
+                      }));
+                    } catch (error) {
+                      await Swal.fire({
+                        icon: "error",
+                        title: "Image upload failed",
+                        text:
                           error instanceof ImageUploadError
                             ? error.message
-                            : "Unable to upload profile image."
-                        );
-                      } finally {
-                        setIsUploadingImage(false);
-                      }
-                    }}
-                  />
-                </label>
-              </div>
+                            : "We couldn’t upload this profile image right now. Please try again.",
+                        confirmButtonColor: "#1d3b66",
+                      });
+                    } finally {
+                      setIsUploadingImage(false);
+                    }
+                  }}
+                />
+              </label>
             </div>
           </article>
 
+          <div className="rounded-[1.35rem] border border-outline-variant/20 bg-surface-container-lowest p-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <h2 className="font-headline text-[1.7rem] font-extrabold tracking-tight text-primary">
+                  Build your public tutoring identity
+                </h2>
+                <p className="mt-1.5 text-[12px] text-on-surface-variant">
+                  Set up the information students will see on your public profile.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                {!isEditing ? (
+                  <button
+                    type="button"
+                    onClick={handleStartEditing}
+                    className="rounded-xl bg-primary px-5 py-2.5 font-headline text-[13px] font-bold text-on-primary transition hover:opacity-90"
+                  >
+                    Edit
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => void handleCancelEditing()}
+                      disabled={isSaving || isUploadingImage}
+                      className="rounded-xl border border-outline-variant/25 bg-surface px-4 py-2.5 text-[13px] font-semibold text-primary transition hover:bg-surface-container-low disabled:opacity-60"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSaving || isUploadingImage || !hasChanges}
+                      className="rounded-xl bg-primary px-5 py-2.5 font-headline text-[13px] font-bold text-on-primary transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isSaving ? "Saving..." : "Save Changes"}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-2xl bg-primary-fixed/40 p-4">
+              <div className="flex items-center justify-between text-[12px] font-semibold text-primary">
+                <span>
+                  Completion {completionStats.completed}/{completionStats.total}
+                </span>
+                <span>{completionPercentage}%</span>
+              </div>
+              <div className="mt-3 h-3 overflow-hidden rounded-full bg-white/70">
+                <div
+                  className="h-full rounded-full bg-primary transition-all duration-300"
+                  style={{ width: `${completionPercentage}%` }}
+                />
+              </div>
+            </div>
+
+            {errorMessage ? (
+              <div className="mt-4 rounded-xl bg-error-container px-4 py-3 text-[13px] text-on-error-container">
+                {errorMessage}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[1.15fr_1fr]">
+        <div className="space-y-6">
           <article className={sectionCardClass}>
-            <h3 className="font-headline text-[1.7rem] font-bold text-primary">
+            <h3 className="font-headline text-[1.35rem] font-bold text-primary">
               Professional Summary
             </h3>
 
@@ -382,6 +599,7 @@ export default function TutorProfileSettings() {
               <input
                 id="professionalTitle"
                 className={inputClass}
+                disabled={isInteractionDisabled}
                 value={formState.professionalTitle}
                 onChange={(event) =>
                   updateFormState((current) => ({
@@ -400,6 +618,7 @@ export default function TutorProfileSettings() {
               <textarea
                 id="bio"
                 className={textAreaClass}
+                disabled={isInteractionDisabled}
                 value={formState.bio}
                 onChange={(event) =>
                   updateFormState((current) => ({
@@ -413,7 +632,7 @@ export default function TutorProfileSettings() {
           </article>
 
           <article className={sectionCardClass}>
-            <h3 className="font-headline text-[1.7rem] font-bold text-primary">
+            <h3 className="font-headline text-[1.35rem] font-bold text-primary">
               Teaching Details
             </h3>
 
@@ -428,6 +647,7 @@ export default function TutorProfileSettings() {
                   step="1"
                   type="number"
                   className={inputClass}
+                  disabled={isInteractionDisabled}
                   value={formState.hourlyRate}
                   onChange={(event) =>
                     updateFormState((current) => ({
@@ -451,6 +671,7 @@ export default function TutorProfileSettings() {
                   step="1"
                   type="number"
                   className={inputClass}
+                  disabled={isInteractionDisabled}
                   value={formState.experienceYears}
                   onChange={(event) =>
                     updateFormState((current) => ({
@@ -474,6 +695,7 @@ export default function TutorProfileSettings() {
                     <button
                       key={category.id}
                       type="button"
+                      disabled={isInteractionDisabled}
                       onClick={() =>
                         updateFormState((current) => ({
                           ...current,
@@ -498,15 +720,17 @@ export default function TutorProfileSettings() {
 
           <article className={sectionCardClass}>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <h3 className="font-headline text-[1.7rem] font-bold text-primary">
+                <h3 className="font-headline text-[1.35rem] font-bold text-primary">
                   Subjects
                 </h3>
               <button
                 type="button"
+                hidden={!isEditing}
+                disabled={isInteractionDisabled}
                 onClick={() =>
                   updateFormState((current) => ({
                     ...current,
-                    expertise: [...current.expertise, createBlankExpertise()],
+                    expertise: [createBlankExpertise(), ...current.expertise],
                   }))
                 }
                 className="rounded-xl bg-primary px-4 py-2 text-[13px] font-bold text-on-primary"
@@ -523,6 +747,7 @@ export default function TutorProfileSettings() {
                 >
                   <input
                     className={inputClass}
+                    disabled={isInteractionDisabled}
                     value={item.name}
                     onChange={(event) =>
                       updateFormState((current) => ({
@@ -538,15 +763,9 @@ export default function TutorProfileSettings() {
                   />
                   <button
                     type="button"
-                    onClick={() =>
-                      updateFormState((current) => ({
-                        ...current,
-                        expertise:
-                          current.expertise.length > 1
-                            ? current.expertise.filter((_, expertiseIndex) => expertiseIndex !== index)
-                            : [createBlankExpertise()],
-                      }))
-                    }
+                    hidden={!isEditing}
+                    disabled={isInteractionDisabled}
+                    onClick={() => void handleRemoveExpertise(index)}
                     className="rounded-xl bg-error-container px-4 py-3 text-[13px] font-semibold text-on-error-container md:min-w-32"
                   >
                     Remove
@@ -559,15 +778,17 @@ export default function TutorProfileSettings() {
 
         <article className={sectionCardClass}>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <h3 className="font-headline text-[1.7rem] font-bold text-primary">
+            <h3 className="font-headline text-[1.35rem] font-bold text-primary">
               Education
             </h3>
             <button
               type="button"
+              hidden={!isEditing}
+              disabled={isInteractionDisabled}
               onClick={() =>
                 updateFormState((current) => ({
                   ...current,
-                  education: [...current.education, createBlankEducation()],
+                  education: [createBlankEducation(), ...current.education],
                 }))
               }
               className="rounded-xl bg-primary px-4 py-2 text-[13px] font-bold text-on-primary"
@@ -593,6 +814,7 @@ export default function TutorProfileSettings() {
                     </label>
                     <input
                       className={inputClass}
+                      disabled={isInteractionDisabled}
                       value={item.degree}
                       onChange={(event) =>
                         updateFormState((current) => ({
@@ -613,6 +835,7 @@ export default function TutorProfileSettings() {
                     </label>
                     <input
                       className={inputClass}
+                      disabled={isInteractionDisabled}
                       value={item.institution}
                       onChange={(event) =>
                         updateFormState((current) => ({
@@ -633,6 +856,7 @@ export default function TutorProfileSettings() {
                     </label>
                     <input
                       className={inputClass}
+                      disabled={isInteractionDisabled}
                       value={item.fieldOfStudy ?? ""}
                       onChange={(event) =>
                         updateFormState((current) => ({
@@ -657,6 +881,7 @@ export default function TutorProfileSettings() {
                         max={3000}
                         type="number"
                         className={inputClass}
+                        disabled={isInteractionDisabled}
                         value={item.startYear}
                         onChange={(event) =>
                           updateFormState((current) => ({
@@ -683,6 +908,7 @@ export default function TutorProfileSettings() {
                         max={3000}
                         type="number"
                         className={inputClass}
+                        disabled={isInteractionDisabled}
                         value={item.endYear ?? ""}
                         onChange={(event) =>
                           updateFormState((current) => ({
@@ -709,6 +935,7 @@ export default function TutorProfileSettings() {
                     </label>
                     <textarea
                       className={`${inputClass} min-h-24 resize-y`}
+                      disabled={isInteractionDisabled}
                       value={item.description ?? ""}
                       onChange={(event) =>
                         updateFormState((current) => ({
@@ -726,15 +953,9 @@ export default function TutorProfileSettings() {
 
                 <button
                   type="button"
-                  onClick={() =>
-                    updateFormState((current) => ({
-                      ...current,
-                      education:
-                        current.education.length > 1
-                          ? current.education.filter((_, educationIndex) => educationIndex !== index)
-                          : [createBlankEducation()],
-                    }))
-                  }
+                  hidden={!isEditing}
+                  disabled={isInteractionDisabled}
+                  onClick={() => void handleRemoveEducation(index)}
                   className="mt-5 w-full rounded-xl border border-error-container bg-error-container/50 px-4 py-3 text-[13px] font-semibold text-on-error-container"
                 >
                   Remove Education
