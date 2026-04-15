@@ -1,4 +1,7 @@
-import { BookingConfirmationResponse } from "@/types/tutor";
+import {
+  BookingConfirmationResponse,
+  DashboardSessionListResponse,
+} from "@/types/tutor";
 
 const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ||
@@ -55,4 +58,37 @@ export async function createBooking(payload: {
   });
 
   return parseApiResponse<BookingConfirmationResponse>(response);
+}
+
+export async function getMySessions(): Promise<DashboardSessionListResponse> {
+  const response = await fetch(`${apiBaseUrl}/api/bookings/me/sessions`, {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  return parseApiResponse<DashboardSessionListResponse>(response);
+}
+
+export async function cancelBooking(
+  bookingId: string
+): Promise<{
+  bookingId: string;
+  sessionId: string | null;
+  status: "cancelled";
+  sessionStatus: "cancelled" | null;
+  slotReleased: boolean;
+}> {
+  const response = await fetch(`${apiBaseUrl}/api/bookings/${bookingId}/cancel`, {
+    method: "PATCH",
+    credentials: "include",
+  });
+
+  return parseApiResponse<{
+    bookingId: string;
+    sessionId: string | null;
+    status: "cancelled";
+    sessionStatus: "cancelled" | null;
+    slotReleased: boolean;
+  }>(response);
 }

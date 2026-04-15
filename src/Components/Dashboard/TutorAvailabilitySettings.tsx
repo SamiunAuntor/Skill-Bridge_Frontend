@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
 import { CalendarDays, Clock3, Plus, Trash2 } from "lucide-react";
 import {
@@ -65,27 +65,49 @@ function toApiErrorMessage(error: unknown): string {
   return "Something went wrong while updating availability.";
 }
 
+function getSlotStatus(slot: AvailabilitySlotItem) {
+  if (slot.isBooked) {
+    return {
+      label: "Booked",
+      helper: "A student has already reserved this slot.",
+      badgeClass:
+        "bg-primary-fixed text-on-primary-fixed-variant dark:bg-primary/20 dark:text-primary-fixed",
+      containerClass:
+        "border-primary/15 bg-primary-fixed/35 dark:border-primary/20 dark:bg-primary/10",
+    };
+  }
+
+  return {
+    label: "Open",
+    helper: "Available for student booking.",
+    badgeClass:
+      "bg-secondary-container text-on-secondary-container dark:bg-secondary/20 dark:text-secondary-fixed",
+    containerClass:
+      "border-outline-variant/15 bg-surface-container-lowest dark:bg-surface-container-low",
+  };
+}
+
 export default function TutorAvailabilitySettings() {
   const [slots, setSlots] = useState<AvailabilitySlotItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedStartTime, setSelectedStartTime] = useState("");
   const [selectedEndTime, setSelectedEndTime] = useState("");
-  const [isPending, startTransition] = useTransition();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const groupedSlots = useMemo(() => groupSlotsByDate(slots), [slots]);
 
   useEffect(() => {
     let isMounted = true;
 
-    async function loadAvailability() {
+    async function loadAvailability(showAlert = false) {
       try {
         const response = await getMyAvailability();
         if (isMounted) {
           setSlots(response.slots);
         }
       } catch (error) {
-        if (isMounted) {
+        if (isMounted && showAlert) {
           void Swal.fire({
             icon: "error",
             title: "Availability unavailable",
@@ -102,13 +124,32 @@ export default function TutorAvailabilitySettings() {
 
     void loadAvailability();
 
+    function handleWindowFocus() {
+      void loadAvailability(false);
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        void loadAvailability(false);
+      }
+    }
+
+    window.addEventListener("focus", handleWindowFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
       isMounted = false;
+      window.removeEventListener("focus", handleWindowFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 
   async function handleCreateSlot(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (isSubmitting) {
+      return;
+    }
 
     if (!selectedDate || !selectedStartTime || !selectedEndTime) {
       await Swal.fire({
@@ -143,40 +184,40 @@ export default function TutorAvailabilitySettings() {
       return;
     }
 
-    startTransition(() => {
-      void (async () => {
-        try {
-          const createdSlot = await createAvailabilitySlot({
-            startAt: startAt.toISOString(),
-            endAt: endAt.toISOString(),
-          });
+    setIsSubmitting(true);
 
-          setSlots((currentSlots) =>
-            [...currentSlots, createdSlot].sort(
-              (left, right) =>
-                new Date(left.startAt).getTime() - new Date(right.startAt).getTime()
-            )
-          );
-          setSelectedDate("");
-          setSelectedStartTime("");
-          setSelectedEndTime("");
+    try {
+      const createdSlot = await createAvailabilitySlot({
+        startAt: startAt.toISOString(),
+        endAt: endAt.toISOString(),
+      });
 
-          await Swal.fire({
-            icon: "success",
-            title: "Availability added",
-            text: "The new time slot is now visible in your upcoming availability.",
-            confirmButtonColor: "#1d3b66",
-          });
-        } catch (error) {
-          await Swal.fire({
-            icon: "error",
-            title: "Could not create slot",
-            text: toApiErrorMessage(error),
-            confirmButtonColor: "#1d3b66",
-          });
-        }
-      })();
-    });
+      setSlots((currentSlots) =>
+        [...currentSlots, createdSlot].sort(
+          (left, right) =>
+            new Date(left.startAt).getTime() - new Date(right.startAt).getTime()
+        )
+      );
+      setSelectedDate("");
+      setSelectedStartTime("");
+      setSelectedEndTime("");
+
+      await Swal.fire({
+        icon: "success",
+        title: "Availability added",
+        text: "The new time slot is now visible in your upcoming availability.",
+        confirmButtonColor: "#1d3b66",
+      });
+    } catch (error) {
+      await Swal.fire({
+        icon: "error",
+        title: "Could not create slot",
+        text: toApiErrorMessage(error),
+        confirmButtonColor: "#1d3b66",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   async function handleDeleteSlot(slot: AvailabilitySlotItem) {
@@ -195,30 +236,34 @@ export default function TutorAvailabilitySettings() {
       return;
     }
 
-    startTransition(() => {
-      void (async () => {
-        try {
-          await deleteAvailabilitySlot(slot.id);
-          setSlots((currentSlots) =>
-            currentSlots.filter((currentSlot) => currentSlot.id !== slot.id)
-          );
+    if (isSubmitting) {
+      return;
+    }
 
-          await Swal.fire({
-            icon: "success",
-            title: "Slot removed",
-            text: "The selected availability slot has been deleted.",
-            confirmButtonColor: "#1d3b66",
-          });
-        } catch (error) {
-          await Swal.fire({
-            icon: "error",
-            title: "Could not delete slot",
-            text: toApiErrorMessage(error),
-            confirmButtonColor: "#1d3b66",
-          });
-        }
-      })();
-    });
+    setIsSubmitting(true);
+
+    try {
+      await deleteAvailabilitySlot(slot.id);
+      setSlots((currentSlots) =>
+        currentSlots.filter((currentSlot) => currentSlot.id !== slot.id)
+      );
+
+      await Swal.fire({
+        icon: "success",
+        title: "Slot removed",
+        text: "The selected availability slot has been deleted.",
+        confirmButtonColor: "#1d3b66",
+      });
+    } catch (error) {
+      await Swal.fire({
+        icon: "error",
+        title: "Could not delete slot",
+        text: toApiErrorMessage(error),
+        confirmButtonColor: "#1d3b66",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -289,11 +334,11 @@ export default function TutorAvailabilitySettings() {
 
           <button
             type="submit"
-            disabled={isPending}
+            disabled={isSubmitting}
             className="mt-auto inline-flex h-[54px] items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-sm font-bold text-on-primary transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Plus className="h-4 w-4" />
-            Add Slot
+            {isSubmitting ? "Adding..." : "Add Slot"}
           </button>
         </form>
       </section>
@@ -330,28 +375,41 @@ export default function TutorAvailabilitySettings() {
 
                 <div className="space-y-3">
                   {group.slots.map((slot) => (
+                    (() => {
+                      const status = getSlotStatus(slot);
+
+                      return (
                     <div
                       key={slot.id}
-                      className="flex flex-col gap-3 rounded-xl border border-outline-variant/15 bg-surface-container-lowest px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+                      className={`flex flex-col gap-3 rounded-xl border px-4 py-4 sm:flex-row sm:items-center sm:justify-between ${status.containerClass}`}
                     >
                       <div>
                         <p className="font-semibold text-primary">
                           {formatTimeRange(slot.startAt, slot.endAt)}
                         </p>
                         <p className="mt-1 text-xs text-on-surface-variant">
-                          Open for student booking
+                          {status.helper}
                         </p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => void handleDeleteSlot(slot)}
-                        disabled={isPending}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-error-container px-4 py-2 text-sm font-semibold text-on-error-container transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Delete
-                      </button>
+                      <div className="flex items-center gap-3 self-start sm:self-auto">
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-semibold ${status.badgeClass}`}
+                        >
+                          {status.label}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => void handleDeleteSlot(slot)}
+                          disabled={isSubmitting || slot.isBooked}
+                          className="inline-flex items-center justify-center gap-2 rounded-xl bg-error-container px-4 py-2 text-sm font-semibold text-on-error-container transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete
+                        </button>
+                      </div>
                     </div>
+                      );
+                    })()
                   ))}
                 </div>
               </div>

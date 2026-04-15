@@ -371,7 +371,6 @@ export default async function TutorProfilePage({
           <TutorBookingSidebar
             tutorId={tutor.id}
             hourlyRate={tutor.hourlyRate}
-            availableSlots={tutor.availableSlots}
           />
         </div>
       </div>

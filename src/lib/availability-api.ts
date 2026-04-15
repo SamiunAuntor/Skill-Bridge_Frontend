@@ -80,9 +80,7 @@ export async function getTutorAvailability(
   tutorId: string
 ): Promise<AvailabilityListResponse> {
   const response = await fetch(`${apiBaseUrl}/api/availability/tutor/${tutorId}`, {
-    next: {
-      revalidate: 60,
-    },
+    cache: "no-store",
   });
 
   return parseApiResponse<AvailabilityListResponse>(response);

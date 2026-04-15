@@ -1,18 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 import { Lock, Sparkles } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import BookingConfirmationModal from "@/Components/Tutors/BookingConfirmationModal";
+import {
+  AvailabilityApiError,
+  getTutorAvailability,
+} from "@/lib/availability-api";
 import { BookingApiError, createBooking } from "@/lib/booking-api";
 import { TutorAvailabilitySlot } from "@/types/tutor";
 
 type TutorBookingSidebarProps = {
   tutorId: string;
   hourlyRate: number;
-  availableSlots: TutorAvailabilitySlot[];
 };
 
 type GroupedSlots = {
@@ -104,13 +107,13 @@ function toBookingErrorMessage(error: unknown): string {
 export default function TutorBookingSidebar({
   tutorId,
   hourlyRate,
-  availableSlots,
 }: TutorBookingSidebarProps) {
   const router = useRouter();
   const { data: session, isPending: sessionPending } = authClient.useSession();
-  const [slots, setSlots] = useState(availableSlots);
+  const [slots, setSlots] = useState<TutorAvailabilitySlot[]>([]);
+  const [isLoadingSlots, setIsLoadingSlots] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isBookingPending, startBookingTransition] = useTransition();
+  const [isBookingPending, setIsBookingPending] = useState(false);
   const groupedSlots = useMemo(
     () => groupSlotsByDate(slots).slice(0, 7),
     [slots]
@@ -131,8 +134,63 @@ export default function TutorBookingSidebar({
     null;
 
   useEffect(() => {
-    setSlots(availableSlots);
-  }, [availableSlots]);
+    let isMounted = true;
+
+    async function loadSlots(showErrorAlert = false) {
+      try {
+        if (isMounted) {
+          setIsLoadingSlots(true);
+        }
+
+        const response = await getTutorAvailability(tutorId);
+
+        if (isMounted) {
+          setSlots(response.slots);
+        }
+      } catch (error) {
+        if (!isMounted || !showErrorAlert) {
+          return;
+        }
+
+        const message =
+          error instanceof AvailabilityApiError
+            ? error.message
+            : "Unable to load tutor availability right now.";
+
+        await Swal.fire({
+          icon: "error",
+          title: "Availability unavailable",
+          text: message,
+          confirmButtonColor: "#1d3b66",
+        });
+      } finally {
+        if (isMounted) {
+          setIsLoadingSlots(false);
+        }
+      }
+    }
+
+    void loadSlots(false);
+
+    function handleWindowFocus() {
+      void loadSlots(false);
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        void loadSlots(false);
+      }
+    }
+
+    window.addEventListener("focus", handleWindowFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("focus", handleWindowFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [tutorId]);
 
   useEffect(() => {
     const nextDateKey = groupedSlots[0]?.dateKey ?? "";
@@ -157,7 +215,7 @@ export default function TutorBookingSidebar({
   }, [groupedSlots, selectedDateKey, selectedSlotId]);
 
   async function handleBookClick() {
-    if (!selectedSlotId || !selectedSlot) {
+    if (!selectedSlotId || !selectedSlot || isBookingPending) {
       return;
     }
 
@@ -196,42 +254,44 @@ export default function TutorBookingSidebar({
       return;
     }
 
-    startBookingTransition(() => {
-      void (async () => {
-        try {
-          const result = await createBooking({
-            tutorId,
-            slotId: selectedSlot.id,
-          });
+    setIsBookingPending(true);
 
-          setSlots((currentSlots) =>
-            currentSlots.filter((slot) => slot.id !== selectedSlot.id)
-          );
-          setIsModalOpen(false);
+    void (async () => {
+      try {
+        const result = await createBooking({
+          tutorId,
+          slotId: selectedSlot.id,
+        });
 
-          await Swal.fire({
-            icon: "success",
-            title: "Booking confirmed",
-            html: `
-              <div style="text-align:left;font-size:14px;line-height:1.7">
-                <p><strong>Amount:</strong> ${formatAmount(result.booking.priceAtBooking)}</p>
-                <p><strong>Date:</strong> ${formatDateLabel(result.booking.startTime)}</p>
-                <p><strong>Time:</strong> ${formatTimeLabel(result.booking.startTime)} - ${formatTimeLabel(result.booking.endTime)}</p>
-                <p style="margin-top:8px;color:#5f6368;">Payment gateway integration will be added later. This booking is currently marked as paid by the direct-booking flow.</p>
-              </div>
-            `,
-            confirmButtonColor: "#1d3b66",
-          });
-        } catch (error) {
-          await Swal.fire({
-            icon: "error",
-            title: "Booking failed",
-            text: toBookingErrorMessage(error),
-            confirmButtonColor: "#1d3b66",
-          });
-        }
-      })();
-    });
+        setSlots((currentSlots) =>
+          currentSlots.filter((slot) => slot.id !== selectedSlot.id)
+        );
+        setIsModalOpen(false);
+
+        await Swal.fire({
+          icon: "success",
+          title: "Booking confirmed",
+          html: `
+            <div style="text-align:left;font-size:14px;line-height:1.7">
+              <p><strong>Amount:</strong> ${formatAmount(result.booking.priceAtBooking)}</p>
+              <p><strong>Date:</strong> ${formatDateLabel(result.booking.startTime)}</p>
+              <p><strong>Time:</strong> ${formatTimeLabel(result.booking.startTime)} - ${formatTimeLabel(result.booking.endTime)}</p>
+              <p style="margin-top:8px;color:#5f6368;">Payment gateway integration will be added later. This booking is currently marked as paid by the direct-booking flow.</p>
+            </div>
+          `,
+          confirmButtonColor: "#1d3b66",
+        });
+      } catch (error) {
+        await Swal.fire({
+          icon: "error",
+          title: "Booking failed",
+          text: toBookingErrorMessage(error),
+          confirmButtonColor: "#1d3b66",
+        });
+      } finally {
+        setIsBookingPending(false);
+      }
+    })();
   }
 
   return (
@@ -298,7 +358,9 @@ export default function TutorBookingSidebar({
               </div>
             ) : (
               <div className="rounded-xl bg-surface-container-low p-4 text-sm text-on-surface-variant">
-                No upcoming slots are available yet.
+                {isLoadingSlots
+                  ? "Loading upcoming slots..."
+                  : "No upcoming slots are available yet."}
               </div>
             )}
           </section>
@@ -330,7 +392,9 @@ export default function TutorBookingSidebar({
               </div>
             ) : (
               <div className="rounded-xl bg-surface-container-low p-4 text-sm text-on-surface-variant">
-                Select a date to see open time slots.
+                {isLoadingSlots
+                  ? "Loading time slots..."
+                  : "Select a date to see open time slots."}
               </div>
             )}
           </section>
@@ -339,16 +403,12 @@ export default function TutorBookingSidebar({
             type="button"
             onClick={() => void handleBookClick()}
             className={`block w-full rounded-md px-4 py-3 text-center font-headline text-[14px] font-bold shadow-lg transition-all ${
-              selectedSlotId && !sessionPending && !isBookingPending
+              selectedSlotId && !sessionPending
                 ? "bg-gradient-to-r from-primary to-primary-container text-on-primary hover:shadow-xl"
                 : "pointer-events-none bg-surface-container-high text-on-surface-variant"
             }`}
           >
-            {sessionPending
-              ? "Checking account..."
-              : isBookingPending
-                ? "Confirming..."
-                : "Book a Session"}
+            {sessionPending ? "Checking account..." : "Book a Session"}
           </button>
 
           <p className="flex items-center justify-center gap-2.5 pt-2 text-center text-[10px] font-medium text-on-surface-variant">
