@@ -1,11 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import Swal from "sweetalert2";
-import { CalendarClock, Clock3, ReceiptText, Star, UserRound } from "lucide-react";
+import {
+  CalendarClock,
+  Clock3,
+  ExternalLink,
+  ReceiptText,
+  Star,
+  UserRound,
+} from "lucide-react";
 import { authClient } from "@/lib/auth-client";
-import { BookingApiError, getTutorDashboardSummary } from "@/lib/booking-api";
+import {
+  BookingApiError,
+  cancelBooking,
+  getTutorDashboardSummary,
+  joinSession,
+} from "@/lib/booking-api";
 import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
 import { DashboardSessionItem } from "@/types/tutor";
 
@@ -84,6 +96,7 @@ export default function TutorDashboardHome() {
     upcomingSessions: DashboardSessionItem[];
   } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     if (role !== "tutor") {
@@ -131,6 +144,106 @@ export default function TutorDashboardHome() {
   const totalEarnings = summary?.stats.totalEarnings ?? 0;
   const totalHours = summary?.stats.totalHours ?? 0;
   const upcomingSessions = summary?.upcomingSessions ?? [];
+
+  async function handleCancel(bookingId: string) {
+    const confirmation = await Swal.fire({
+      icon: "warning",
+      title: "Cancel this session?",
+      text: "The booking will be cancelled and the slot will become available again if it is still in the future.",
+      showCancelButton: true,
+      confirmButtonText: "Yes, cancel it",
+      cancelButtonText: "Keep session",
+      confirmButtonColor: "#9f1d1d",
+      cancelButtonColor: "#1d3b66",
+    });
+
+    if (!confirmation.isConfirmed) {
+      return;
+    }
+
+    startTransition(() => {
+      void (async () => {
+        try {
+          await cancelBooking(bookingId);
+          setSummary((current) =>
+            current
+              ? {
+                  ...current,
+                  upcomingSessions: current.upcomingSessions
+                    .map((item) =>
+                      item.bookingId === bookingId
+                        ? {
+                            ...item,
+                            bookingStatus: "cancelled" as const,
+                            sessionStatus: "cancelled" as const,
+                            canCancel: false,
+                          }
+                        : item
+                    )
+                    .filter(
+                      (item) =>
+                        item.sessionStatus === "scheduled" ||
+                        item.sessionStatus === "ongoing"
+                    ),
+                }
+              : current
+          );
+
+          await Swal.fire({
+            icon: "success",
+            title: "Session cancelled",
+            text: "Both tutor and student have been notified.",
+            confirmButtonColor: "#1d3b66",
+          });
+        } catch (error) {
+          await Swal.fire({
+            icon: "error",
+            title: "Cancellation failed",
+            text: toFriendlyError(error),
+            confirmButtonColor: "#1d3b66",
+          });
+        }
+      })();
+    });
+  }
+
+  function handleJoin(item: DashboardSessionItem) {
+    if (!item.canJoin) {
+      return;
+    }
+
+    startTransition(() => {
+      void (async () => {
+        try {
+          const result = await joinSession(item.bookingId);
+          setSummary((current) =>
+            current
+              ? {
+                  ...current,
+                  upcomingSessions: current.upcomingSessions.map((sessionItem) =>
+                    sessionItem.bookingId === item.bookingId
+                      ? {
+                          ...sessionItem,
+                          sessionStatus: result.sessionStatus,
+                        }
+                      : sessionItem
+                  ),
+                }
+              : current
+          );
+
+          window.open(result.meetingJoinUrl, "_blank", "noopener,noreferrer");
+        } catch (error) {
+          void Swal.fire({
+            icon: "error",
+            title: "Unable to join session",
+            text: toFriendlyError(error),
+            confirmButtonColor: "#1d3b66",
+          });
+        }
+      })();
+    });
+  }
 
   return (
     <div className="space-y-8">
@@ -190,27 +303,56 @@ export default function TutorDashboardHome() {
                   key={sessionItem.sessionId}
                   className="rounded-2xl border border-outline-variant/14 bg-surface-container-low p-5"
                 >
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-sm text-on-surface-variant">
-                      <UserRound className="h-4 w-4" />
-                      <span className="font-semibold text-primary">
-                        {sessionItem.student.name}
-                      </span>
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-sm text-on-surface-variant">
+                        <UserRound className="h-4 w-4" />
+                        <span className="font-semibold text-primary">
+                          {sessionItem.student.name}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-on-surface-variant">
+                        <CalendarClock className="h-4 w-4" />
+                        <span>{formatSessionDate(sessionItem.sessionDate)}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-on-surface-variant">
+                        <Clock3 className="h-4 w-4" />
+                        <span>
+                          {formatSessionTime(sessionItem.startTime, sessionItem.endTime)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-on-surface-variant">
+                        <ReceiptText className="h-4 w-4" />
+                        <span>${sessionItem.priceAtBooking.toFixed(2)}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-on-surface-variant">
-                      <CalendarClock className="h-4 w-4" />
-                      <span>{formatSessionDate(sessionItem.sessionDate)}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-on-surface-variant">
-                      <Clock3 className="h-4 w-4" />
-                      <span>
-                        {formatSessionTime(sessionItem.startTime, sessionItem.endTime)}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-on-surface-variant">
-                      <ReceiptText className="h-4 w-4" />
-                      <span>${sessionItem.priceAtBooking.toFixed(2)}</span>
-                    </div>
+
+                    {(sessionItem.canJoin || sessionItem.canCancel) ? (
+                      <div className="flex shrink-0 flex-col gap-2 lg:min-w-[170px]">
+                        {sessionItem.canJoin ? (
+                          <button
+                            type="button"
+                            onClick={() => handleJoin(sessionItem)}
+                            disabled={isPending}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-[13px] font-semibold text-on-primary transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                            Join Session
+                          </button>
+                        ) : null}
+
+                        {sessionItem.canCancel ? (
+                          <button
+                            type="button"
+                            onClick={() => void handleCancel(sessionItem.bookingId)}
+                            disabled={isPending}
+                            className="rounded-xl border border-error/20 bg-error-container px-4 py-2.5 text-[13px] font-semibold text-on-error-container transition-colors hover:bg-error-container/85 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Cancel Session
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
                 </article>
               ))

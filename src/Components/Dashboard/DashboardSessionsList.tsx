@@ -4,13 +4,10 @@ import { useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Swal from "sweetalert2";
 import {
-  CalendarClock,
   CircleAlert,
-  Clock3,
   ExternalLink,
-  Search,
-  UserRound,
   Video,
+  Search,
 } from "lucide-react";
 import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
 import { authClient } from "@/lib/auth-client";
@@ -364,12 +361,9 @@ export default function DashboardSessionsList() {
                   </div>
 
                   <div className="space-y-3 border-t border-outline-variant/14 pt-3">
-                    <div className="flex items-start gap-2.5 text-[13px] text-on-surface-variant">
-                      <div className="flex min-h-[40px] items-center">
-                        <UserRound className="h-5 w-5" />
-                      </div>
+                    <div className="text-[13px] text-on-surface-variant">
                       <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-on-surface-variant">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-on-surface">
                           {role === "tutor" ? "Student Name" : "Tutor Name"}
                         </p>
                         <p className="mt-0.5 font-semibold text-primary">
@@ -378,12 +372,9 @@ export default function DashboardSessionsList() {
                       </div>
                     </div>
 
-                    <div className="flex items-start gap-2.5 text-[13px] text-on-surface-variant">
-                      <div className="flex min-h-[40px] items-center">
-                        <CalendarClock className="h-5 w-5" />
-                      </div>
+                    <div className="text-[13px] text-on-surface-variant">
                       <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-on-surface-variant">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-on-surface">
                           Time
                         </p>
                         <p className="mt-0.5 font-medium text-primary">
@@ -392,12 +383,9 @@ export default function DashboardSessionsList() {
                       </div>
                     </div>
 
-                    <div className="flex items-start gap-2.5 text-[13px] text-on-surface-variant">
-                      <div className="flex min-h-[40px] items-center">
-                        <Clock3 className="h-5 w-5" />
-                      </div>
+                    <div className="text-[13px] text-on-surface-variant">
                       <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-on-surface-variant">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-on-surface">
                           Total Amount
                         </p>
                         <p className="mt-0.5 font-semibold text-primary">
@@ -410,10 +398,7 @@ export default function DashboardSessionsList() {
                   {item.meetingProvider === "zoom" ? (
                     <div className="border-t border-outline-variant/14 pt-3">
                       <div className="rounded-xl border border-outline-variant/16 bg-surface-container px-3 py-3 text-[11px] text-on-surface-variant">
-                      <div className="flex items-center gap-2 font-semibold text-primary">
-                        <Video className="h-4 w-4" />
-                        Zoom Meeting
-                      </div>
+                      <div className="font-semibold text-primary">Zoom Meeting</div>
                       <div className="mt-2 space-y-1">
                         <p>
                           Meeting ID:{" "}
