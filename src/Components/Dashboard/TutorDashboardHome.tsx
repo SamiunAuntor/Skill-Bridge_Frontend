@@ -21,30 +21,6 @@ import {
 import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
 import { DashboardSessionItem } from "@/types/tutor";
 
-const recentFeedback = [
-  {
-    id: "review-1",
-    student: "Elena Rodriguez",
-    subject: "Calculus III",
-    comment:
-      "Julian has a unique way of breaking down complex theorems. I finally feel confident for my finals!",
-  },
-  {
-    id: "review-2",
-    student: "Marcus Chen",
-    subject: "Chemistry",
-    comment:
-      "Great session today. The analogies used for organic synthesis were incredibly helpful.",
-  },
-  {
-    id: "review-3",
-    student: "Sarah Jenkins",
-    subject: "Physics",
-    comment:
-      "Highly knowledgeable and patient. Dr. Vance makes physics feel like a puzzle rather than a chore.",
-  },
-];
-
 function toFriendlyError(error: unknown): string {
   if (error instanceof BookingApiError) {
     return error.message;
@@ -92,8 +68,20 @@ export default function TutorDashboardHome() {
       totalEarnings: number;
       totalHours: number;
       averageRating: number | null;
+      totalReviews: number;
     };
     upcomingSessions: DashboardSessionItem[];
+    recentFeedback: Array<{
+      id: string;
+      rating: number;
+      comment: string | null;
+      createdAt: string;
+      student: {
+        id: string;
+        name: string;
+        avatarUrl: string | null;
+      };
+    }>;
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
@@ -143,7 +131,10 @@ export default function TutorDashboardHome() {
 
   const totalEarnings = summary?.stats.totalEarnings ?? 0;
   const totalHours = summary?.stats.totalHours ?? 0;
+  const averageRating = summary?.stats.averageRating ?? null;
+  const totalReviews = summary?.stats.totalReviews ?? 0;
   const upcomingSessions = summary?.upcomingSessions ?? [];
+  const recentFeedback = summary?.recentFeedback ?? [];
 
   async function handleCancel(bookingId: string) {
     const confirmation = await Swal.fire({
@@ -270,9 +261,13 @@ export default function TutorDashboardHome() {
 
         <article className="rounded-[1.5rem] bg-surface-container-lowest p-6 shadow-[0px_12px_32px_rgba(0,51,88,0.06)]">
           <p className="text-[13px] font-medium text-on-surface-variant">Average Rating</p>
-          <h3 className="mt-2 font-headline text-[2rem] font-bold text-primary">--</h3>
+          <h3 className="mt-2 font-headline text-[2rem] font-bold text-primary">
+            {averageRating !== null ? averageRating.toFixed(2) : "--"}
+          </h3>
           <p className="mt-2 text-xs text-on-surface-variant">
-            Feedback scoring will be added later
+            {totalReviews > 0
+              ? `Based on ${totalReviews} review${totalReviews > 1 ? "s" : ""}`
+              : "No ratings yet"}
           </p>
         </article>
       </section>
@@ -370,42 +365,52 @@ export default function TutorDashboardHome() {
               Recent Feedback
             </h2>
             <p className="mt-1 text-sm text-on-surface-variant">
-              Static preview for now. Live tutor feedback will appear here later.
+              Your latest published student reviews.
             </p>
           </div>
 
           <div className="mt-6 space-y-4">
-            {recentFeedback.map((review) => (
-              <article
-                key={review.id}
-                className="space-y-4 rounded-2xl border border-outline-variant/14 bg-surface-container-low p-5"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-xs font-black text-on-primary">
-                      {getInitials(review.student)}
+            {recentFeedback.length > 0 ? (
+              recentFeedback.map((review) => (
+                <article
+                  key={review.id}
+                  className="space-y-4 rounded-2xl border border-outline-variant/14 bg-surface-container-low p-5"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-xs font-black text-on-primary">
+                        {getInitials(review.student.name)}
+                      </div>
+                      <div>
+                        <h3 className="font-headline text-sm font-bold text-on-surface">
+                          {review.student.name}
+                        </h3>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
+                          {new Intl.DateTimeFormat("en-BD", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          }).format(new Date(review.createdAt))}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-headline text-sm font-bold text-on-surface">
-                        {review.student}
-                      </h3>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
-                        {review.subject}
-                      </p>
+                    <div className="flex items-center gap-1 text-secondary">
+                      {Array.from({ length: review.rating }).map((_, index) => (
+                        <Star key={index} className="h-3.5 w-3.5 fill-current" />
+                      ))}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 text-secondary">
-                    {Array.from({ length: 5 }).map((_, index) => (
-                      <Star key={index} className="h-3.5 w-3.5 fill-current" />
-                    ))}
-                  </div>
-                </div>
 
-                <p className="text-sm italic text-on-surface-variant">
-                  &quot;{review.comment}&quot;
-                </p>
-              </article>
-            ))}
+                  <p className="text-sm italic text-on-surface-variant">
+                    &quot;{review.comment || "Great learning experience."}&quot;
+                  </p>
+                </article>
+              ))
+            ) : (
+              <div className="rounded-2xl bg-surface-container-low p-5 text-sm text-on-surface-variant">
+                Reviews from students will appear here after completed sessions receive feedback.
+              </div>
+            )}
           </div>
         </section>
       </div>

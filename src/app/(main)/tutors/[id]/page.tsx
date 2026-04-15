@@ -4,7 +4,7 @@ import {
   FlaskConical,
   MessageSquareQuote,
   Sigma,
-  Sparkles,
+  Star,
   TrendingUp,
 } from "lucide-react";
 import { notFound } from "next/navigation";
@@ -103,6 +103,14 @@ function buildMasteryItems(
   }));
 }
 
+function formatAverageRating(value: number, totalReviews: number): string {
+  if (totalReviews <= 0) {
+    return "--";
+  }
+
+  return value.toFixed(2);
+}
+
 function TestimonialCard({ testimonial }: { testimonial: TutorTestimonial }) {
   return (
     <article className="rounded-xl bg-surface-container-lowest p-8 shadow-[0px_4px_20px_rgba(0,51,88,0.04)]">
@@ -121,7 +129,7 @@ function TestimonialCard({ testimonial }: { testimonial: TutorTestimonial }) {
           <h4 className="font-bold text-primary">{testimonial.student.name}</h4>
           <div className="flex gap-1 text-amber-500">
             {Array.from({ length: testimonial.rating }).map((_, index) => (
-              <Sparkles key={index} className="h-3.5 w-3.5 fill-current" />
+              <Star key={index} className="h-3.5 w-3.5 fill-current" />
             ))}
           </div>
         </div>
@@ -190,23 +198,7 @@ export default async function TutorProfilePage({
   const tutor = tutorData.tutor;
   const profileSubjects = buildProfileSubjects(tutor.categories, tutor.expertise);
   const masteryItems = buildMasteryItems(tutor.categories, tutor.expertise);
-  const testimonials =
-    tutor.testimonials.length > 0
-      ? tutor.testimonials
-      : [
-          {
-            id: "placeholder",
-            rating: Math.max(Math.round(tutor.averageRating), 5),
-            comment:
-              "Students will see testimonials here as soon as reviews are added.",
-            createdAt: new Date().toISOString(),
-            student: {
-              id: "placeholder-student",
-              name: "SkillBridge Student",
-              avatarUrl: null,
-            },
-          },
-        ];
+  const testimonials = tutor.testimonials;
 
   return (
     <section className="pb-20 pt-8">
@@ -260,7 +252,7 @@ export default async function TutorProfilePage({
             <div className="grid grid-cols-2 gap-4">
               <div className="rounded-xl bg-surface-container-low p-6 text-center shadow-sm">
                 <div className="font-headline text-3xl font-black text-primary">
-                  {tutor.averageRating.toFixed(1)}
+                  {formatAverageRating(tutor.averageRating, tutor.totalReviews)}
                 </div>
                 <div className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-on-surface-variant">
                   Rating
@@ -281,8 +273,8 @@ export default async function TutorProfilePage({
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
           <div className="space-y-16 lg:col-span-8">
             <section>
-              <h2 className="mb-6 flex items-center gap-3 font-headline text-2xl font-bold text-primary">
-                <Sparkles className="h-5 w-5 text-secondary" />
+                <h2 className="mb-6 flex items-center gap-3 font-headline text-2xl font-bold text-primary">
+                <Star className="h-5 w-5 text-secondary" />
                 Bio
               </h2>
               <div className="space-y-4 text-base leading-relaxed text-on-surface-variant">
@@ -361,9 +353,17 @@ export default async function TutorProfilePage({
               </div>
 
               <div className="space-y-8">
-                {testimonials.map((testimonial) => (
-                  <TestimonialCard key={testimonial.id} testimonial={testimonial} />
-                ))}
+                {testimonials.length > 0 ? (
+                  testimonials.map((testimonial) => (
+                    <TestimonialCard key={testimonial.id} testimonial={testimonial} />
+                  ))
+                ) : (
+                  <article className="rounded-xl bg-surface-container-lowest p-8 shadow-[0px_4px_20px_rgba(0,51,88,0.04)]">
+                    <p className="text-sm text-on-surface-variant">
+                      Students will see testimonials here as soon as reviews are added.
+                    </p>
+                  </article>
+                )}
               </div>
             </section>
           </div>

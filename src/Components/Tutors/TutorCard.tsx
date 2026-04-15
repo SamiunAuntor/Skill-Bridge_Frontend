@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Star } from "lucide-react";
+import { BadgeCheck, Star } from "lucide-react";
 import { TutorCard as TutorCardData } from "@/types/tutor";
 
 type TutorCardProps = {
@@ -83,6 +83,12 @@ export default function TutorCard({ tutor, featured = false }: TutorCardProps) {
             <div className="space-y-5">
               <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
                 <div>
+                  {tutor.isTopRated ? (
+                    <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-secondary-container px-3 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-on-secondary-container md:text-[10px]">
+                      <BadgeCheck className="h-3 w-3" />
+                      Top Rated Expert
+                    </div>
+                  ) : null}
                   <h2 className="font-headline text-3xl font-extrabold tracking-tight text-primary">
                     {tutor.displayName}
                   </h2>
@@ -139,6 +145,12 @@ export default function TutorCard({ tutor, featured = false }: TutorCardProps) {
         <div className="mb-6 flex items-center gap-4">
           <Avatar name={tutor.displayName} avatarUrl={tutor.avatarUrl} />
           <div>
+            {tutor.isTopRated ? (
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-secondary-container px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.18em] text-on-secondary-container">
+                <BadgeCheck className="h-3 w-3" />
+                Top Rated Expert
+              </div>
+            ) : null}
             <h3 className="font-headline text-xl font-bold text-primary">
               {tutor.displayName}
             </h3>

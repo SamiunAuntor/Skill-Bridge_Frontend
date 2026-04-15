@@ -22,7 +22,7 @@ export const dashboardNavByRole: Record<UserRole, DashboardNavItem[]> = {
   student: [
     { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
     { href: "/dashboard/profile", label: "Profile", icon: "person" },
-    { href: "/dashboard/bookings", label: "My Bookings", icon: "calendar_month" },
+    { href: "/dashboard/sessions", label: "Sessions", icon: "calendar_month" },
   ],
   admin: [
     { href: "/dashboard", label: "Dashboard", icon: "dashboard" },

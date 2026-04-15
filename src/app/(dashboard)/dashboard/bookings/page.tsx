@@ -1,5 +1,5 @@
-import DashboardSessionsList from "@/Components/Dashboard/DashboardSessionsList";
+import { redirect } from "next/navigation";
 
 export default function DashboardBookingsPage() {
-  return <DashboardSessionsList />;
+  redirect("/dashboard/sessions");
 }

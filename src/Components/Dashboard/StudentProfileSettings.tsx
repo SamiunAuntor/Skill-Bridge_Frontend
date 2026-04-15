@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
 import { Camera, Mail, UserRound } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import { updateMyStudentProfile } from "@/lib/student-profile-api";
 import { uploadImage } from "@/lib/upload-image";
 
 export default function StudentProfileSettings() {
@@ -93,13 +94,18 @@ export default function StudentProfileSettings() {
     setIsSaving(true);
 
     try {
-      const result = await authClient.updateUser({
-        name: trimmedName,
-        image: profileImageUrl ?? undefined,
+      const result = await updateMyStudentProfile({
+        fullName: trimmedName,
+        profileImageUrl: profileImageUrl ?? null,
       });
 
-      if (result.error) {
-        throw new Error(result.error.message || "Unable to update your profile.");
+      const authSyncResult = await authClient.updateUser({
+        name: result.profile.name,
+        image: result.profile.image ?? undefined,
+      });
+
+      if (authSyncResult.error) {
+        console.warn("Student profile saved, but auth session sync failed.", authSyncResult.error);
       }
 
       setInitialDisplayName(trimmedName);
