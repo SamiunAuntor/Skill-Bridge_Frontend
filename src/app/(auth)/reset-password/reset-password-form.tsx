@@ -3,10 +3,15 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import PasswordVisibilityToggle from "@/Components/Auth/PasswordVisibilityToggle";
+import {
+  showAuthErrorAlert,
+  showAuthInfoAlert,
+  showAuthSuccessAlert,
+} from "@/lib/auth-alerts";
 import { authClient } from "@/lib/auth-client";
 import { formatAuthError } from "@/lib/auth-errors";
 
@@ -30,7 +35,6 @@ export default function ResetPasswordForm() {
   const token = useMemo(() => searchParams.get("token"), [searchParams]);
   const urlError = useMemo(() => searchParams.get("error"), [searchParams]);
 
-  const [apiError, setApiError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -45,10 +49,27 @@ export default function ResetPasswordForm() {
   const tokenInvalid =
     urlError === "INVALID_TOKEN" || urlError === "invalid_token";
 
-  const onSubmit = handleSubmit(async (values) => {
-    setApiError(null);
+  useEffect(() => {
+    if (tokenInvalid) {
+      void showAuthErrorAlert(
+        "This reset link is invalid or expired. Request a new one from the forgot password page."
+      );
+      return;
+    }
+
     if (!token) {
-      setApiError("Missing reset token. Open the link from your email again.");
+      void showAuthInfoAlert(
+        "Open your reset link",
+        "Open the password reset link from your email. If it has expired, request a new one."
+      );
+    }
+  }, [token, tokenInvalid]);
+
+  const onSubmit = handleSubmit(async (values) => {
+    if (!token) {
+      await showAuthErrorAlert(
+        "Missing reset token. Open the password reset link from your email again."
+      );
       return;
     }
     try {
@@ -57,12 +78,16 @@ export default function ResetPasswordForm() {
         token,
       });
       if (err) {
-        setApiError(err.message || "Could not reset password.");
+        await showAuthErrorAlert(err.message || "Could not reset password.");
         return;
       }
+      await showAuthSuccessAlert(
+        "Password updated",
+        "Your password has been changed successfully."
+      );
       router.push("/login?reset=1");
     } catch (e) {
-      setApiError(formatAuthError(e));
+      await showAuthErrorAlert(formatAuthError(e));
     }
   });
 
@@ -102,14 +127,6 @@ export default function ResetPasswordForm() {
 
   return (
     <form className="space-y-6" onSubmit={onSubmit} noValidate>
-      {apiError && (
-        <div
-          className="rounded-lg bg-red-100 px-4 py-3 text-sm text-red-900"
-          role="alert"
-        >
-          {apiError}
-        </div>
-      )}
       <div className="space-y-2">
         <label
           className="block text-sm font-medium text-on-surface"

@@ -1,5 +1,5 @@
 const API_HINT =
-  "Start the SkillBridge API (e.g. cd Skill-Bridge_Backend && npm run dev) and set NEXT_PUBLIC_BETTER_AUTH_URL to match (default http://localhost:5000).";
+  "We couldn't reach SkillBridge right now. Please try again in a moment.";
 
 /** Returned on failed Better Auth client calls (better-fetch). */
 export type AuthClientError = {
@@ -19,7 +19,7 @@ export function isAuthClientError(value: unknown): value is AuthClientError {
 
 export function formatAuthError(error: unknown): string {
   if (error instanceof TypeError && error.message === "Failed to fetch") {
-    return `Cannot reach the server. ${API_HINT}`;
+    return API_HINT;
   }
   if (
     error &&
@@ -29,7 +29,7 @@ export function formatAuthError(error: unknown): string {
   ) {
     const msg = (error as { message: string }).message;
     if (msg === "Failed to fetch" || msg.includes("NetworkError")) {
-      return `Cannot reach the server. ${API_HINT}`;
+      return API_HINT;
     }
     return msg;
   }

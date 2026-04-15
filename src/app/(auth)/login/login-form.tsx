@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import PasswordVisibilityToggle from "@/Components/Auth/PasswordVisibilityToggle";
+import { showAuthErrorAlert } from "@/lib/auth-alerts";
 import { authClient } from "@/lib/auth-client";
 import { formatAuthError, isAuthClientError } from "@/lib/auth-errors";
 
@@ -28,7 +29,6 @@ export default function LoginForm() {
   const verified = searchParams.get("verified") === "1";
   const resetOk = searchParams.get("reset") === "1";
 
-  const [apiError, setApiError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
   const { data: session, isPending: sessionPending } = authClient.useSession();
@@ -43,7 +43,6 @@ export default function LoginForm() {
   });
 
   const onSubmit = handleSubmit(async (values) => {
-    setApiError(null);
     try {
       const { error: signErr } = await authClient.signIn.email({
         email: values.email,
@@ -52,18 +51,18 @@ export default function LoginForm() {
       });
       if (signErr) {
         if (isAuthClientError(signErr) && signErr.status === 403) {
-          setApiError(
+          await showAuthErrorAlert(
             "Please verify your email before signing in. Check your inbox; we sent you a new verification link."
           );
         } else {
-          setApiError(signErr.message || "Could not sign in.");
+          await showAuthErrorAlert(signErr.message || "Could not sign in.");
         }
         return;
       }
       router.push("/");
       router.refresh();
     } catch (e) {
-      setApiError(formatAuthError(e));
+      await showAuthErrorAlert(formatAuthError(e));
     }
   });
 
@@ -101,15 +100,6 @@ export default function LoginForm() {
           role="status"
         >
           Email verified. Sign in below with your password.
-        </div>
-      )}
-
-      {apiError && (
-        <div
-          className="rounded-lg bg-red-100 px-4 py-3 text-sm text-red-900"
-          role="alert"
-        >
-          {apiError}
         </div>
       )}
 

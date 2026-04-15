@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import PasswordVisibilityToggle from "@/Components/Auth/PasswordVisibilityToggle";
+import { showAuthErrorAlert } from "@/lib/auth-alerts";
 import { authClient } from "@/lib/auth-client";
 import { formatAuthError } from "@/lib/auth-errors";
 import { REGISTER_ROLES, type RegisterRole } from "@/types/auth";
@@ -45,7 +46,6 @@ const fieldClass = (invalid: boolean) =>
 
 export default function RegisterForm() {
   const router = useRouter();
-  const [apiError, setApiError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -61,20 +61,21 @@ export default function RegisterForm() {
   });
 
   const onSubmit = handleSubmit(async (values) => {
-    setApiError(null);
     try {
       const { error: signUpErr } = await authClient.signUp.email(
         buildSignUpPayload(values)
       );
       if (signUpErr) {
-        setApiError(signUpErr.message || "Could not create account.");
+        await showAuthErrorAlert(
+          signUpErr.message || "Could not create account."
+        );
         return;
       }
       router.push(
         `/verify-pending?email=${encodeURIComponent(values.email.toLowerCase())}`
       );
     } catch (e) {
-      setApiError(formatAuthError(e));
+      await showAuthErrorAlert(formatAuthError(e));
     }
   });
 
@@ -86,15 +87,6 @@ export default function RegisterForm() {
           Create your account and we&apos;ll email you a verification link.
         </p>
       </div>
-
-      {apiError && (
-        <div
-          className="rounded-lg bg-red-100 px-4 py-3 text-sm text-red-900"
-          role="alert"
-        >
-          {apiError}
-        </div>
-      )}
 
       <form className="space-y-6" onSubmit={onSubmit} noValidate>
         <div className="space-y-3">

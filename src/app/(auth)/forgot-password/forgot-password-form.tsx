@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { showAuthErrorAlert, showAuthSuccessAlert } from "@/lib/auth-alerts";
 import { authClient } from "@/lib/auth-client";
 import { formatAuthError } from "@/lib/auth-errors";
 
@@ -19,7 +20,6 @@ const fieldClass = (invalid: boolean) =>
   }`;
 
 export default function ForgotPasswordForm() {
-  const [apiError, setApiError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
   const {
@@ -32,19 +32,22 @@ export default function ForgotPasswordForm() {
   });
 
   const onSubmit = handleSubmit(async (values) => {
-    setApiError(null);
     try {
       const { error: err } = await authClient.requestPasswordReset({
         email: values.email,
         redirectTo: `${window.location.origin}/reset-password`,
       });
       if (err) {
-        setApiError(err.message || "Something went wrong.");
+        await showAuthErrorAlert(err.message || "Something went wrong.");
         return;
       }
       setDone(true);
+      await showAuthSuccessAlert(
+        "Check your inbox",
+        "If an account exists for that email, we sent reset instructions."
+      );
     } catch (e) {
-      setApiError(formatAuthError(e));
+      await showAuthErrorAlert(formatAuthError(e));
     }
   });
 
@@ -62,14 +65,6 @@ export default function ForgotPasswordForm() {
 
   return (
     <form className="space-y-6" onSubmit={onSubmit} noValidate>
-      {apiError && (
-        <div
-          className="rounded-lg bg-red-100 px-4 py-3 text-sm text-red-900"
-          role="alert"
-        >
-          {apiError}
-        </div>
-      )}
       <div className="space-y-2">
         <label
           className="block text-sm font-medium text-on-surface"
