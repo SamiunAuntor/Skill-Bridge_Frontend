@@ -74,17 +74,7 @@ export default function TutorDashboardHome() {
   const role = session?.user?.role;
 
   if (role !== "tutor") {
-    return (
-      <section className="rounded-[1.5rem] bg-surface-container-low p-8">
-        <h2 className="font-headline text-2xl font-bold text-primary">
-          Dashboard setup is ready
-        </h2>
-        <p className="mt-3 max-w-2xl text-on-surface-variant">
-          This shared dashboard shell is now role-aware. Tutor-specific widgets are
-          shown here, and student/admin sections can plug into the same layout next.
-        </p>
-      </section>
-    );
+    return null;
   }
 
   return (

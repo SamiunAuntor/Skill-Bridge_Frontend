@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Camera, LoaderCircle } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
 import {
   getMyTutorProfile,
   TutorProfileApiError,
@@ -82,6 +83,7 @@ function getCompletionRatio(completed: number, total: number): number {
 }
 
 export default function TutorProfileSettings() {
+  const { data: session } = authClient.useSession();
   const [profileData, setProfileData] = useState<TutorEditableProfileResponse | null>(
     null
   );
@@ -91,6 +93,10 @@ export default function TutorProfileSettings() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+  if (session?.user?.role && session.user.role !== "tutor") {
+    return null;
+  }
 
   useEffect(() => {
     let isMounted = true;

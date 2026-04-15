@@ -31,9 +31,14 @@ async function parseApiResponse<T>(response: Response): Promise<T> {
     | null;
 
   if (!response.ok) {
+    const fallbackMessage =
+      response.status >= 500
+        ? "Something went wrong while handling your booking. Please try again."
+        : "Unable to complete booking request.";
+
     throw new BookingApiError(
       response.status,
-      payload?.message || "Unable to complete booking request."
+      payload?.message || fallbackMessage
     );
   }
 

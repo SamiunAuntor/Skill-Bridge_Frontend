@@ -28,9 +28,14 @@ async function parseApiResponse<T>(response: Response): Promise<T> {
     | null;
 
   if (!response.ok) {
+    const fallbackMessage =
+      response.status >= 500
+        ? "Something went wrong while updating availability. Please try again."
+        : "Unable to complete availability request.";
+
     throw new AvailabilityApiError(
       response.status,
-      payload?.message || "Unable to complete availability request."
+      payload?.message || fallbackMessage
     );
   }
 
