@@ -1,40 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import Swal from "sweetalert2";
+import { CalendarClock, Clock3, ReceiptText, Star, UserRound } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
-
-const upcomingSessions = [
-  {
-    id: "session-1",
-    month: "Oct",
-    day: "24",
-    title: "Advanced Calculus",
-    student: "Elena Rodriguez",
-    time: "14:00 - 15:30",
-    mode: "Virtual Class",
-    icon: "video_call",
-  },
-  {
-    id: "session-2",
-    month: "Oct",
-    day: "25",
-    title: "Organic Chemistry I",
-    student: "Marcus Chen",
-    time: "09:00 - 11:00",
-    mode: "In-Person",
-    icon: "map",
-  },
-  {
-    id: "session-3",
-    month: "Oct",
-    day: "25",
-    title: "Quantum Mechanics",
-    student: "Sarah Jenkins",
-    time: "16:30 - 18:00",
-    mode: "Virtual Class",
-    icon: "video_call",
-  },
-];
+import { BookingApiError, getTutorDashboardSummary } from "@/lib/booking-api";
+import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
+import { DashboardSessionItem } from "@/types/tutor";
 
 const recentFeedback = [
   {
@@ -60,6 +33,18 @@ const recentFeedback = [
   },
 ];
 
+function toFriendlyError(error: unknown): string {
+  if (error instanceof BookingApiError) {
+    return error.message;
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "Unable to load the tutor dashboard right now.";
+}
+
 function getInitials(name: string): string {
   return name
     .split(/\s+/)
@@ -69,67 +54,127 @@ function getInitials(name: string): string {
     .join("");
 }
 
+function formatSessionDate(value: string): string {
+  return new Intl.DateTimeFormat("en-BD", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
+function formatSessionTime(start: string, end: string): string {
+  const formatter = new Intl.DateTimeFormat("en-BD", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  return `${formatter.format(new Date(start))} - ${formatter.format(new Date(end))}`;
+}
+
 export default function TutorDashboardHome() {
   const { data: session } = authClient.useSession();
   const role = session?.user?.role;
+  const [summary, setSummary] = useState<{
+    stats: {
+      totalEarnings: number;
+      totalHours: number;
+      averageRating: number | null;
+    };
+    upcomingSessions: DashboardSessionItem[];
+  } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (role !== "tutor") {
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const result = await getTutorDashboardSummary();
+        if (!cancelled) {
+          setSummary(result);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          await Swal.fire({
+            icon: "error",
+            title: "Unable to load dashboard",
+            text: toFriendlyError(error),
+            confirmButtonColor: "#1d3b66",
+          });
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [role]);
 
   if (role !== "tutor") {
     return null;
   }
 
+  if (loading) {
+    return <DashboardPageLoader label="Loading tutor dashboard..." />;
+  }
+
+  const totalEarnings = summary?.stats.totalEarnings ?? 0;
+  const totalHours = summary?.stats.totalHours ?? 0;
+  const upcomingSessions = summary?.upcomingSessions ?? [];
+
   return (
-    <div className="space-y-10">
-      <section className="grid grid-cols-1 gap-6 xl:grid-cols-4">
-        <article className="relative overflow-hidden rounded-[1.5rem] bg-primary px-8 py-8 text-on-primary-container xl:col-span-2">
-          <p className="text-[13px] font-medium text-on-primary-container/80">
-            Total Earnings
-          </p>
-          <h2 className="mt-2 font-headline text-[2.6rem] font-extrabold text-white">
-            $12,480.00
+    <div className="space-y-8">
+      <section className="grid grid-cols-1 gap-5 xl:grid-cols-3">
+        <article className="rounded-[1.5rem] bg-primary px-6 py-6 text-on-primary">
+          <p className="text-[13px] font-medium text-on-primary/80">Total Earnings</p>
+          <h2 className="mt-2 font-headline text-[2.25rem] font-extrabold">
+            ${totalEarnings.toFixed(2)}
           </h2>
-          <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-secondary/20 px-3 py-1 text-[11px] font-semibold text-secondary-fixed">
-            <span className="material-symbols-outlined text-base">trending_up</span>
-            +14.2% from last month
-          </div>
-          <span className="material-symbols-outlined absolute bottom-4 right-5 text-[8rem] text-white/10">
-            payments
-          </span>
+          <p className="mt-2 text-xs text-on-primary/80">
+            Sum of all completed session amounts
+          </p>
         </article>
 
         <article className="rounded-[1.5rem] bg-surface-container-lowest p-6 shadow-[0px_12px_32px_rgba(0,51,88,0.06)]">
-          <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-primary-fixed text-primary">
-            <span className="material-symbols-outlined">history_edu</span>
-          </div>
-          <p className="text-[13px] font-medium text-on-surface-variant">Hours Taught</p>
-          <h3 className="mt-1 font-headline text-[2rem] font-bold text-primary">
-            342.5
+          <p className="text-[13px] font-medium text-on-surface-variant">Total Hours</p>
+          <h3 className="mt-2 font-headline text-[2rem] font-bold text-primary">
+            {totalHours.toFixed(2)}
           </h3>
-          <p className="mt-2 text-xs text-on-surface-variant">Target: 400h</p>
+          <p className="mt-2 text-xs text-on-surface-variant">
+            Counted from completed sessions only
+          </p>
         </article>
 
         <article className="rounded-[1.5rem] bg-surface-container-lowest p-6 shadow-[0px_12px_32px_rgba(0,51,88,0.06)]">
-          <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-secondary-container text-on-secondary-container">
-            <span
-              className="material-symbols-outlined"
-              style={{ fontVariationSettings: '"FILL" 1' }}
-            >
-              star
-            </span>
-          </div>
           <p className="text-[13px] font-medium text-on-surface-variant">Average Rating</p>
-          <h3 className="mt-1 font-headline text-[2rem] font-bold text-primary">
-            4.92
-          </h3>
-          <p className="mt-2 text-xs text-on-surface-variant">from 128 reviews</p>
+          <h3 className="mt-2 font-headline text-[2rem] font-bold text-primary">--</h3>
+          <p className="mt-2 text-xs text-on-surface-variant">
+            Feedback scoring will be added later
+          </p>
         </article>
       </section>
 
-      <div className="grid grid-cols-1 gap-10 xl:grid-cols-[2fr_1fr]">
-        <section className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="font-headline text-[2rem] font-bold text-primary">
-              Upcoming Sessions
-            </h2>
+      <div className="grid grid-cols-1 gap-8 xl:grid-cols-[1.5fr_1fr]">
+        <section className="rounded-[1.5rem] bg-surface-container-lowest p-6 shadow-[0px_12px_32px_rgba(0,51,88,0.06)]">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="font-headline text-[1.55rem] font-bold text-primary">
+                Upcoming Sessions
+              </h2>
+              <p className="mt-1 text-sm text-on-surface-variant">
+                The next few confirmed sessions on your schedule.
+              </p>
+            </div>
             <Link
               href="/dashboard/sessions"
               className="text-sm font-bold text-secondary hover:underline"
@@ -138,141 +183,90 @@ export default function TutorDashboardHome() {
             </Link>
           </div>
 
-          <div className="space-y-4">
-            {upcomingSessions.map((sessionItem) => (
-              <article
-                key={sessionItem.id}
-                className="group flex items-center justify-between rounded-2xl bg-surface-container-lowest p-5 transition-colors duration-300 hover:bg-primary-fixed"
-              >
-                <div className="flex items-center gap-5">
-                  <div className="flex h-14 w-14 flex-col items-center justify-center rounded-xl border border-outline-variant/10 bg-surface-container-low text-primary">
-                    <span className="text-[11px] font-bold uppercase">
-                      {sessionItem.month}
-                    </span>
-                    <span className="font-headline text-xl font-black leading-none">
-                      {sessionItem.day}
-                    </span>
-                  </div>
-                  <div>
-                    <h3 className="font-headline text-[1.05rem] font-bold text-on-surface">
-                      {sessionItem.title}
-                    </h3>
-                    <p className="mt-1 flex items-center gap-1 text-sm text-on-surface-variant">
-                      <span className="material-symbols-outlined text-base">
-                        person
+          <div className="mt-6 space-y-4">
+            {upcomingSessions.length > 0 ? (
+              upcomingSessions.map((sessionItem) => (
+                <article
+                  key={sessionItem.sessionId}
+                  className="rounded-2xl border border-outline-variant/14 bg-surface-container-low p-5"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm text-on-surface-variant">
+                      <UserRound className="h-4 w-4" />
+                      <span className="font-semibold text-primary">
+                        {sessionItem.student.name}
                       </span>
-                      {sessionItem.student} • {sessionItem.time}
-                    </p>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-on-surface-variant">
+                      <CalendarClock className="h-4 w-4" />
+                      <span>{formatSessionDate(sessionItem.sessionDate)}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-on-surface-variant">
+                      <Clock3 className="h-4 w-4" />
+                      <span>
+                        {formatSessionTime(sessionItem.startTime, sessionItem.endTime)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-on-surface-variant">
+                      <ReceiptText className="h-4 w-4" />
+                      <span>${sessionItem.priceAtBooking.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </article>
+              ))
+            ) : (
+              <div className="rounded-2xl bg-surface-container-low p-5 text-sm text-on-surface-variant">
+                No upcoming sessions yet.
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section className="rounded-[1.5rem] bg-surface-container-lowest p-6 shadow-[0px_12px_32px_rgba(0,51,88,0.06)]">
+          <div>
+            <h2 className="font-headline text-[1.55rem] font-bold text-primary">
+              Recent Feedback
+            </h2>
+            <p className="mt-1 text-sm text-on-surface-variant">
+              Static preview for now. Live tutor feedback will appear here later.
+            </p>
+          </div>
+
+          <div className="mt-6 space-y-4">
+            {recentFeedback.map((review) => (
+              <article
+                key={review.id}
+                className="space-y-4 rounded-2xl border border-outline-variant/14 bg-surface-container-low p-5"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-xs font-black text-on-primary">
+                      {getInitials(review.student)}
+                    </div>
+                    <div>
+                      <h3 className="font-headline text-sm font-bold text-on-surface">
+                        {review.student}
+                      </h3>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
+                        {review.subject}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 text-secondary">
+                    {Array.from({ length: 5 }).map((_, index) => (
+                      <Star key={index} className="h-3.5 w-3.5 fill-current" />
+                    ))}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <span className="rounded-xl bg-tertiary-fixed px-3 py-1 text-xs font-semibold text-on-tertiary-fixed-variant">
-                    {sessionItem.mode}
-                  </span>
-                  <button
-                    type="button"
-                    className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-container text-primary transition-colors group-hover:bg-primary group-hover:text-white"
-                  >
-                    <span className="material-symbols-outlined">
-                      {sessionItem.icon}
-                    </span>
-                  </button>
-                </div>
+                <p className="text-sm italic text-on-surface-variant">
+                  &quot;{review.comment}&quot;
+                </p>
               </article>
             ))}
           </div>
         </section>
-
-        <section className="space-y-6">
-          <h2 className="font-headline text-[2rem] font-bold text-primary">
-            Availability
-          </h2>
-
-          <article className="space-y-6 rounded-[1.5rem] bg-surface-container-low p-8">
-            <div>
-              <p className="mb-3 text-sm font-bold text-on-surface">Profile Status</p>
-              <div className="flex items-center gap-3 rounded-xl bg-surface-container-lowest p-4">
-                <span className="h-3 w-3 rounded-full bg-secondary-fixed shadow-[0_0_8px_rgba(104,250,221,0.8)]" />
-                <span className="text-sm font-medium text-on-surface">
-                  Tutor profile can be completed from the availability and profile pages
-                </span>
-              </div>
-            </div>
-
-            <div>
-              <div className="mb-4 flex items-center justify-between">
-                <span className="text-sm font-bold text-on-surface">
-                  Weekly Load
-                </span>
-                <span className="text-xs font-medium text-on-surface-variant">
-                  28 / 40 hrs
-                </span>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-surface-container-highest">
-                <div className="h-full w-[70%] bg-primary" />
-              </div>
-            </div>
-          </article>
-
-          <div className="flex flex-wrap gap-2">
-            {["STEM Specialist", "PhD Mentor", "Top 1% Tutor"].map((chip) => (
-              <span
-                key={chip}
-                className="rounded-full bg-tertiary-fixed px-3 py-1 text-xs font-medium text-on-tertiary-fixed-variant"
-              >
-                {chip}
-              </span>
-            ))}
-          </div>
-        </section>
       </div>
-
-      <section className="space-y-6">
-        <h2 className="font-headline text-[2rem] font-bold text-primary">
-          Recent Feedback
-        </h2>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {recentFeedback.map((review) => (
-            <article
-              key={review.id}
-              className="space-y-4 rounded-2xl bg-surface-container-lowest p-6 shadow-[0px_12px_32px_rgba(0,51,88,0.06)]"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-xs font-black text-on-primary">
-                    {getInitials(review.student)}
-                  </div>
-                  <div>
-                    <h3 className="font-headline text-sm font-bold text-on-surface">
-                      {review.student}
-                    </h3>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
-                      {review.subject}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex text-secondary-fixed-dim">
-                  {Array.from({ length: 5 }).map((_, index) => (
-                    <span
-                      key={index}
-                      className="material-symbols-outlined text-sm"
-                      style={{ fontVariationSettings: '"FILL" 1' }}
-                    >
-                      star
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <p className="text-sm italic text-on-surface-variant">
-                &quot;{review.comment}&quot;
-              </p>
-            </article>
-          ))}
-        </div>
-      </section>
     </div>
   );
 }

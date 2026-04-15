@@ -190,6 +190,15 @@ export interface DashboardSessionListResponse {
   };
 }
 
+export interface TutorDashboardSummaryResponse {
+  stats: {
+    totalEarnings: number;
+    totalHours: number;
+    averageRating: number | null;
+  };
+  upcomingSessions: DashboardSessionItem[];
+}
+
 export interface TutorEditableProfileEducation {
   id: string;
   degree: string;

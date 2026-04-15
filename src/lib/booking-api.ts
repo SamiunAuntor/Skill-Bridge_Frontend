@@ -2,6 +2,7 @@ import {
   BookingConfirmationResponse,
   DashboardSessionSortOption,
   DashboardSessionListResponse,
+  TutorDashboardSummaryResponse,
 } from "@/types/tutor";
 
 const apiBaseUrl =
@@ -91,6 +92,16 @@ export async function getMySessions(params?: {
   );
 
   return parseApiResponse<DashboardSessionListResponse>(response);
+}
+
+export async function getTutorDashboardSummary(): Promise<TutorDashboardSummaryResponse> {
+  const response = await fetch(`${apiBaseUrl}/api/bookings/me/tutor-dashboard`, {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  return parseApiResponse<TutorDashboardSummaryResponse>(response);
 }
 
 export async function cancelBooking(
