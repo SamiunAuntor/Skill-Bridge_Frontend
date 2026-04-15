@@ -92,3 +92,22 @@ export async function cancelBooking(
     slotReleased: boolean;
   }>(response);
 }
+
+export async function joinSession(bookingId: string): Promise<{
+  bookingId: string;
+  sessionId: string;
+  sessionStatus: "ongoing" | "completed";
+  meetingJoinUrl: string;
+}> {
+  const response = await fetch(`${apiBaseUrl}/api/bookings/${bookingId}/join`, {
+    method: "POST",
+    credentials: "include",
+  });
+
+  return parseApiResponse<{
+    bookingId: string;
+    sessionId: string;
+    sessionStatus: "ongoing" | "completed";
+    meetingJoinUrl: string;
+  }>(response);
+}

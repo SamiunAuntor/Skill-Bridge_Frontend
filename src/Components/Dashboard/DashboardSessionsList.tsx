@@ -2,9 +2,21 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import Swal from "sweetalert2";
-import { CalendarClock, CircleAlert, Clock3, UserRound } from "lucide-react";
+import {
+  CalendarClock,
+  CircleAlert,
+  Clock3,
+  ExternalLink,
+  UserRound,
+  Video,
+} from "lucide-react";
 import { authClient } from "@/lib/auth-client";
-import { BookingApiError, cancelBooking, getMySessions } from "@/lib/booking-api";
+import {
+  BookingApiError,
+  cancelBooking,
+  getMySessions,
+  joinSession,
+} from "@/lib/booking-api";
 import { DashboardSessionItem } from "@/types/tutor";
 import { UserRole } from "@/types/auth";
 
@@ -158,6 +170,39 @@ export default function DashboardSessionsList() {
     });
   }
 
+  function handleJoin(item: DashboardSessionItem) {
+    if (!item.canJoin) {
+      return;
+    }
+
+    startTransition(() => {
+      void (async () => {
+        try {
+          const result = await joinSession(item.bookingId);
+          setSessions((current) =>
+            current.map((sessionItem) =>
+              sessionItem.bookingId === item.bookingId
+                ? {
+                    ...sessionItem,
+                    sessionStatus: result.sessionStatus,
+                  }
+                : sessionItem
+            )
+          );
+
+          window.open(result.meetingJoinUrl, "_blank", "noopener,noreferrer");
+        } catch (error) {
+          await Swal.fire({
+            icon: "error",
+            title: "Unable to join session",
+            text: toFriendlyError(error),
+            confirmButtonColor: "#1d3b66",
+          });
+        }
+      })();
+    });
+  }
+
   function renderSection(title: string, items: DashboardSessionItem[]) {
     return (
       <section className="space-y-4 rounded-[1.75rem] border border-outline-variant/14 bg-surface-container-lowest p-6 shadow-[0px_18px_40px_rgba(0,51,88,0.08)]">
@@ -202,19 +247,55 @@ export default function DashboardSessionsList() {
                         <Clock3 className="h-4 w-4" />
                         <span>Amount: ${item.priceAtBooking.toFixed(2)}</span>
                       </div>
+                      {item.meetingProvider === "zoom" ? (
+                        <div className="rounded-xl border border-outline-variant/16 bg-surface-container px-3 py-3 text-xs text-on-surface-variant">
+                          <div className="flex items-center gap-2 font-semibold text-primary">
+                            <Video className="h-4 w-4" />
+                            Zoom Meeting
+                          </div>
+                          <div className="mt-2 space-y-1">
+                            <p>
+                              Meeting ID:{" "}
+                              <span className="font-semibold text-primary">
+                                {item.meetingId ?? "Pending"}
+                              </span>
+                            </p>
+                            <p>
+                              Passcode:{" "}
+                              <span className="font-semibold text-primary">
+                                {item.meetingPassword ?? "Not required"}
+                              </span>
+                            </p>
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
                   </div>
 
-                  {item.canCancel ? (
-                    <button
-                      type="button"
-                      onClick={() => void handleCancel(item.bookingId)}
-                      disabled={isPending}
-                      className="rounded-xl border border-error/20 bg-error-container px-4 py-2.5 text-sm font-semibold text-on-error-container transition-colors hover:bg-error-container/85 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      Cancel Session
-                    </button>
-                  ) : null}
+                  <div className="flex flex-col gap-3">
+                    {item.canJoin ? (
+                      <button
+                        type="button"
+                        onClick={() => handleJoin(item)}
+                        disabled={isPending}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-on-primary transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        Join Session
+                      </button>
+                    ) : null}
+
+                    {item.canCancel ? (
+                      <button
+                        type="button"
+                        onClick={() => void handleCancel(item.bookingId)}
+                        disabled={isPending}
+                        className="rounded-xl border border-error/20 bg-error-container px-4 py-2.5 text-sm font-semibold text-on-error-container transition-colors hover:bg-error-container/85 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        Cancel Session
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
               </article>
             ))}

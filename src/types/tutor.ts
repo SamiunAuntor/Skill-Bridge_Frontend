@@ -151,6 +151,11 @@ export interface DashboardSessionItem {
   endTime: string;
   priceAtBooking: number;
   canCancel: boolean;
+  canJoin: boolean;
+  meetingProvider: string | null;
+  meetingId: string | null;
+  meetingJoinUrl: string | null;
+  meetingPassword: string | null;
   student: {
     id: string;
     name: string;
