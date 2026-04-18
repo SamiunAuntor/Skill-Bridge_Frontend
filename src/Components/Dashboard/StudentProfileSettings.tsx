@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
 import { Camera, Mail, UserRound } from "lucide-react";
-import { authClient } from "@/lib/auth-client";
+import { notifyAuthChanged, useAppAuthSession } from "@/lib/auth";
 import { updateMyStudentProfile } from "@/lib/student-profile-api";
 import {
   deleteUploadedAsset,
@@ -12,7 +12,7 @@ import {
 } from "@/lib/upload-image";
 
 export default function StudentProfileSettings() {
-  const { data: session } = authClient.useSession();
+  const { data: session } = useAppAuthSession();
   const [displayName, setDisplayName] = useState("");
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
   const [initialDisplayName, setInitialDisplayName] = useState("");
@@ -117,18 +117,10 @@ export default function StudentProfileSettings() {
         profileImageUrl: profileImageUrl ?? null,
       });
 
-      const authSyncResult = await authClient.updateUser({
-        name: result.profile.name,
-        image: result.profile.image ?? undefined,
-      });
-
-      if (authSyncResult.error) {
-        console.warn("Student profile saved, but auth session sync failed.", authSyncResult.error);
-      }
-
       setInitialDisplayName(trimmedName);
       setInitialProfileImageUrl(profileImageUrl ?? null);
       setPendingUploadedImage(null);
+      notifyAuthChanged();
 
       await Swal.fire({
         icon: "success",

@@ -10,9 +10,9 @@ import PasswordVisibilityToggle from "@/Components/Auth/PasswordVisibilityToggle
 import {
   showAuthErrorAlert,
   showAuthInfoAlert,
-  showAuthSuccessAlert,
+  showAuthSuccessToast,
 } from "@/lib/auth-alerts";
-import { authClient } from "@/lib/auth-client";
+import { resetPasswordWithAppAuth } from "@/lib/auth";
 import { formatAuthError } from "@/lib/auth-errors";
 
 const resetSchema = z.object({
@@ -73,15 +73,11 @@ export default function ResetPasswordForm() {
       return;
     }
     try {
-      const { error: err } = await authClient.resetPassword({
-        newPassword: values.password,
+      await resetPasswordWithAppAuth({
         token,
+        newPassword: values.password,
       });
-      if (err) {
-        await showAuthErrorAlert(err.message || "Could not reset password.");
-        return;
-      }
-      await showAuthSuccessAlert(
+      await showAuthSuccessToast(
         "Password updated",
         "Your password has been changed successfully."
       );

@@ -5,7 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { authClient, type AuthSessionUser } from "@/lib/auth-client";
+import { logoutWithAppAuth, useAppAuthSession, type AppAuthUser } from "@/lib/auth";
+import { showAuthErrorToast, showAuthSuccessToast } from "@/lib/auth-alerts";
 
 type NavbarSessionProps = {
   variant: "desktop" | "mobile";
@@ -18,7 +19,7 @@ export default function NavbarSession({
 }: NavbarSessionProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session, isPending } = useAppAuthSession();
   const [menuOpen, setMenuOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -36,8 +37,21 @@ export default function NavbarSession({
   const handleSignOut = async () => {
     setMenuOpen(false);
     onNavigate?.();
-    await authClient.signOut();
-    router.refresh();
+    try {
+      await logoutWithAppAuth();
+      await showAuthSuccessToast(
+        "Signed out",
+        "You have been logged out successfully."
+      );
+      router.refresh();
+    } catch (error) {
+      await showAuthErrorToast(
+        "Sign-out failed",
+        error instanceof Error
+          ? error.message
+          : "We couldn't sign you out right now."
+      );
+    }
   };
 
   if (isPending) {
@@ -94,7 +108,7 @@ export default function NavbarSession({
     );
   }
 
-  const user: AuthSessionUser = session.user;
+  const user: AppAuthUser = session.user;
   const displayName = user.name?.trim() || user.email || "Account";
   const avatarSrc = user.image?.trim();
   const dashboardHref = "/dashboard";
@@ -111,10 +125,11 @@ export default function NavbarSession({
       }}
     >
       {avatarSrc ? (
-        // eslint-disable-next-line @next/next/no-img-element -- user URLs from OAuth / uploads vary by host
-        <img
+        <Image
           src={avatarSrc}
           alt=""
+          width={40}
+          height={40}
           className="h-10 w-10 rounded-full object-cover"
           referrerPolicy="no-referrer"
         />
@@ -135,10 +150,11 @@ export default function NavbarSession({
       <div className="flex flex-col gap-3 border-t border-outline-variant/20 pt-4">
         <div className="flex items-center gap-3 px-1">
           {avatarSrc ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={avatarSrc}
               alt=""
+              width={48}
+              height={48}
               className="h-12 w-12 shrink-0 rounded-full object-cover"
               referrerPolicy="no-referrer"
             />

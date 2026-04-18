@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 import { Lock } from "lucide-react";
-import { authClient } from "@/lib/auth-client";
+import { useAppAuthSession } from "@/lib/auth";
 import BookingConfirmationModal from "@/Components/Tutors/BookingConfirmationModal";
 import {
   AvailabilityApiError,
@@ -109,7 +109,7 @@ export default function TutorBookingSidebar({
   hourlyRate,
 }: TutorBookingSidebarProps) {
   const router = useRouter();
-  const { data: session, isPending: sessionPending } = authClient.useSession();
+  const { data: session, isPending: sessionPending } = useAppAuthSession();
   const [slots, setSlots] = useState<TutorAvailabilitySlot[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);

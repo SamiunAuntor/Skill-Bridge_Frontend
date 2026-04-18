@@ -7,8 +7,11 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import PasswordVisibilityToggle from "@/Components/Auth/PasswordVisibilityToggle";
-import { showAuthErrorAlert } from "@/lib/auth-alerts";
-import { authClient } from "@/lib/auth-client";
+import {
+  showAuthErrorToast,
+  showAuthSuccessToast,
+} from "@/lib/auth-alerts";
+import { registerWithAppAuth } from "@/lib/auth";
 import { formatAuthError } from "@/lib/auth-errors";
 import { REGISTER_ROLES, type RegisterRole } from "@/types/auth";
 
@@ -27,17 +30,6 @@ const registerSchema = z.object({
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
-
-function buildSignUpPayload(values: RegisterFormValues) {
-  const payload = {
-    name: `${values.firstName} ${values.lastName}`.trim(),
-    email: values.email,
-    password: values.password,
-    role: values.role satisfies RegisterRole,
-    callbackURL: `${window.location.origin}/login?verified=1`,
-  };
-  return payload as Parameters<typeof authClient.signUp.email>[0];
-}
 
 const fieldClass = (invalid: boolean) =>
   `h-14 w-full rounded-md border-none bg-surface-container-highest px-4 text-base leading-normal text-on-surface placeholder:leading-normal focus:ring-2 focus:ring-surface-tint/40 ${
@@ -62,20 +54,23 @@ export default function RegisterForm() {
 
   const onSubmit = handleSubmit(async (values) => {
     try {
-      const { error: signUpErr } = await authClient.signUp.email(
-        buildSignUpPayload(values)
+      await registerWithAppAuth({
+        firstName: values.firstName,
+        lastName: values.lastName,
+        email: values.email,
+        password: values.password,
+        role: values.role satisfies RegisterRole,
+        callbackURL: `${window.location.origin}/login?verified=1`,
+      });
+      await showAuthSuccessToast(
+        "Account created",
+        "Check your email to verify your account."
       );
-      if (signUpErr) {
-        await showAuthErrorAlert(
-          signUpErr.message || "Could not create account."
-        );
-        return;
-      }
       router.push(
         `/verify-pending?email=${encodeURIComponent(values.email.toLowerCase())}`
       );
     } catch (e) {
-      await showAuthErrorAlert(formatAuthError(e));
+      await showAuthErrorToast("Registration failed", formatAuthError(e));
     }
   });
 

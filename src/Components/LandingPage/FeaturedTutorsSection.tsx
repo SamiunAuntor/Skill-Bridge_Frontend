@@ -24,7 +24,7 @@ export default function FeaturedTutorsSection({
 }: FeaturedTutorsSectionProps) {
   const [leadTutor, secondTutor, thirdTutor] = tutors;
 
-  if (!leadTutor || !secondTutor || !thirdTutor) {
+  if (!leadTutor) {
     return null;
   }
 
@@ -91,61 +91,65 @@ export default function FeaturedTutorsSection({
             </div>
           </div>
 
-          <div className="group cursor-pointer rounded-xl bg-surface-container-lowest p-6 shadow-[0px_12px_32px_rgba(0,51,88,0.06)] transition-colors hover:bg-surface-container-high">
-            <div className="mx-auto mb-6 h-24 w-24 overflow-hidden rounded-full">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img alt="" className="h-full w-full object-cover" src={secondTutor.avatarUrl ?? "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80"} />
-            </div>
-            <div className="text-center">
-              <span className="mb-3 inline-block rounded-full bg-tertiary-fixed px-3 py-1 text-[10px] font-bold uppercase text-on-tertiary-fixed-variant">
-                {secondTutor.primarySubject}
-              </span>
-              <h3 className="mb-1 text-xl font-bold text-primary">
-                {secondTutor.displayName}
-              </h3>
-              <div className="mb-4 flex justify-center text-secondary">
-                <Star className="h-4 w-4 fill-current" />
-                <span className="ml-1 text-sm font-bold text-primary">
-                  {secondTutor.averageRating.toFixed(1)}
+          {secondTutor ? (
+            <div className="group cursor-pointer rounded-xl bg-surface-container-lowest p-6 shadow-[0px_12px_32px_rgba(0,51,88,0.06)] transition-colors hover:bg-surface-container-high">
+              <div className="mx-auto mb-6 h-24 w-24 overflow-hidden rounded-full">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img alt="" className="h-full w-full object-cover" src={secondTutor.avatarUrl ?? "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80"} />
+              </div>
+              <div className="text-center">
+                <span className="mb-3 inline-block rounded-full bg-tertiary-fixed px-3 py-1 text-[10px] font-bold uppercase text-on-tertiary-fixed-variant">
+                  {secondTutor.primarySubject}
                 </span>
-              </div>
-              <p className="mb-6 line-clamp-2 text-sm text-on-surface-variant">
-                {secondTutor.bio}
-              </p>
-              <div className="flex items-center justify-between border-t border-outline-variant/10 pt-4">
-                <span className="font-bold text-primary">{formatRate(secondTutor.hourlyRate)}</span>
-                <ArrowRight className="h-4 w-4 text-primary transition-transform group-hover:translate-x-2" />
+                <h3 className="mb-1 text-xl font-bold text-primary">
+                  {secondTutor.displayName}
+                </h3>
+                <div className="mb-4 flex justify-center text-secondary">
+                  <Star className="h-4 w-4 fill-current" />
+                  <span className="ml-1 text-sm font-bold text-primary">
+                    {secondTutor.averageRating.toFixed(1)}
+                  </span>
+                </div>
+                <p className="mb-6 line-clamp-2 text-sm text-on-surface-variant">
+                  {secondTutor.bio}
+                </p>
+                <div className="flex items-center justify-between border-t border-outline-variant/10 pt-4">
+                  <span className="font-bold text-primary">{formatRate(secondTutor.hourlyRate)}</span>
+                  <ArrowRight className="h-4 w-4 text-primary transition-transform group-hover:translate-x-2" />
+                </div>
               </div>
             </div>
-          </div>
+          ) : null}
 
-          <div className="group cursor-pointer rounded-xl bg-surface-container-lowest p-6 shadow-[0px_12px_32px_rgba(0,51,88,0.06)] transition-colors hover:bg-surface-container-high">
-            <div className="mx-auto mb-6 h-24 w-24 overflow-hidden rounded-full">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img alt="" className="h-full w-full object-cover" src={thirdTutor.avatarUrl ?? "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=400&q=80"} />
-            </div>
-            <div className="text-center">
-              <span className="mb-3 inline-block rounded-full bg-tertiary-fixed px-3 py-1 text-[10px] font-bold uppercase text-on-tertiary-fixed-variant">
-                {thirdTutor.primarySubject}
-              </span>
-              <h3 className="mb-1 text-xl font-bold text-primary">
-                {thirdTutor.displayName}
-              </h3>
-              <div className="mb-4 flex justify-center text-secondary">
-                <Star className="h-4 w-4 fill-current" />
-                <span className="ml-1 text-sm font-bold text-primary">
-                  {thirdTutor.averageRating.toFixed(1)}
+          {thirdTutor ? (
+            <div className="group cursor-pointer rounded-xl bg-surface-container-lowest p-6 shadow-[0px_12px_32px_rgba(0,51,88,0.06)] transition-colors hover:bg-surface-container-high">
+              <div className="mx-auto mb-6 h-24 w-24 overflow-hidden rounded-full">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img alt="" className="h-full w-full object-cover" src={thirdTutor.avatarUrl ?? "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=400&q=80"} />
+              </div>
+              <div className="text-center">
+                <span className="mb-3 inline-block rounded-full bg-tertiary-fixed px-3 py-1 text-[10px] font-bold uppercase text-on-tertiary-fixed-variant">
+                  {thirdTutor.primarySubject}
                 </span>
-              </div>
-              <p className="mb-6 line-clamp-2 text-sm text-on-surface-variant">
-                {thirdTutor.bio}
-              </p>
-              <div className="flex items-center justify-between border-t border-outline-variant/10 pt-4">
-                <span className="font-bold text-primary">{formatRate(thirdTutor.hourlyRate)}</span>
-                <ArrowRight className="h-4 w-4 text-primary transition-transform group-hover:translate-x-2" />
+                <h3 className="mb-1 text-xl font-bold text-primary">
+                  {thirdTutor.displayName}
+                </h3>
+                <div className="mb-4 flex justify-center text-secondary">
+                  <Star className="h-4 w-4 fill-current" />
+                  <span className="ml-1 text-sm font-bold text-primary">
+                    {thirdTutor.averageRating.toFixed(1)}
+                  </span>
+                </div>
+                <p className="mb-6 line-clamp-2 text-sm text-on-surface-variant">
+                  {thirdTutor.bio}
+                </p>
+                <div className="flex items-center justify-between border-t border-outline-variant/10 pt-4">
+                  <span className="font-bold text-primary">{formatRate(thirdTutor.hourlyRate)}</span>
+                  <ArrowRight className="h-4 w-4 text-primary transition-transform group-hover:translate-x-2" />
+                </div>
               </div>
             </div>
-          </div>
+          ) : null}
 
           <div className="group relative overflow-hidden rounded-2xl bg-primary-container p-10 shadow-sm transition-all duration-300 md:col-span-2 md:p-14">
             <div className="relative z-10 flex flex-col gap-8">

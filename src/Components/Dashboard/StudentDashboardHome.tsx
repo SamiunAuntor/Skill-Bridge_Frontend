@@ -5,7 +5,7 @@ import Link from "next/link";
 import Swal from "sweetalert2";
 import { CalendarClock, Clock3, ReceiptText, UserRound } from "lucide-react";
 import { getMySessions, BookingApiError } from "@/lib/booking-api";
-import { authClient } from "@/lib/auth-client";
+import { useAppAuthSession } from "@/lib/auth";
 import { DashboardSessionItem } from "@/types/tutor";
 
 function toFriendlyError(error: unknown): string {
@@ -38,16 +38,17 @@ function formatTimeRange(start: string, end: string): string {
 }
 
 export default function StudentDashboardHome() {
-  const { data: session } = authClient.useSession();
+  const { data: session } = useAppAuthSession();
   const [sessions, setSessions] = useState<DashboardSessionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const role = session?.user?.role;
 
-  if (role && role !== "student") {
-    return null;
-  }
-
   useEffect(() => {
+    if (role && role !== "student") {
+      setLoading(false);
+      return;
+    }
+
     let cancelled = false;
 
     void (async () => {
@@ -75,7 +76,7 @@ export default function StudentDashboardHome() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [role]);
 
   const stats = useMemo(() => {
     const upcoming = sessions.filter(
@@ -93,6 +94,10 @@ export default function StudentDashboardHome() {
       totalSpent,
     };
   }, [sessions]);
+
+  if (role && role !== "student") {
+    return null;
+  }
 
   const recentSessions = stats.upcoming.slice(0, 3);
 

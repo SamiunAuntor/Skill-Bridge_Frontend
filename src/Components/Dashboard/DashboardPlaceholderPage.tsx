@@ -1,6 +1,6 @@
 "use client";
 
-import { authClient } from "@/lib/auth-client";
+import { useAppAuthSession } from "@/lib/auth";
 
 type DashboardPlaceholderPageProps = {
   title: string;
@@ -11,7 +11,7 @@ export default function DashboardPlaceholderPage({
   title,
   description,
 }: DashboardPlaceholderPageProps) {
-  const { data: session } = authClient.useSession();
+  const { data: session } = useAppAuthSession();
   const role = session?.user?.role ?? "student";
 
   return (

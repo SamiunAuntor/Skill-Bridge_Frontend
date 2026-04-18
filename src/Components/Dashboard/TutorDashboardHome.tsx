@@ -11,7 +11,7 @@ import {
   Star,
   UserRound,
 } from "lucide-react";
-import { authClient } from "@/lib/auth-client";
+import { useAppAuthSession } from "@/lib/auth";
 import {
   BookingApiError,
   cancelBooking,
@@ -61,7 +61,7 @@ function formatSessionTime(start: string, end: string): string {
 }
 
 export default function TutorDashboardHome() {
-  const { data: session } = authClient.useSession();
+  const { data: session } = useAppAuthSession();
   const role = session?.user?.role;
   const [summary, setSummary] = useState<{
     stats: {

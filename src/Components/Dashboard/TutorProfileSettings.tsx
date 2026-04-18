@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
 import { Camera, LoaderCircle } from "lucide-react";
-import { authClient } from "@/lib/auth-client";
+import { useAppAuthSession } from "@/lib/auth";
 import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
 import {
   getMyTutorProfile,
@@ -165,7 +165,7 @@ function getCompletionRatio(completed: number, total: number): number {
 }
 
 export default function TutorProfileSettings() {
-  const { data: session } = authClient.useSession();
+  const { data: session } = useAppAuthSession();
   const [profileData, setProfileData] = useState<TutorEditableProfileResponse | null>(
     null
   );

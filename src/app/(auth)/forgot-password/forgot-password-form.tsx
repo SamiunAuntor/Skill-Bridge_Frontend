@@ -4,8 +4,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { showAuthErrorAlert, showAuthSuccessAlert } from "@/lib/auth-alerts";
-import { authClient } from "@/lib/auth-client";
+import {
+  showAuthErrorToast,
+  showAuthSuccessToast,
+} from "@/lib/auth-alerts";
+import { betterAuthClient } from "@/lib/auth/better-auth-client";
 import { formatAuthError } from "@/lib/auth-errors";
 
 const forgotSchema = z.object({
@@ -33,21 +36,24 @@ export default function ForgotPasswordForm() {
 
   const onSubmit = handleSubmit(async (values) => {
     try {
-      const { error: err } = await authClient.requestPasswordReset({
+      const { error: err } = await betterAuthClient.requestPasswordReset({
         email: values.email,
         redirectTo: `${window.location.origin}/reset-password`,
       });
       if (err) {
-        await showAuthErrorAlert(err.message || "Something went wrong.");
+        await showAuthErrorToast(
+          "Reset request failed",
+          err.message || "Something went wrong."
+        );
         return;
       }
       setDone(true);
-      await showAuthSuccessAlert(
-        "Check your inbox",
+      await showAuthSuccessToast(
+        "Reset email sent",
         "If an account exists for that email, we sent reset instructions."
       );
     } catch (e) {
-      await showAuthErrorAlert(formatAuthError(e));
+      await showAuthErrorToast("Reset request failed", formatAuthError(e));
     }
   });
 

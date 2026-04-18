@@ -10,7 +10,7 @@ import {
   Search,
 } from "lucide-react";
 import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
-import { authClient } from "@/lib/auth-client";
+import { useAppAuthSession } from "@/lib/auth";
 import {
   BookingApiError,
   cancelBooking,
@@ -87,7 +87,7 @@ export default function DashboardSessionsList() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { data: session } = authClient.useSession();
+  const { data: session } = useAppAuthSession();
   const [sessions, setSessions] = useState<DashboardSessionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPending, startTransition] = useTransition();

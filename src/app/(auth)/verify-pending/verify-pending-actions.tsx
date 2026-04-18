@@ -5,7 +5,11 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { authClient } from "@/lib/auth-client";
+import { betterAuthClient } from "@/lib/auth/better-auth-client";
+import {
+  showAuthErrorToast,
+  showAuthSuccessToast,
+} from "@/lib/auth-alerts";
 import { formatAuthError } from "@/lib/auth-errors";
 
 const verifySchema = z.object({
@@ -44,17 +48,27 @@ export default function VerifyPendingActions() {
     setApiError(null);
     setStatus(null);
     try {
-      const { error: err } = await authClient.sendVerificationEmail({
+      const { error: err } = await betterAuthClient.sendVerificationEmail({
         email: values.email,
         callbackURL: `${window.location.origin}/login?verified=1`,
       });
       if (err) {
         setApiError(err.message || "Could not send email.");
+        await showAuthErrorToast(
+          "Verification email failed",
+          err.message || "Could not send email."
+        );
         return;
       }
       setStatus("Verification email sent. Check your inbox.");
+      await showAuthSuccessToast(
+        "Verification email sent",
+        "Check your inbox for the new verification link."
+      );
     } catch (e) {
-      setApiError(formatAuthError(e));
+      const message = formatAuthError(e);
+      setApiError(message);
+      await showAuthErrorToast("Verification email failed", message);
     }
   });
 

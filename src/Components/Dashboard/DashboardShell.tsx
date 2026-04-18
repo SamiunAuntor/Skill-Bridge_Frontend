@@ -1,12 +1,15 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect } from "react";
-import { authClient } from "@/lib/auth-client";
+import { logoutWithAppAuth, useAppAuthSession } from "@/lib/auth";
+import { showAuthErrorToast, showAuthSuccessToast } from "@/lib/auth-alerts";
 import { dashboardNavByRole } from "./dashboard.config";
 import { UserRole } from "@/types/auth";
 import ThemeToggle from "@/Components/Theme/ThemeToggle";
+import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
 
 type DashboardShellProps = {
   children: ReactNode;
@@ -30,7 +33,7 @@ function getDisplayName(user: { name?: string | null; email?: string | null }): 
 export default function DashboardShell({ children }: DashboardShellProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session, isPending } = useAppAuthSession();
 
   useEffect(() => {
     if (!isPending && !session?.user) {
@@ -41,10 +44,7 @@ export default function DashboardShell({ children }: DashboardShellProps) {
   if (isPending || !session?.user) {
     return (
       <div className="min-h-screen bg-surface">
-        <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[260px_1fr]">
-          <div className="bg-surface-container-lowest p-6" />
-          <div className="bg-surface p-6" />
-        </div>
+        <DashboardPageLoader label="Loading dashboard..." />
       </div>
     );
   }
@@ -99,9 +99,22 @@ export default function DashboardShell({ children }: DashboardShellProps) {
             <button
               type="button"
               onClick={async () => {
-                await authClient.signOut();
-                router.replace("/");
-                router.refresh();
+                try {
+                  await logoutWithAppAuth();
+                  await showAuthSuccessToast(
+                    "Signed out",
+                    "You have been logged out successfully."
+                  );
+                  router.replace("/");
+                  router.refresh();
+                } catch (error) {
+                  await showAuthErrorToast(
+                    "Sign-out failed",
+                    error instanceof Error
+                      ? error.message
+                      : "We couldn't sign you out right now."
+                  );
+                }
               }}
               className={sidebarActionClass}
             >
@@ -129,10 +142,11 @@ export default function DashboardShell({ children }: DashboardShellProps) {
 
               <div className="flex items-center gap-3 rounded-full bg-surface-container-low px-3 py-2">
                 {avatarSrc ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- external user-uploaded URLs vary by host
-                  <img
+                  <Image
                     src={avatarSrc}
                     alt=""
+                    width={36}
+                    height={36}
                     className="h-9 w-9 rounded-full object-cover"
                     referrerPolicy="no-referrer"
                   />

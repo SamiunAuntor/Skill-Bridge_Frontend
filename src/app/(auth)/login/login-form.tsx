@@ -3,13 +3,17 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import PasswordVisibilityToggle from "@/Components/Auth/PasswordVisibilityToggle";
-import { showAuthErrorAlert } from "@/lib/auth-alerts";
-import { authClient } from "@/lib/auth-client";
+import {
+  showAuthInfoToast,
+  showAuthErrorToast,
+  showAuthSuccessToast,
+} from "@/lib/auth-alerts";
 import { formatAuthError, isAuthClientError } from "@/lib/auth-errors";
+import { loginWithAppAuth, useAppAuthSession } from "@/lib/auth";
 
 const loginSchema = z.object({
   email: z.string().trim().email("Enter a valid email"),
@@ -31,7 +35,32 @@ export default function LoginForm() {
 
   const [showPassword, setShowPassword] = useState(false);
 
-  const { data: session, isPending: sessionPending } = authClient.useSession();
+  const { data: session, isPending: sessionPending } = useAppAuthSession();
+
+  useEffect(() => {
+    if (resetOk) {
+      void showAuthSuccessToast(
+        "Password updated",
+        "Sign in with your new password."
+      );
+      return;
+    }
+
+    if (verified && !sessionPending && session?.user) {
+      void showAuthSuccessToast(
+        "Email verified",
+        "Your account is verified and ready to use."
+      );
+      return;
+    }
+
+    if (verified && !sessionPending && !session?.user) {
+      void showAuthInfoToast(
+        "Email verified",
+        "Sign in below with your password."
+      );
+    }
+  }, [resetOk, session?.user, sessionPending, verified]);
 
   const {
     register,
@@ -44,25 +73,27 @@ export default function LoginForm() {
 
   const onSubmit = handleSubmit(async (values) => {
     try {
-      const { error: signErr } = await authClient.signIn.email({
-        email: values.email,
-        password: values.password,
-        callbackURL: `${window.location.origin}/`,
-      });
-      if (signErr) {
-        if (isAuthClientError(signErr) && signErr.status === 403) {
-          await showAuthErrorAlert(
-            "Please verify your email before signing in. Check your inbox; we sent you a new verification link."
-          );
-        } else {
-          await showAuthErrorAlert(signErr.message || "Could not sign in.");
-        }
-        return;
-      }
+      await loginWithAppAuth(values);
+      await showAuthSuccessToast(
+        "Signed in successfully",
+        "Welcome back to SkillBridge."
+      );
       router.push("/");
       router.refresh();
     } catch (e) {
-      await showAuthErrorAlert(formatAuthError(e));
+      const message = formatAuthError(e);
+      if (
+        isAuthClientError(e) &&
+        e.status === 403 &&
+        /verify your email/i.test(message)
+      ) {
+        await showAuthErrorToast(
+          "Email verification required",
+          "Please verify your email before signing in. Check your inbox; we sent you a new verification link."
+        );
+        return;
+      }
+      await showAuthErrorToast("Sign-in failed", message);
     }
   });
 
@@ -74,34 +105,6 @@ export default function LoginForm() {
           Continue your learning journey with SkillBridge.
         </p>
       </div>
-
-      {resetOk && (
-        <div
-          className="rounded-lg bg-secondary-fixed/40 px-4 py-3 text-sm text-on-secondary-fixed"
-          role="status"
-        >
-          Password updated. Sign in with your new password.
-        </div>
-      )}
-
-      {verified && !sessionPending && session?.user && (
-        <div
-          className="rounded-lg bg-secondary-fixed/40 px-4 py-3 text-sm text-on-secondary-fixed"
-          role="status"
-        >
-          Your email is verified and you&apos;re signed in. You can continue to
-          the app.
-        </div>
-      )}
-
-      {verified && !sessionPending && !session?.user && (
-        <div
-          className="rounded-lg bg-primary-fixed/50 px-4 py-3 text-sm text-on-primary-fixed"
-          role="status"
-        >
-          Email verified. Sign in below with your password.
-        </div>
-      )}
 
       <form className="space-y-6" onSubmit={onSubmit} noValidate>
         <div className="space-y-2">
