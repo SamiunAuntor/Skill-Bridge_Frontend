@@ -11,19 +11,6 @@ function formatHourlyRate(rate: number): string {
   return `$${Math.round(rate)}`;
 }
 
-function formatAvailabilityLabel(nextAvailableSlot: string | null): string {
-  if (!nextAvailableSlot) {
-    return "No upcoming availability";
-  }
-
-  return new Intl.DateTimeFormat("en-BD", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(nextAvailableSlot));
-}
-
 function getInitials(name: string): string {
   return name
     .split(/\s+/)
@@ -79,9 +66,9 @@ export default function TutorCard({ tutor, featured = false }: TutorCardProps) {
               featured
             />
           </div>
-          <div className="flex flex-1 flex-col justify-between p-8">
-            <div className="space-y-5">
-              <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+          <div className="flex flex-1 flex-col p-8">
+            <div className="grid flex-1 gap-8 lg:grid-cols-[minmax(0,1.15fr)_190px] lg:items-start">
+              <div className="flex min-w-0 flex-col">
                 <div>
                   {tutor.isTopRated ? (
                     <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-secondary-container px-3 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-on-secondary-container md:text-[10px]">
@@ -103,35 +90,37 @@ export default function TutorCard({ tutor, featured = false }: TutorCardProps) {
                     ))}
                   </div>
                 </div>
-                <div className="text-left md:text-right">
+
+                <p className="mt-5 max-w-3xl text-justify text-base leading-relaxed text-on-surface-variant">
+                  {tutor.bio}
+                </p>
+              </div>
+
+              <div className="flex h-full min-w-0 flex-col justify-between gap-6 lg:pl-2">
+                <div className="text-left lg:text-right">
                   <p className="text-3xl font-black text-secondary">
                     {formatHourlyRate(tutor.hourlyRate)}
                     <span className="ml-1 text-sm font-medium text-on-surface-variant">
                       /hr
                     </span>
                   </p>
-                  <p className="mt-1 flex items-center gap-1 text-sm font-semibold text-on-surface-variant md:justify-end">
-                    <Star className="h-4 w-4 fill-secondary text-secondary" />
-                    {tutor.averageRating.toFixed(1)} ({tutor.totalReviews} reviews)
+                  <p className="mt-2 flex items-center gap-1 text-sm font-semibold text-on-surface-variant lg:justify-end">
+                    <Star className="h-4 w-4 shrink-0 fill-secondary text-secondary" />
+                    <span>
+                      {tutor.averageRating.toFixed(1)} ({tutor.totalReviews} reviews)
+                    </span>
                   </p>
                 </div>
+
+                <div className="flex lg:justify-end">
+                  <Link
+                    href={`/tutors/${tutor.id}`}
+                    className="inline-flex rounded-xl bg-primary px-8 py-3 text-center font-headline text-sm font-bold text-on-primary transition-transform hover:translate-y-[-1px]"
+                  >
+                    View Profile
+                  </Link>
+                </div>
               </div>
-
-              <p className="max-w-2xl text-base leading-relaxed text-on-surface-variant">
-                {tutor.bio}
-              </p>
-            </div>
-
-            <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center">
-              <Link
-                href={`/tutors/${tutor.id}`}
-                className="rounded-xl bg-primary px-8 py-3 text-center font-headline text-sm font-bold text-on-primary transition-transform hover:translate-y-[-1px]"
-              >
-                View Profile
-              </Link>
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-on-surface-variant sm:ml-auto">
-                {formatAvailabilityLabel(tutor.nextAvailableSlot)}
-              </p>
             </div>
           </div>
         </div>
@@ -184,9 +173,6 @@ export default function TutorCard({ tutor, featured = false }: TutorCardProps) {
             <span className="ml-1 text-xs font-medium text-on-surface-variant">
               /hr
             </span>
-          </p>
-          <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-on-surface-variant">
-            {formatAvailabilityLabel(tutor.nextAvailableSlot)}
           </p>
         </div>
         <Link

@@ -8,16 +8,17 @@ import {
   FlaskConical
 } from "lucide-react";
 
-const subjects = [
-  { icon: <Code2 size={32} />, name: "Computer Science" },
-  { icon: <Palette size={32} />, name: "Fine Arts" },
-  { icon: <Variable size={32} />, name: "Mathematics" },
-  { icon: <Languages size={32} />, name: "Languages" },
-  { icon: <Landmark size={32} />, name: "Economics" },
-  { icon: <FlaskConical size={32} />, name: "Biological Sciences" },
-];
+type SubjectsSectionProps = {
+  subjects: Array<{
+    id: string;
+    name: string;
+    slug: string;
+  }>;
+};
 
-export default function SubjectsSection() {
+const icons = [Code2, Palette, Variable, Languages, Landmark, FlaskConical];
+
+export default function SubjectsSection({ subjects }: SubjectsSectionProps) {
   return (
     <section className="bg-surface-container-low py-24">
       {/* Section Header */}
@@ -39,20 +40,23 @@ export default function SubjectsSection() {
         pauseOnHover={true}
         className="pb-8"
       >
-        {subjects.map((subject) => (
+        {subjects.map((subject, index) => {
+          const Icon = icons[index % icons.length];
+
+          return (
           <div
-            key={subject.name}
+            key={subject.id}
             className="group mx-4 flex min-w-[240px] flex-col items-center rounded-2xl bg-surface-container-lowest px-10 py-8 text-center shadow-[0px_12px_32px_rgba(0,51,88,0.04)] transition-all hover:scale-[1.02] hover:bg-surface-bright"
           >
             <div className="mb-4 text-primary transition-transform group-hover:-translate-y-1">
-              {subject.icon}
+              <Icon size={32} />
             </div>
 
             <h4 className="font-headline text-lg font-bold text-primary">
               {subject.name}
             </h4>
           </div>
-        ))}
+        )})}
       </Marquee>
     </section>
   );

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
-import { Lock, Sparkles } from "lucide-react";
+import { Lock } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import BookingConfirmationModal from "@/Components/Tutors/BookingConfirmationModal";
 import {
@@ -298,18 +298,14 @@ export default function TutorBookingSidebar({
     <>
       <aside className="self-start lg:col-span-4 lg:flex lg:justify-end">
         <div className="w-full max-w-[21rem] overflow-hidden rounded-2xl border border-outline-variant/10 bg-surface-container-lowest shadow-[0px_18px_36px_rgba(0,51,88,0.08)]">
-        <div className="flex items-end justify-between bg-primary p-5 text-on-primary">
+        <div className="bg-primary p-5 text-on-primary">
           <div>
             <p className="font-headline text-[2.2rem] font-black">
               {formatCurrency(hourlyRate)}
               <span className="ml-1 text-xs font-medium text-on-primary-container">
-                / 60 min session
+                /hr
               </span>
             </p>
-          </div>
-          <div className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 text-[10px] font-semibold backdrop-blur-sm">
-            <Sparkles className="h-3 w-3" />
-            Instant Booking
           </div>
         </div>
 
