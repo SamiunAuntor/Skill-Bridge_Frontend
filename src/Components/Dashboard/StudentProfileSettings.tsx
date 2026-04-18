@@ -5,7 +5,11 @@ import Swal from "sweetalert2";
 import { Camera, Mail, UserRound } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { updateMyStudentProfile } from "@/lib/student-profile-api";
-import { uploadImage } from "@/lib/upload-image";
+import {
+  deleteUploadedAsset,
+  UploadedImageResult,
+  uploadImage,
+} from "@/lib/upload-image";
 
 export default function StudentProfileSettings() {
   const { data: session } = authClient.useSession();
@@ -16,6 +20,8 @@ export default function StudentProfileSettings() {
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [pendingUploadedImage, setPendingUploadedImage] =
+    useState<UploadedImageResult | null>(null);
 
   useEffect(() => {
     if (!session?.user || hasInitialized) {
@@ -55,7 +61,19 @@ export default function StudentProfileSettings() {
     try {
       const uploaded = await uploadImage(file);
 
+      if (pendingUploadedImage) {
+        try {
+          await deleteUploadedAsset({
+            publicId: pendingUploadedImage.publicId,
+            resourceType: pendingUploadedImage.resourceType,
+          });
+        } catch (rollbackError) {
+          console.warn("Unable to remove replaced uploaded image.", rollbackError);
+        }
+      }
+
       setProfileImageUrl(uploaded.secureUrl);
+      setPendingUploadedImage(uploaded);
     } catch (error) {
       await Swal.fire({
         icon: "error",
@@ -110,6 +128,7 @@ export default function StudentProfileSettings() {
 
       setInitialDisplayName(trimmedName);
       setInitialProfileImageUrl(profileImageUrl ?? null);
+      setPendingUploadedImage(null);
 
       await Swal.fire({
         icon: "success",
@@ -118,6 +137,20 @@ export default function StudentProfileSettings() {
         confirmButtonColor: "#1d3b66",
       });
     } catch (error) {
+      if (pendingUploadedImage) {
+        try {
+          await deleteUploadedAsset({
+            publicId: pendingUploadedImage.publicId,
+            resourceType: pendingUploadedImage.resourceType,
+          });
+        } catch (rollbackError) {
+          console.warn("Unable to roll back unsaved uploaded image.", rollbackError);
+        }
+
+        setProfileImageUrl(initialProfileImageUrl);
+        setPendingUploadedImage(null);
+      }
+
       await Swal.fire({
         icon: "error",
         title: "Profile update failed",

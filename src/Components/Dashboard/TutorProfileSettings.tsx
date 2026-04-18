@@ -10,7 +10,12 @@ import {
   TutorProfileApiError,
   updateMyTutorProfile,
 } from "@/lib/tutor-profile-api";
-import { ImageUploadError, uploadImage } from "@/lib/upload-image";
+import {
+  deleteUploadedAsset,
+  ImageUploadError,
+  UploadedImageResult,
+  uploadImage,
+} from "@/lib/upload-image";
 import {
   TutorEditableProfileResponse,
   TutorProfileUpdateEducationInput,
@@ -171,6 +176,8 @@ export default function TutorProfileSettings() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [pendingUploadedImage, setPendingUploadedImage] =
+    useState<UploadedImageResult | null>(null);
 
   if (session?.user?.role && session.user.role !== "tutor") {
     return null;
@@ -257,6 +264,23 @@ export default function TutorProfileSettings() {
     setFormState((current) => (current ? updater(current) : current));
   }
 
+  async function rollbackPendingUploadedImage() {
+    if (!pendingUploadedImage) {
+      return;
+    }
+
+    try {
+      await deleteUploadedAsset({
+        publicId: pendingUploadedImage.publicId,
+        resourceType: pendingUploadedImage.resourceType,
+      });
+    } catch (rollbackError) {
+      console.warn("Unable to remove unsaved uploaded image.", rollbackError);
+    } finally {
+      setPendingUploadedImage(null);
+    }
+  }
+
   function handleStartEditing() {
     setErrorMessage(null);
     setIsEditing(true);
@@ -279,6 +303,8 @@ export default function TutorProfileSettings() {
         return;
       }
     }
+
+    await rollbackPendingUploadedImage();
 
     if (initialFormState) {
       setFormState(initialFormState);
@@ -393,6 +419,7 @@ export default function TutorProfileSettings() {
       setProfileData(response);
       setFormState(mappedState);
       setInitialFormState(mappedState);
+      setPendingUploadedImage(null);
       setIsEditing(false);
 
       await Swal.fire({
@@ -402,6 +429,16 @@ export default function TutorProfileSettings() {
         confirmButtonColor: "#1d3b66",
       });
     } catch (error) {
+      if (pendingUploadedImage) {
+        await rollbackPendingUploadedImage();
+        if (initialFormState) {
+          updateFormState((current) => ({
+            ...current,
+            profileImageUrl: initialFormState.profileImageUrl,
+          }));
+        }
+      }
+
       await Swal.fire({
         icon: "error",
         title: "Profile update failed",
@@ -493,6 +530,21 @@ export default function TutorProfileSettings() {
 
                     try {
                       const result = await uploadImage(file);
+                      if (pendingUploadedImage) {
+                        try {
+                          await deleteUploadedAsset({
+                            publicId: pendingUploadedImage.publicId,
+                            resourceType: pendingUploadedImage.resourceType,
+                          });
+                        } catch (rollbackError) {
+                          console.warn(
+                            "Unable to remove replaced uploaded image.",
+                            rollbackError
+                          );
+                        }
+                      }
+
+                      setPendingUploadedImage(result);
                       updateFormState((current) => ({
                         ...current,
                         profileImageUrl: result.secureUrl,

@@ -9,17 +9,14 @@ interface BackendEnvelope<T> {
   data: T;
 }
 
-interface SignedUploadResponse {
-  timestamp: number;
-  signature: string;
-  apiKey: string;
-  cloudName: string;
-  folder: string;
-}
+export type UploadedAssetResourceType = "image" | "raw";
 
 export interface UploadedImageResult {
   secureUrl: string;
   publicId: string;
+  originalName: string;
+  resourceType: UploadedAssetResourceType;
+  bytes: number;
 }
 
 export class ImageUploadError extends Error {
@@ -29,25 +26,20 @@ export class ImageUploadError extends Error {
   }
 }
 
-async function getSignedUpload(): Promise<SignedUploadResponse> {
-  const response = await fetch(`${apiBaseUrl}/api/uploads/sign`, {
-    method: "POST",
-    credentials: "include",
-    cache: "no-store",
-  });
-
-  const payload = (await response.json().catch(() => null)) as
-    | BackendEnvelope<SignedUploadResponse>
-    | { message?: string }
-    | null;
-
-  if (!response.ok || !payload || !("data" in payload)) {
-    throw new ImageUploadError(
-      payload?.message || "Unable to prepare image upload."
-    );
+function getUploadErrorMessage(
+  response: Response,
+  payload: { message?: string } | null,
+  fallbackMessage: string
+): string {
+  if (payload?.message) {
+    return payload.message;
   }
 
-  return payload.data;
+  if (response.status >= 500) {
+    return fallbackMessage;
+  }
+
+  return "Unable to upload this file right now.";
 }
 
 export async function uploadImage(file: File): Promise<UploadedImageResult> {
@@ -61,35 +53,57 @@ export async function uploadImage(file: File): Promise<UploadedImageResult> {
     throw new ImageUploadError("Image size must be 3MB or smaller.");
   }
 
-  const signedUpload = await getSignedUpload();
   const formData = new FormData();
-
   formData.append("file", file);
-  formData.append("api_key", signedUpload.apiKey);
-  formData.append("timestamp", String(signedUpload.timestamp));
-  formData.append("signature", signedUpload.signature);
-  formData.append("folder", signedUpload.folder);
 
-  const response = await fetch(
-    `https://api.cloudinary.com/v1_1/${signedUpload.cloudName}/image/upload`,
-    {
-      method: "POST",
-      body: formData,
-    }
-  );
+  const response = await fetch(`${apiBaseUrl}/api/uploads/images`, {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+  });
 
   const payload = (await response.json().catch(() => null)) as
-    | { secure_url?: string; public_id?: string; error?: { message?: string } }
+    | BackendEnvelope<UploadedImageResult>
+    | { message?: string }
     | null;
 
-  if (!response.ok || !payload?.secure_url || !payload.public_id) {
+  if (!response.ok || !payload || !("data" in payload)) {
     throw new ImageUploadError(
-      payload?.error?.message || "Unable to upload image."
+      getUploadErrorMessage(
+        response,
+        payload,
+        "We couldn't upload this image right now. Please try again."
+      )
     );
   }
 
-  return {
-    secureUrl: payload.secure_url,
-    publicId: payload.public_id,
-  };
+  return payload.data;
+}
+
+export async function deleteUploadedAsset(input: {
+  publicId: string;
+  resourceType: UploadedAssetResourceType;
+}): Promise<void> {
+  const response = await fetch(`${apiBaseUrl}/api/uploads/assets`, {
+    method: "DELETE",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(input),
+  });
+
+  const payload = (await response.json().catch(() => null)) as
+    | { success?: boolean; message?: string }
+    | null;
+
+  if (!response.ok) {
+    throw new ImageUploadError(
+      getUploadErrorMessage(
+        response,
+        payload,
+        "We couldn't remove the uploaded file right now."
+      )
+    );
+  }
 }
