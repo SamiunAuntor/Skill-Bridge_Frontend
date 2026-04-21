@@ -1,16 +1,75 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { getAdminDashboardData, AdminApiError } from "@/lib/admin-api";
 import type { AdminDashboardResponse } from "@/types/admin";
 import {
   AdminCard,
   AdminErrorMessage,
   AdminLoadingMessage,
-  AdminPageHeader,
   AdminStatCard,
-} from "@/Components/Dashboard/AdminUi";
+} from "@/Components/Admin/AdminUi";
+
+const chartPalette = {
+  primary: "#1d3b66",
+  primarySoft: "#c6d7f3",
+  secondary: "#2f6e64",
+  secondarySoft: "#bff4e6",
+  accent: "#7b6ef6",
+  accentSoft: "#d8d3ff",
+  warning: "#d97706",
+  warningSoft: "#fde3b3",
+  danger: "#b42318",
+  dangerSoft: "#f7d3cf",
+};
+
+const bookingStatusColors: Record<string, string> = {
+  confirmed: chartPalette.primary,
+  completed: chartPalette.secondary,
+  cancelled: chartPalette.danger,
+  no_show: chartPalette.warning,
+};
+
+function formatStatusLabel(status: string): string {
+  return status.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function AdminChartCard({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <AdminCard>
+      <div className="mb-5">
+        <h2 className="font-headline text-xl font-bold text-primary">{title}</h2>
+        <p className="mt-1 text-sm text-on-surface-variant">{subtitle}</p>
+      </div>
+      <div className="h-72">{children}</div>
+    </AdminCard>
+  );
+}
 
 export default function AdminDashboardPage() {
   const [data, setData] = useState<AdminDashboardResponse | null>(null);
@@ -45,13 +104,22 @@ export default function AdminDashboardPage() {
     };
   }, []);
 
+  const bookingStatusChartData = useMemo(
+    () =>
+      data?.charts.bookingStatusBreakdown.map((item) => ({
+        ...item,
+        label: formatStatusLabel(item.status),
+      })) ?? [],
+    [data]
+  );
+
   return (
     <div>
-      <AdminPageHeader
-        eyebrow="Admin Control Center"
-        title="Platform overview"
-        description="Monitor the health of the tutoring marketplace and jump into the core moderation and catalog-management areas."
-      />
+      <header className="mb-8">
+        <h1 className="font-headline text-3xl font-extrabold tracking-tight text-primary md:text-4xl">
+          Platform overview
+        </h1>
+      </header>
 
       {errorMessage ? <AdminErrorMessage message={errorMessage} /> : null}
 
@@ -69,43 +137,96 @@ export default function AdminDashboardPage() {
             <AdminStatCard label="Categories" value={data.stats.totalCategories} href="/dashboard/admin/categories" />
             <AdminStatCard label="Subjects" value={data.stats.totalSubjects} href="/dashboard/admin/subjects" />
             <AdminStatCard label="Degrees" value={data.stats.totalDegrees} href="/dashboard/admin/degrees" />
+            <AdminStatCard label="Banned Users" value={data.stats.bannedUsers} href="/dashboard/admin/users" />
           </div>
 
-          <div className="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-3">
-            <AdminCard title="Operational focus">
-              <div className="space-y-3 text-sm leading-relaxed text-on-surface-variant">
-                <p>Use the user table to ban or unban tutor and student accounts.</p>
-                <p>Use bookings to monitor platform activity and keep payment-related fields visible for the upcoming gateway integration.</p>
-                <p>Use categories, subjects, and degrees as the master-data backbone that powers tutor profile setup and public subject discovery.</p>
-              </div>
-            </AdminCard>
+          <div className="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-2">
+            <AdminChartCard
+              title="Student registration trend"
+              subtitle="Student sign-ups over the last 6 months."
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data.charts.studentRegistrations}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#d8e2ef" />
+                  <XAxis dataKey="label" stroke="#5f6d7f" tickLine={false} axisLine={false} />
+                  <YAxis allowDecimals={false} stroke="#5f6d7f" tickLine={false} axisLine={false} />
+                  <Tooltip />
+                  <Area
+                    type="monotone"
+                    dataKey="count"
+                    stroke={chartPalette.primary}
+                    fill={chartPalette.primarySoft}
+                    strokeWidth={3}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </AdminChartCard>
 
-            <AdminCard title="Quick links">
-              <div className="grid gap-3">
-                {[
-                  { href: "/dashboard/admin/users", label: "Manage users" },
-                  { href: "/dashboard/admin/bookings", label: "Review bookings" },
-                  { href: "/dashboard/admin/categories", label: "Manage categories" },
-                  { href: "/dashboard/admin/subjects", label: "Manage subjects" },
-                  { href: "/dashboard/admin/degrees", label: "Manage degrees" },
-                ].map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="rounded-xl bg-surface-container-lowest px-4 py-3 text-sm font-semibold text-primary transition hover:bg-primary-fixed"
+            <AdminChartCard
+              title="Tutor registration trend"
+              subtitle="Tutor sign-ups over the last 6 months."
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={data.charts.tutorRegistrations}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#d8e2ef" />
+                  <XAxis dataKey="label" stroke="#5f6d7f" tickLine={false} axisLine={false} />
+                  <YAxis allowDecimals={false} stroke="#5f6d7f" tickLine={false} axisLine={false} />
+                  <Tooltip />
+                  <Line
+                    type="monotone"
+                    dataKey="count"
+                    stroke={chartPalette.secondary}
+                    strokeWidth={3}
+                    dot={{ r: 4, fill: chartPalette.secondary }}
+                    activeDot={{ r: 6 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </AdminChartCard>
+
+            <AdminChartCard
+              title="Booking activity trend"
+              subtitle="New bookings created over the last 6 months."
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data.charts.bookingTrend}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#d8e2ef" />
+                  <XAxis dataKey="label" stroke="#5f6d7f" tickLine={false} axisLine={false} />
+                  <YAxis allowDecimals={false} stroke="#5f6d7f" tickLine={false} axisLine={false} />
+                  <Tooltip />
+                  <Bar dataKey="count" radius={[10, 10, 0, 0]} fill={chartPalette.accent} />
+                </BarChart>
+              </ResponsiveContainer>
+            </AdminChartCard>
+
+            <AdminChartCard
+              title="Booking status breakdown"
+              subtitle="Current booking distribution across platform states."
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={bookingStatusChartData}
+                    dataKey="count"
+                    nameKey="label"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={65}
+                    outerRadius={95}
+                    paddingAngle={4}
                   >
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
-            </AdminCard>
-
-            <AdminCard title="Next expansion ready">
-              <div className="space-y-3 text-sm leading-relaxed text-on-surface-variant">
-                <p>The current schema already keeps booking payment fields ready for gateway integration.</p>
-                <p>Once payments land, this dashboard can add revenue cards, payout states, and settlement-level oversight without changing the admin route structure.</p>
-              </div>
-            </AdminCard>
+                    {bookingStatusChartData.map((item) => (
+                      <Cell
+                        key={item.status}
+                        fill={bookingStatusColors[item.status] ?? chartPalette.primary}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </AdminChartCard>
           </div>
         </>
       ) : null}

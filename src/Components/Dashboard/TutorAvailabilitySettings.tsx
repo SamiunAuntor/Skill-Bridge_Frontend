@@ -17,6 +17,7 @@ import {
   getMyAvailability,
   updateAvailabilitySlot,
 } from "@/lib/availability-api";
+import { formatTimeRange } from "@/lib/format/date";
 import type { AvailabilitySlotItem } from "@/types/tutor";
 
 type GroupedAvailability = {
@@ -36,16 +37,6 @@ type SlotVisualStatus = {
     borderColor: string;
   };
 };
-
-function formatTimeRange(startAt: string, endAt: string): string {
-  return `${new Intl.DateTimeFormat("en-BD", {
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(startAt))} - ${new Intl.DateTimeFormat("en-BD", {
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(endAt))}`;
-}
 
 function groupSlotsByDate(slots: AvailabilitySlotItem[]): GroupedAvailability[] {
   const groups = new Map<string, GroupedAvailability>();

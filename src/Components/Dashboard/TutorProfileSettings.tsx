@@ -16,6 +16,7 @@ import {
   UploadedImageResult,
   uploadImage,
 } from "@/lib/upload-image";
+import { normalizeText } from "@/lib/text";
 import type {
   TutorEditableDegreeOption,
   TutorEditableProfileResponse,
@@ -33,10 +34,6 @@ const inputClass =
   "w-full rounded-xl border border-outline-variant/30 bg-white px-3.5 py-2.5 text-[13px] text-on-surface shadow-sm shadow-slate-900/5 outline-none transition placeholder:text-[13px] focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-70 dark:border-outline-variant/30 dark:bg-surface-container dark:shadow-none";
 
 const textAreaClass = `${inputClass} min-h-32 resize-y`;
-
-function normalizeText(value: string | null | undefined): string {
-  return typeof value === "string" ? value.trim() : "";
-}
 
 function toFriendlyTutorProfileError(error: unknown): string {
   const message =
@@ -297,6 +294,7 @@ export default function TutorProfileSettings() {
       await deleteUploadedAsset({
         publicId: pendingUploadedImage.publicId,
         resourceType: pendingUploadedImage.resourceType,
+        deleteToken: pendingUploadedImage.deleteToken,
       });
     } catch (rollbackError) {
       console.warn("Unable to remove unsaved uploaded image.", rollbackError);
@@ -542,6 +540,7 @@ export default function TutorProfileSettings() {
                           await deleteUploadedAsset({
                             publicId: pendingUploadedImage.publicId,
                             resourceType: pendingUploadedImage.resourceType,
+                            deleteToken: pendingUploadedImage.deleteToken,
                           });
                         } catch (rollbackError) {
                           console.warn(

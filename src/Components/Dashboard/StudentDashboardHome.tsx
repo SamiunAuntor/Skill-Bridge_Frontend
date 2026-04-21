@@ -7,6 +7,7 @@ import { CalendarClock, Clock3, ReceiptText, UserRound } from "lucide-react";
 import { getMySessions, BookingApiError } from "@/lib/booking-api";
 import { useAppAuthSession } from "@/lib/auth";
 import { getRoleDashboardPath } from "@/lib/dashboard-routes";
+import { formatShortDate, formatTimeRange } from "@/lib/format/date";
 import { DashboardSessionItem } from "@/types/tutor";
 
 function toFriendlyError(error: unknown): string {
@@ -19,23 +20,6 @@ function toFriendlyError(error: unknown): string {
   }
 
   return "Unable to load your dashboard right now.";
-}
-
-function formatDate(value: string): string {
-  return new Intl.DateTimeFormat("en-BD", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  }).format(new Date(value));
-}
-
-function formatTimeRange(start: string, end: string): string {
-  const formatter = new Intl.DateTimeFormat("en-BD", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
-  return `${formatter.format(new Date(start))} - ${formatter.format(new Date(end))}`;
 }
 
 export default function StudentDashboardHome() {
@@ -159,7 +143,7 @@ export default function StudentDashboardHome() {
                   </div>
                   <div className="flex items-center gap-2 text-sm text-on-surface-variant">
                     <CalendarClock className="h-4 w-4" />
-                    <span>{formatDate(item.sessionDate)}</span>
+                    <span>{formatShortDate(item.sessionDate)}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-on-surface-variant">
                     <Clock3 className="h-4 w-4" />

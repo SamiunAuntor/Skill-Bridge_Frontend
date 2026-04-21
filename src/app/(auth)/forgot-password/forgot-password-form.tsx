@@ -7,9 +7,9 @@ import { z } from "zod";
 import {
   showAuthErrorToast,
   showAuthSuccessToast,
-} from "@/lib/auth-alerts";
+} from "@/lib/auth/auth-alerts";
 import { betterAuthClient } from "@/lib/auth/better-auth-client";
-import { formatAuthError } from "@/lib/auth-errors";
+import { formatAuthError } from "@/lib/auth/auth-errors";
 
 const forgotSchema = z.object({
   email: z.string().trim().email("Enter a valid email"),

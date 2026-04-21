@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
 import { useAppAuthSession } from "@/lib/auth";
+import { formatLongDate, formatTimeRange } from "@/lib/format/date";
 import {
   BookingApiError,
   cancelBooking,
@@ -23,24 +24,6 @@ import {
   DashboardSessionSortOption,
 } from "@/types/tutor";
 import { UserRole } from "@/types/auth";
-
-function formatDate(value: string): string {
-  return new Intl.DateTimeFormat("en-BD", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(value));
-}
-
-function formatTimeRange(start: string, end: string): string {
-  const formatter = new Intl.DateTimeFormat("en-BD", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
-  return `${formatter.format(new Date(start))} - ${formatter.format(new Date(end))}`;
-}
 
 function getCounterpartyLabel(role: UserRole, session: DashboardSessionItem): string {
   return role === "tutor" ? session.student.name : session.tutor.name;
@@ -421,7 +404,7 @@ export default function DashboardSessionsList() {
                         Date
                       </p>
                       <p className="mt-1 text-[14px] font-semibold text-primary">
-                        {formatDate(item.sessionDate)}
+                        {formatLongDate(item.sessionDate)}
                       </p>
                     </div>
                     <span

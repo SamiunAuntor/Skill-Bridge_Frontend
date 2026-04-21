@@ -39,10 +39,6 @@ export function proxy(request: NextRequest) {
   const hasAuthCookie = hasAnyAuthCookie(request);
 
   if (isAuthRoute(pathname)) {
-    if (hasAuthCookie) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
-    }
-
     return NextResponse.next();
   }
 

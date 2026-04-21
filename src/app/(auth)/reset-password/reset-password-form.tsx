@@ -11,9 +11,9 @@ import {
   showAuthErrorAlert,
   showAuthInfoAlert,
   showAuthSuccessToast,
-} from "@/lib/auth-alerts";
+} from "@/lib/auth/auth-alerts";
 import { resetPasswordWithAppAuth } from "@/lib/auth";
-import { formatAuthError } from "@/lib/auth-errors";
+import { formatAuthError } from "@/lib/auth/auth-errors";
 
 const resetSchema = z.object({
   password: z

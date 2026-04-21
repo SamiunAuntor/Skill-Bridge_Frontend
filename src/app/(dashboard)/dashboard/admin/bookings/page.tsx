@@ -10,9 +10,11 @@ import {
   AdminPageHeader,
   AdminPaginationControls,
   AdminTableEmpty,
+} from "@/Components/Admin/AdminUi";
+import {
   formatAdminCurrency,
   formatAdminDateTime,
-} from "@/Components/Dashboard/AdminUi";
+} from "@/Components/Admin/admin-formatters";
 
 const defaultQuery = {
   q: "",

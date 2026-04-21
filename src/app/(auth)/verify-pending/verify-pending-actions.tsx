@@ -9,8 +9,8 @@ import { betterAuthClient } from "@/lib/auth/better-auth-client";
 import {
   showAuthErrorToast,
   showAuthSuccessToast,
-} from "@/lib/auth-alerts";
-import { formatAuthError } from "@/lib/auth-errors";
+} from "@/lib/auth/auth-alerts";
+import { formatAuthError } from "@/lib/auth/auth-errors";
 
 const verifySchema = z.object({
   email: z.string().trim().email("Enter a valid email"),

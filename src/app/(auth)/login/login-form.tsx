@@ -11,8 +11,8 @@ import {
   showAuthInfoToast,
   showAuthErrorToast,
   showAuthSuccessToast,
-} from "@/lib/auth-alerts";
-import { formatAuthError, isAuthClientError } from "@/lib/auth-errors";
+} from "@/lib/auth/auth-alerts";
+import { formatAuthError, isAuthClientError } from "@/lib/auth/auth-errors";
 import { loginWithAppAuth, useAppAuthSession } from "@/lib/auth";
 
 const loginSchema = z.object({

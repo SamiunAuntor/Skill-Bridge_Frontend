@@ -15,8 +15,8 @@ import {
   AdminPageHeader,
   AdminPaginationControls,
   AdminTableEmpty,
-  formatAdminDate,
-} from "@/Components/Dashboard/AdminUi";
+} from "@/Components/Admin/AdminUi";
+import { formatAdminDate } from "@/Components/Admin/admin-formatters";
 
 const defaultQuery = {
   q: "",

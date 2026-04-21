@@ -40,6 +40,25 @@ export type AdminDashboardResponse = {
     totalCategories: number;
     totalSubjects: number;
     totalDegrees: number;
+    bannedUsers: number;
+  };
+  charts: {
+    studentRegistrations: Array<{
+      label: string;
+      count: number;
+    }>;
+    tutorRegistrations: Array<{
+      label: string;
+      count: number;
+    }>;
+    bookingTrend: Array<{
+      label: string;
+      count: number;
+    }>;
+    bookingStatusBreakdown: Array<{
+      status: "confirmed" | "completed" | "cancelled" | "no_show";
+      count: number;
+    }>;
   };
 };
 

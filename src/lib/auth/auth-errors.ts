@@ -1,7 +1,6 @@
 const API_HINT =
   "We couldn't reach SkillBridge right now. Please try again in a moment.";
 
-/** Returned on failed Better Auth client calls (better-fetch). */
 export type AuthClientError = {
   status: number;
   statusText?: string;

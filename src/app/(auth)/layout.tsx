@@ -1,12 +1,21 @@
 import AuthTabs from "@/Components/Auth/AuthTabs";
 import Footer from "@/Components/Layout/Footer";
 import Navbar from "@/Components/Layout/Navbar";
+import { getServerAuthSession } from "@/lib/auth/server-session";
+import { getRoleDashboardRoot } from "@/lib/dashboard-routes";
+import { redirect } from "next/navigation";
 
 type AuthLayoutProps = {
   children: React.ReactNode;
 };
 
-export default function AuthLayout({ children }: AuthLayoutProps) {
+export default async function AuthLayout({ children }: AuthLayoutProps) {
+  const session = await getServerAuthSession();
+
+  if (session?.user) {
+    redirect(getRoleDashboardRoot(session.user.role));
+  }
+
   return (
     <div className="min-h-screen bg-background text-on-background">
       <Navbar />

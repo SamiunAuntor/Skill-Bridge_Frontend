@@ -10,9 +10,9 @@ import PasswordVisibilityToggle from "@/Components/Auth/PasswordVisibilityToggle
 import {
   showAuthErrorToast,
   showAuthSuccessToast,
-} from "@/lib/auth-alerts";
+} from "@/lib/auth/auth-alerts";
 import { registerWithAppAuth } from "@/lib/auth";
-import { formatAuthError } from "@/lib/auth-errors";
+import { formatAuthError } from "@/lib/auth/auth-errors";
 import { REGISTER_ROLES, type RegisterRole } from "@/types/auth";
 
 const registerSchema = z.object({

@@ -17,6 +17,7 @@ export interface UploadedImageResult {
   originalName: string;
   resourceType: UploadedAssetResourceType;
   bytes: number;
+  deleteToken: string;
 }
 
 export class ImageUploadError extends Error {
@@ -83,6 +84,7 @@ export async function uploadImage(file: File): Promise<UploadedImageResult> {
 export async function deleteUploadedAsset(input: {
   publicId: string;
   resourceType: UploadedAssetResourceType;
+  deleteToken: string;
 }): Promise<void> {
   const response = await fetch(`${apiBaseUrl}/api/uploads/assets`, {
     method: "DELETE",

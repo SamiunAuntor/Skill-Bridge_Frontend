@@ -66,6 +66,7 @@ export default function StudentProfileSettings() {
           await deleteUploadedAsset({
             publicId: pendingUploadedImage.publicId,
             resourceType: pendingUploadedImage.resourceType,
+            deleteToken: pendingUploadedImage.deleteToken,
           });
         } catch (rollbackError) {
           console.warn("Unable to remove replaced uploaded image.", rollbackError);
@@ -134,6 +135,7 @@ export default function StudentProfileSettings() {
           await deleteUploadedAsset({
             publicId: pendingUploadedImage.publicId,
             resourceType: pendingUploadedImage.resourceType,
+            deleteToken: pendingUploadedImage.deleteToken,
           });
         } catch (rollbackError) {
           console.warn("Unable to roll back unsaved uploaded image.", rollbackError);

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode } from "react";
 import { logoutWithAppAuth, useAppAuthSession } from "@/lib/auth";
-import { showAuthErrorToast, showAuthSuccessToast } from "@/lib/auth-alerts";
+import { showAuthErrorToast, showAuthSuccessToast } from "@/lib/auth/auth-alerts";
 import { dashboardNavByRole } from "./dashboard.config";
 import { UserRole } from "@/types/auth";
 import ThemeToggle from "@/Components/Theme/ThemeToggle";

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { logoutWithAppAuth, useAppAuthSession, type AppAuthUser } from "@/lib/auth";
-import { showAuthErrorToast, showAuthSuccessToast } from "@/lib/auth-alerts";
+import { showAuthErrorToast, showAuthSuccessToast } from "@/lib/auth/auth-alerts";
 import { getRoleDashboardPath } from "@/lib/dashboard-routes";
 
 type NavbarSessionProps = {
