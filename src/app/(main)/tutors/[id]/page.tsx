@@ -14,14 +14,14 @@ import {
   TutorCategory,
   TutorDetailResponse,
   TutorEducation,
-  TutorExpertise,
+  TutorSubject,
   TutorTestimonial,
 } from "@/types/tutor";
 
 export const metadata = {
   title: "Tutor Profile | SkillBridge",
   description:
-    "Explore tutor expertise, education, student reviews, and booking details on SkillBridge.",
+    "Explore tutor subjects, education, student reviews, and booking details on SkillBridge.",
 };
 
 type TutorProfilePageProps = {
@@ -67,11 +67,11 @@ function formatRelativeDate(isoDate: string): string {
 
 function buildProfileSubjects(
   categories: TutorCategory[],
-  expertise: TutorExpertise[]
+  subjects: TutorSubject[]
 ): Array<{ id: string; name: string }> {
   const uniqueItems = new Map<string, { id: string; name: string }>();
 
-  for (const item of [...categories, ...expertise]) {
+  for (const item of [...categories, ...subjects]) {
     const key = item.slug || item.name.toLowerCase();
     if (!uniqueItems.has(key)) {
       uniqueItems.set(key, { id: item.id, name: item.name });
@@ -83,14 +83,13 @@ function buildProfileSubjects(
 
 function buildMasteryItems(
   categories: TutorCategory[],
-  expertise: TutorExpertise[]
+  subjects: TutorSubject[]
 ): Array<{ key: string; title: string; subtitle: string; iconIndex: number }> {
-  if (expertise.length > 0) {
-    return expertise.map((item, index) => ({
+  if (subjects.length > 0) {
+    return subjects.map((item, index) => ({
       key: item.id,
       title: item.name,
-      subtitle:
-        categories[index % Math.max(categories.length, 1)]?.name || "Specialized tutoring",
+      subtitle: item.categoryName || categories[index % Math.max(categories.length, 1)]?.name || "Specialized tutoring",
       iconIndex: index,
     }));
   }
@@ -196,8 +195,8 @@ export default async function TutorProfilePage({
   }
 
   const tutor = tutorData.tutor;
-  const profileSubjects = buildProfileSubjects(tutor.categories, tutor.expertise);
-  const masteryItems = buildMasteryItems(tutor.categories, tutor.expertise);
+  const profileSubjects = buildProfileSubjects(tutor.categories, tutor.subjects);
+  const masteryItems = buildMasteryItems(tutor.categories, tutor.subjects);
   const testimonials = tutor.testimonials;
 
   return (
@@ -334,7 +333,7 @@ export default async function TutorProfilePage({
                   })
                 ) : (
                   <div className="rounded-xl bg-surface-container-low px-6 py-4 text-sm text-on-surface-variant">
-                    Offered tutorings will appear when categories or expertise are
+                    Offered tutorings will appear when categories or subjects are
                     added.
                   </div>
                 )}

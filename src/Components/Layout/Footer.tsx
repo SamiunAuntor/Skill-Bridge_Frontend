@@ -6,7 +6,7 @@ const footerColumns = [
     links: [
       { label: "Find Tutors", href: "/tutors" },
       { label: "Become a Tutor", href: "#" },
-      { label: "Subjects", href: "#" },
+      { label: "Subjects", href: "/subjects" },
     ],
   },
   {

@@ -37,7 +37,7 @@ export default function FeaturedTutorsSection({
               Learn from the <span className="text-secondary">Best Minds</span>
             </h2>
             <p className="text-lg text-on-surface-variant">
-              Our top-rated tutors are vetted for both expertise and teaching
+              Our top-rated tutors are vetted for both subject mastery and teaching
               excellence. Experience the difference of premium mentorship.
             </p>
           </div>
@@ -160,7 +160,7 @@ export default function FeaturedTutorsSection({
 
                 <p className="text-lg leading-relaxed text-on-primary-container/90 md:text-xl">
                   Join our elite roster of intellectuals and share your
-                  expertise with motivated students globally. We are looking for
+                  knowledge with motivated students globally. We are looking for
                   distinguished tutors to shape the future of learning.
                 </p>
               </div>

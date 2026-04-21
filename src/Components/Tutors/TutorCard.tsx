@@ -53,7 +53,7 @@ function Avatar({
 }
 
 export default function TutorCard({ tutor, featured = false }: TutorCardProps) {
-  const tags = tutor.expertise.length > 0 ? tutor.expertise : tutor.categories;
+  const tags = tutor.subjects.length > 0 ? tutor.subjects : tutor.categories;
 
   if (featured) {
     return (

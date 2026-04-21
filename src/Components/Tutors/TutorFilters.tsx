@@ -2,11 +2,11 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import type { TutorCategory, TutorListFilters } from "@/types/tutor";
+import type { TutorListFilters, TutorSubject } from "@/types/tutor";
 
 type TutorFiltersProps = {
   filters: TutorListFilters;
-  subjectOptions: TutorCategory[];
+  subjectOptions: TutorSubject[];
 };
 
 type RatingOption = {

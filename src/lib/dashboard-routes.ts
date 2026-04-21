@@ -6,7 +6,12 @@ export type DashboardSection =
   | "sessions"
   | "availability"
   | "finances"
-  | "resources";
+  | "resources"
+  | "users"
+  | "bookings"
+  | "categories"
+  | "subjects"
+  | "degrees";
 
 export function getRoleDashboardRoot(role: UserRole): string {
   switch (role) {
@@ -56,6 +61,26 @@ export function getLegacyDashboardRedirectPath(
       return role === "tutor" || role === "admin"
         ? getRoleDashboardPath(role, "resources")
         : getRoleDashboardPath(role, "home");
+    case "/dashboard/users":
+      return role === "admin"
+        ? getRoleDashboardPath(role, "users")
+        : getRoleDashboardPath(role, "home");
+    case "/dashboard/categories":
+      return role === "admin"
+        ? getRoleDashboardPath(role, "categories")
+        : getRoleDashboardPath(role, "home");
+    case "/dashboard/subjects":
+      return role === "admin"
+        ? getRoleDashboardPath(role, "subjects")
+        : getRoleDashboardPath(role, "home");
+    case "/dashboard/degrees":
+      return role === "admin"
+        ? getRoleDashboardPath(role, "degrees")
+        : getRoleDashboardPath(role, "home");
+    case "/dashboard/bookings":
+      return role === "admin"
+        ? getRoleDashboardPath(role, "bookings")
+        : getRoleDashboardPath(role, "sessions");
     default:
       return getRoleDashboardPath(role, "home");
   }

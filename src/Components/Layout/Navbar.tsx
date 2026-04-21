@@ -9,7 +9,7 @@ import NavbarSession from "@/Components/Layout/NavbarSession";
 
 const navLinks = [
   { href: "/tutors", label: "Find Tutors" },
-  { href: "#", label: "Subjects" },
+  { href: "/subjects", label: "Subjects" },
   { href: "#", label: "Resources" },
   { href: "#", label: "About" },
 ];

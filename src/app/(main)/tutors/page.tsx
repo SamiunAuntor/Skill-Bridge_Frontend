@@ -8,7 +8,7 @@ import { TutorListFilters, TutorSortOption } from "@/types/tutor";
 export const metadata = {
   title: "Find Tutors | SkillBridge",
   description:
-    "Browse public tutor profiles, compare expertise, and find the right mentor on SkillBridge.",
+    "Browse public tutor profiles, compare subjects, and find the right mentor on SkillBridge.",
 };
 
 type TutorsPageProps = {

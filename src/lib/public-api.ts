@@ -70,9 +70,70 @@ export type LandingPageResponse = {
     id: string;
     name: string;
     slug: string;
+    iconKey: string | null;
+    shortDescription: string | null;
+    categoryName: string;
   }>;
 };
 
 export async function getLandingPageData(): Promise<LandingPageResponse> {
   return fetchPublicApi<LandingPageResponse>("/api/public/landing", 300);
+}
+
+export type PublicSubjectsResponse = {
+  subjects: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    iconKey: string | null;
+    shortDescription: string | null;
+    category: {
+      id: string;
+      name: string;
+      slug: string;
+    };
+    tutorCount: number;
+  }>;
+};
+
+export type PublicSubjectDetailResponse = {
+  subject: {
+    id: string;
+    name: string;
+    slug: string;
+    shortDescription: string | null;
+    longDescription: string | null;
+    iconKey: string | null;
+    heroImageUrl: string | null;
+    category: {
+      id: string;
+      name: string;
+      slug: string;
+    };
+  };
+  tutors: Array<{
+    id: string;
+    userId: string;
+    displayName: string;
+    professionalTitle: string;
+    avatarUrl: string | null;
+    bio: string;
+    hourlyRate: number;
+    averageRating: number;
+    totalReviews: number;
+    isTopRated: boolean;
+  }>;
+};
+
+export async function getPublicSubjects(): Promise<PublicSubjectsResponse> {
+  return fetchPublicApi<PublicSubjectsResponse>("/api/public/subjects", 300);
+}
+
+export async function getPublicSubjectBySlug(
+  slug: string
+): Promise<PublicSubjectDetailResponse> {
+  return fetchPublicApi<PublicSubjectDetailResponse>(
+    `/api/public/subjects/${slug}`,
+    300
+  );
 }

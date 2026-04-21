@@ -1,8 +1,8 @@
 import {
-  TutorCategory,
   TutorDetailResponse,
   TutorListFilters,
   TutorListResponse,
+  TutorSubject,
   TutorSortOption,
 } from "@/types/tutor";
 
@@ -96,8 +96,8 @@ export async function getTutorById(id: string): Promise<TutorDetailResponse> {
   return fetchTutorApi<TutorDetailResponse>(`/api/tutors/${id}`, 60);
 }
 
-export async function getTutorSubjectOptions(): Promise<TutorCategory[]> {
-  return fetchTutorApi<TutorCategory[]>(`/api/tutors/subjects`, 300);
+export async function getTutorSubjectOptions(): Promise<TutorSubject[]> {
+  return fetchTutorApi<TutorSubject[]>(`/api/tutors/subjects`, 300);
 }
 
 export const tutorSortLabels: Record<TutorSortOption, string> = {

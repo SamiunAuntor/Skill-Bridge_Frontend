@@ -16,10 +16,11 @@ import {
   UploadedImageResult,
   uploadImage,
 } from "@/lib/upload-image";
-import {
+import type {
+  TutorEditableDegreeOption,
   TutorEditableProfileResponse,
+  TutorEditableSubjectOption,
   TutorProfileUpdateEducationInput,
-  TutorProfileUpdateExpertiseInput,
   TutorProfileUpdateInput,
 } from "@/types/tutor";
 
@@ -42,59 +43,55 @@ function toFriendlyTutorProfileError(error: unknown): string {
     error instanceof TutorProfileApiError
       ? error.message
       : error instanceof Error
-      ? error.message
-      : "We couldn’t update your tutor profile right now. Please try again.";
+        ? error.message
+        : "We couldn't update your tutor profile right now. Please try again.";
 
-  if (/^education\[\d+\]\.startYear cannot be greater than endYear\.$/i.test(message)) {
-    return "One education entry has a start year later than its end year.";
+  if (/selected subjects must belong to the selected categories/i.test(message)) {
+    return "One or more selected subjects do not belong to your selected categories.";
   }
 
-  if (/^education\[\d+\]\.startYear must be a valid year\.$/i.test(message)) {
-    return "Please enter a valid education start year.";
+  if (/one or more selected subjects are invalid/i.test(message)) {
+    return "One or more selected subjects are no longer available. Please reselect them.";
   }
 
-  if (/^education\[\d+\]\.endYear must be a valid year\.$/i.test(message)) {
-    return "Please enter a valid education end year.";
-  }
-
-  if (/^education\[\d+\]\.degree is required\.$/i.test(message)) {
-    return "Each education entry needs a degree name.";
-  }
-
-  if (/^education\[\d+\]\.institution is required\.$/i.test(message)) {
-    return "Each education entry needs an institution name.";
-  }
-
-  if (/^expertise\[\d+\]\.name is required\.$/i.test(message)) {
-    return "Each subject entry needs a subject name.";
-  }
-
-  if (/^categoryIds\[\d+\] must be a valid category id\.$/i.test(message)) {
-    return "One of the selected categories is invalid. Please reselect your categories.";
-  }
-
-  if (/^One or more selected categories are invalid\.$/i.test(message)) {
+  if (/one or more selected categories are invalid/i.test(message)) {
     return "One or more selected categories are invalid. Please reselect them.";
   }
 
-  if (/^At least one subject is required\.$/i.test(message)) {
-    return "Please add at least one subject before saving your profile.";
+  if (/one or more selected degrees are invalid/i.test(message)) {
+    return "One or more selected degrees are invalid. Please choose the degree again.";
   }
 
-  if (/^bio must be at least 20 characters long\.$/i.test(message)) {
+  if (/at least one subject is required/i.test(message)) {
+    return "Please select at least one subject before saving your profile.";
+  }
+
+  if (/bio must be at least 20 characters long/i.test(message)) {
     return "Your bio must be at least 20 characters long.";
+  }
+
+  if (/education\[\d+\]\.institution/i.test(message)) {
+    return "Each education entry needs an institution name.";
+  }
+
+  if (/education\[\d+\]\.degreeId/i.test(message)) {
+    return "Each education entry must use one of the available degree options.";
+  }
+
+  if (/education\[\d+\]\.startYear cannot be greater than endYear/i.test(message)) {
+    return "One education entry has a start year later than its end year.";
   }
 
   return message;
 }
 
-function createBlankExpertise(): TutorProfileUpdateExpertiseInput {
-  return { name: "" };
-}
-
-function createBlankEducation(): TutorProfileUpdateEducationInput {
+function createBlankEducation(
+  defaultDegreeId?: string,
+  degreeLabel?: string
+): TutorProfileUpdateEducationInput {
   return {
-    degree: "",
+    degreeId: defaultDegreeId ?? "",
+    degree: degreeLabel ?? "",
     institution: "",
     fieldOfStudy: "",
     startYear: new Date().getFullYear(),
@@ -104,23 +101,23 @@ function createBlankEducation(): TutorProfileUpdateEducationInput {
 }
 
 function mapProfileToFormState(
-  data: TutorEditableProfileResponse["profile"]
+  data: TutorEditableProfileResponse
 ): ProfileFormState {
+  const defaultDegree = data.availableDegrees[0];
+
   return {
-    profileImageUrl: data.profileImageUrl,
-    professionalTitle: data.professionalTitle ?? "",
-    bio: data.bio ?? "",
-    hourlyRate: data.hourlyRate,
-    experienceYears: data.experienceYears,
-    categoryIds: data.categoryIds,
-    expertise:
-      data.expertise.length > 0
-        ? data.expertise.map((item) => ({ id: item.id, name: item.name }))
-        : [createBlankExpertise()],
+    profileImageUrl: data.profile.profileImageUrl,
+    professionalTitle: data.profile.professionalTitle ?? "",
+    bio: data.profile.bio ?? "",
+    hourlyRate: data.profile.hourlyRate,
+    experienceYears: data.profile.experienceYears,
+    categoryIds: data.profile.categoryIds,
+    subjectIds: data.profile.subjects.map((item) => item.subjectId),
     education:
-      data.education.length > 0
-        ? data.education.map((item) => ({
+      data.profile.education.length > 0
+        ? data.profile.education.map((item) => ({
             id: item.id,
+            degreeId: item.degreeId,
             degree: item.degree,
             institution: item.institution,
             fieldOfStudy: item.fieldOfStudy,
@@ -128,7 +125,7 @@ function mapProfileToFormState(
             endYear: item.endYear,
             description: item.description ?? "",
           }))
-        : [createBlankEducation()],
+        : [createBlankEducation(defaultDegree?.id, defaultDegree?.name)],
   };
 }
 
@@ -140,13 +137,10 @@ function serializeFormState(state: ProfileFormState): string {
     hourlyRate: Number(state.hourlyRate) || 0,
     experienceYears: Number(state.experienceYears) || 0,
     categoryIds: [...state.categoryIds].sort(),
-    expertise: state.expertise.map((item) => ({
-      id: item.id ?? null,
-      name: normalizeText(item.name),
-    })),
+    subjectIds: [...state.subjectIds].sort(),
     education: state.education.map((item) => ({
       id: item.id ?? null,
-      degree: normalizeText(item.degree),
+      degreeId: item.degreeId,
       institution: normalizeText(item.institution),
       fieldOfStudy: normalizeText(item.fieldOfStudy),
       startYear: Number(item.startYear),
@@ -162,6 +156,26 @@ function getCompletionRatio(completed: number, total: number): number {
   }
 
   return Math.round((completed / total) * 100);
+}
+
+function resolveDegreeLabel(
+  degreeId: string,
+  options: TutorEditableDegreeOption[]
+): string {
+  return options.find((item) => item.id === degreeId)?.name ?? "";
+}
+
+function getAvailableSubjectsForSelection(
+  selectedCategoryIds: string[],
+  availableSubjects: TutorEditableSubjectOption[]
+): TutorEditableSubjectOption[] {
+  if (selectedCategoryIds.length === 0) {
+    return [];
+  }
+
+  return availableSubjects.filter((subject) =>
+    selectedCategoryIds.includes(subject.categoryId)
+  );
 }
 
 export default function TutorProfileSettings() {
@@ -192,8 +206,8 @@ export default function TutorProfileSettings() {
           return;
         }
 
+        const mappedState = mapProfileToFormState(response);
         setProfileData(response);
-        const mappedState = mapProfileToFormState(response.profile);
         setFormState(mappedState);
         setInitialFormState(mappedState);
       } catch (error) {
@@ -220,6 +234,17 @@ export default function TutorProfileSettings() {
     };
   }, []);
 
+  const availableSubjects = useMemo(
+    () =>
+      profileData && formState
+        ? getAvailableSubjectsForSelection(
+            formState.categoryIds,
+            profileData.availableSubjects
+          )
+        : [],
+    [profileData, formState]
+  );
+
   const completionStats = useMemo(() => {
     if (!formState) {
       return { completed: 0, total: 7 };
@@ -231,11 +256,10 @@ export default function TutorProfileSettings() {
       normalizeText(formState.bio).length > 0,
       formState.hourlyRate > 0,
       formState.experienceYears > 0,
-      formState.categoryIds.length > 0 ||
-        formState.expertise.some((item) => normalizeText(item.name).length > 0),
+      formState.categoryIds.length > 0 && formState.subjectIds.length > 0,
       formState.education.some(
         (item) =>
-          normalizeText(item.degree).length > 0 &&
+          normalizeText(item.degreeId).length > 0 &&
           normalizeText(item.institution).length > 0
       ),
     ];
@@ -313,31 +337,6 @@ export default function TutorProfileSettings() {
     setErrorMessage(null);
   }
 
-  async function handleRemoveExpertise(index: number) {
-    const confirmation = await Swal.fire({
-      icon: "warning",
-      title: "Remove this subject?",
-      text: "This subject will be removed from your public tutoring profile.",
-      showCancelButton: true,
-      confirmButtonText: "Remove subject",
-      cancelButtonText: "Keep subject",
-      confirmButtonColor: "#9f1d1d",
-      cancelButtonColor: "#1d3b66",
-    });
-
-    if (!confirmation.isConfirmed) {
-      return;
-    }
-
-    updateFormState((current) => ({
-      ...current,
-      expertise:
-        current.expertise.length > 1
-          ? current.expertise.filter((_, expertiseIndex) => expertiseIndex !== index)
-          : [createBlankExpertise()],
-    }));
-  }
-
   async function handleRemoveEducation(index: number) {
     const confirmation = await Swal.fire({
       icon: "warning",
@@ -354,19 +353,23 @@ export default function TutorProfileSettings() {
       return;
     }
 
-    updateFormState((current) => ({
-      ...current,
-      education:
-        current.education.length > 1
-          ? current.education.filter((_, educationIndex) => educationIndex !== index)
-          : [createBlankEducation()],
-    }));
+    updateFormState((current) => {
+      const defaultDegree = profileData?.availableDegrees[0];
+
+      return {
+        ...current,
+        education:
+          current.education.length > 1
+            ? current.education.filter((_, educationIndex) => educationIndex !== index)
+            : [createBlankEducation(defaultDegree?.id, defaultDegree?.name)],
+      };
+    });
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!formState || !isEditing) {
+    if (!formState || !isEditing || !profileData) {
       return;
     }
 
@@ -384,6 +387,16 @@ export default function TutorProfileSettings() {
       return;
     }
 
+    if (formState.subjectIds.length === 0) {
+      await Swal.fire({
+        icon: "warning",
+        title: "Select at least one subject",
+        text: "Students need to know exactly which subjects you teach.",
+        confirmButtonColor: "#1d3b66",
+      });
+      return;
+    }
+
     setIsSaving(true);
     setErrorMessage(null);
 
@@ -395,27 +408,23 @@ export default function TutorProfileSettings() {
         hourlyRate: Number(formState.hourlyRate) || 0,
         experienceYears: Number(formState.experienceYears) || 0,
         categoryIds: formState.categoryIds,
-        expertise: formState.expertise
-          .map((item) => ({
-            ...(item.id ? { id: item.id } : {}),
-            name: normalizeText(item.name),
-          }))
-          .filter((item) => item.name.length > 0),
+        subjectIds: formState.subjectIds,
         education: formState.education
           .map((item) => ({
             ...(item.id ? { id: item.id } : {}),
-            degree: normalizeText(item.degree),
+            degreeId: item.degreeId,
+            degree: resolveDegreeLabel(item.degreeId, profileData.availableDegrees),
             institution: normalizeText(item.institution),
             fieldOfStudy: normalizeText(item.fieldOfStudy),
             startYear: Number(item.startYear),
             ...(item.endYear ? { endYear: Number(item.endYear) } : {}),
             description: normalizeText(item.description),
           }))
-          .filter((item) => item.degree.length > 0 && item.institution.length > 0),
+          .filter((item) => item.degreeId && item.institution.length > 0),
       };
 
       const response = await updateMyTutorProfile(normalizedPayload);
-      const mappedState = mapProfileToFormState(response.profile);
+      const mappedState = mapProfileToFormState(response);
       setProfileData(response);
       setFormState(mappedState);
       setInitialFormState(mappedState);
@@ -509,9 +518,7 @@ export default function TutorProfileSettings() {
                 ) : (
                   <Camera className="h-4 w-4" />
                 )}
-                <span>
-                  {isUploadingImage ? "Uploading..." : "Upload New Image"}
-                </span>
+                <span>{isUploadingImage ? "Uploading..." : "Upload New Image"}</span>
                 <input
                   className="sr-only"
                   type="file"
@@ -556,7 +563,7 @@ export default function TutorProfileSettings() {
                         text:
                           error instanceof ImageUploadError
                             ? error.message
-                            : "We couldn’t upload this profile image right now. Please try again.",
+                            : "We couldn't upload this profile image right now. Please try again.",
                         confirmButtonColor: "#1d3b66",
                       });
                     } finally {
@@ -749,12 +756,24 @@ export default function TutorProfileSettings() {
                       type="button"
                       disabled={isInteractionDisabled}
                       onClick={() =>
-                        updateFormState((current) => ({
-                          ...current,
-                          categoryIds: isSelected
+                        updateFormState((current) => {
+                          const nextCategoryIds = isSelected
                             ? current.categoryIds.filter((id) => id !== category.id)
-                            : [...current.categoryIds, category.id],
-                        }))
+                            : [...current.categoryIds, category.id];
+                          const allowedSubjectIds = profileData.availableSubjects
+                            .filter((subject) =>
+                              nextCategoryIds.includes(subject.categoryId)
+                            )
+                            .map((subject) => subject.id);
+
+                          return {
+                            ...current,
+                            categoryIds: nextCategoryIds,
+                            subjectIds: current.subjectIds.filter((subjectId) =>
+                              allowedSubjectIds.includes(subjectId)
+                            ),
+                          };
+                        })
                       }
                       className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
                         isSelected
@@ -768,62 +787,84 @@ export default function TutorProfileSettings() {
                 })}
               </div>
             </div>
-          </article>
 
-          <article className={sectionCardClass}>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <h3 className="font-headline text-[1.35rem] font-bold text-primary">
+            <div className="mt-6 space-y-3">
+              <div className="flex items-center justify-between gap-4">
+                <label className="block text-[13px] font-semibold text-on-surface">
                   Subjects
-                </h3>
-              <button
-                type="button"
-                hidden={!isEditing}
-                disabled={isInteractionDisabled}
-                onClick={() =>
-                  updateFormState((current) => ({
-                    ...current,
-                    expertise: [createBlankExpertise(), ...current.expertise],
-                  }))
-                }
-                className="rounded-xl bg-primary px-4 py-2 text-[13px] font-bold text-on-primary"
-              >
-                Add Subject
-              </button>
-            </div>
+                </label>
+                <p className="text-[11px] text-on-surface-variant">
+                  Select subjects under your chosen categories.
+                </p>
+              </div>
 
-            <div className="mt-5 space-y-3">
-              {formState.expertise.map((item, index) => (
-                <div
-                  key={item.id ?? `expertise-${index}`}
-                  className="flex flex-col gap-3 rounded-2xl border border-outline-variant/25 bg-white p-4 shadow-sm shadow-slate-900/5 md:flex-row dark:border-outline-variant/20 dark:bg-surface-container dark:shadow-none"
-                >
-                  <input
-                    className={inputClass}
-                    disabled={isInteractionDisabled}
-                    value={item.name}
-                    onChange={(event) =>
-                      updateFormState((current) => ({
-                        ...current,
-                        expertise: current.expertise.map((expertiseItem, expertiseIndex) =>
-                          expertiseIndex === index
-                            ? { ...expertiseItem, name: event.target.value }
-                            : expertiseItem
-                        ),
-                      }))
-                    }
-                    placeholder="Add subject..."
-                  />
-                  <button
-                    type="button"
-                    hidden={!isEditing}
-                    disabled={isInteractionDisabled}
-                    onClick={() => void handleRemoveExpertise(index)}
-                    className="rounded-xl bg-error-container px-4 py-3 text-[13px] font-semibold text-on-error-container md:min-w-32"
-                  >
-                    Remove
-                  </button>
+              {formState.categoryIds.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-outline-variant/30 bg-surface-container-lowest px-4 py-5 text-sm text-on-surface-variant">
+                  Choose at least one category first to unlock its subjects.
                 </div>
-              ))}
+              ) : availableSubjects.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-outline-variant/30 bg-surface-container-lowest px-4 py-5 text-sm text-on-surface-variant">
+                  No active subjects are available under the selected categories yet.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {profileData.availableCategories
+                    .filter((category) => formState.categoryIds.includes(category.id))
+                    .map((category) => {
+                      const categorySubjects = availableSubjects.filter(
+                        (subject) => subject.categoryId === category.id
+                      );
+
+                      if (categorySubjects.length === 0) {
+                        return null;
+                      }
+
+                      return (
+                        <div
+                          key={category.id}
+                          className="rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-4"
+                        >
+                          <h4 className="text-[12px] font-bold uppercase tracking-[0.18em] text-primary">
+                            {category.name}
+                          </h4>
+                          <div className="mt-3 flex flex-wrap gap-3">
+                            {categorySubjects.map((subject) => {
+                              const isSelected = formState.subjectIds.includes(subject.id);
+
+                              return (
+                                <button
+                                  key={subject.id}
+                                  type="button"
+                                  disabled={isInteractionDisabled}
+                                  onClick={() =>
+                                    updateFormState((current) => ({
+                                      ...current,
+                                      subjectIds: isSelected
+                                        ? current.subjectIds.filter((id) => id !== subject.id)
+                                        : [...current.subjectIds, subject.id],
+                                    }))
+                                  }
+                                  className={`rounded-2xl border px-4 py-3 text-left transition ${
+                                    isSelected
+                                      ? "border-primary bg-primary-fixed text-primary"
+                                      : "border-outline-variant/20 bg-white text-on-surface-variant hover:border-primary/30 hover:text-primary"
+                                  }`}
+                                >
+                                  <div className="text-sm font-bold">{subject.name}</div>
+                                  {subject.shortDescription ? (
+                                    <div className="mt-1 text-[11px] leading-relaxed">
+                                      {subject.shortDescription}
+                                    </div>
+                                  ) : null}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
             </div>
           </article>
         </div>
@@ -837,12 +878,17 @@ export default function TutorProfileSettings() {
               type="button"
               hidden={!isEditing}
               disabled={isInteractionDisabled}
-              onClick={() =>
+              onClick={() => {
+                const defaultDegree = profileData.availableDegrees[0];
+
                 updateFormState((current) => ({
                   ...current,
-                  education: [createBlankEducation(), ...current.education],
-                }))
-              }
+                  education: [
+                    createBlankEducation(defaultDegree?.id, defaultDegree?.name),
+                    ...current.education,
+                  ],
+                }));
+              }}
               className="rounded-xl bg-primary px-4 py-2 text-[13px] font-bold text-on-primary"
             >
               Add Education
@@ -864,21 +910,36 @@ export default function TutorProfileSettings() {
                     <label className="block text-[13px] font-semibold text-on-surface">
                       Degree
                     </label>
-                    <input
+                    <select
                       className={inputClass}
                       disabled={isInteractionDisabled}
-                      value={item.degree}
+                      value={item.degreeId}
                       onChange={(event) =>
                         updateFormState((current) => ({
                           ...current,
                           education: current.education.map((educationItem, educationIndex) =>
                             educationIndex === index
-                              ? { ...educationItem, degree: event.target.value }
+                              ? {
+                                  ...educationItem,
+                                  degreeId: event.target.value,
+                                  degree: resolveDegreeLabel(
+                                    event.target.value,
+                                    profileData.availableDegrees
+                                  ),
+                                }
                               : educationItem
                           ),
                         }))
                       }
-                    />
+                    >
+                      <option value="">Select degree</option>
+                      {profileData.availableDegrees.map((degree) => (
+                        <option key={degree.id} value={degree.id}>
+                          {degree.name}
+                          {degree.level ? ` (${degree.level})` : ""}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="space-y-2">
