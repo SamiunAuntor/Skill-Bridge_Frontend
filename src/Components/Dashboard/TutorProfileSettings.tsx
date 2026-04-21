@@ -179,10 +179,6 @@ export default function TutorProfileSettings() {
   const [pendingUploadedImage, setPendingUploadedImage] =
     useState<UploadedImageResult | null>(null);
 
-  if (session?.user?.role && session.user.role !== "tutor") {
-    return null;
-  }
-
   useEffect(() => {
     let isMounted = true;
 
@@ -257,6 +253,10 @@ export default function TutorProfileSettings() {
 
     return serializeFormState(formState) !== serializeFormState(initialFormState);
   }, [formState, initialFormState]);
+
+  if (session?.user?.role && session.user.role !== "tutor") {
+    return null;
+  }
 
   const isInteractionDisabled = !isEditing || isSaving;
 

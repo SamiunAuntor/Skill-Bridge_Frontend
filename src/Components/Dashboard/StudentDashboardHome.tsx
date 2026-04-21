@@ -6,6 +6,7 @@ import Swal from "sweetalert2";
 import { CalendarClock, Clock3, ReceiptText, UserRound } from "lucide-react";
 import { getMySessions, BookingApiError } from "@/lib/booking-api";
 import { useAppAuthSession } from "@/lib/auth";
+import { getRoleDashboardPath } from "@/lib/dashboard-routes";
 import { DashboardSessionItem } from "@/types/tutor";
 
 function toFriendlyError(error: unknown): string {
@@ -137,7 +138,7 @@ export default function StudentDashboardHome() {
             </p>
           </div>
           <Link
-            href="/dashboard/sessions"
+            href={getRoleDashboardPath("student", "sessions")}
             className="text-sm font-bold text-secondary hover:underline"
           >
             View all sessions

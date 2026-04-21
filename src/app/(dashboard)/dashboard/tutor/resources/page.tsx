@@ -1,6 +1,6 @@
 import DashboardPlaceholderPage from "@/Components/Dashboard/DashboardPlaceholderPage";
 
-export default function DashboardResourcesPage() {
+export default function TutorDashboardResourcesPage() {
   return (
     <DashboardPlaceholderPage
       title="Resources"

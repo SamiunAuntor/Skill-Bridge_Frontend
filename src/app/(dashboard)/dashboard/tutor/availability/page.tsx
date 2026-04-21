@@ -1,5 +1,5 @@
 import TutorAvailabilitySettings from "@/Components/Dashboard/TutorAvailabilitySettings";
 
-export default function DashboardAvailabilityPage() {
+export default function TutorDashboardAvailabilityPage() {
   return <TutorAvailabilitySettings />;
 }

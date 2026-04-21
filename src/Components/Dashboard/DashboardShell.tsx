@@ -3,13 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ReactNode, useEffect } from "react";
+import { ReactNode } from "react";
 import { logoutWithAppAuth, useAppAuthSession } from "@/lib/auth";
 import { showAuthErrorToast, showAuthSuccessToast } from "@/lib/auth-alerts";
 import { dashboardNavByRole } from "./dashboard.config";
 import { UserRole } from "@/types/auth";
 import ThemeToggle from "@/Components/Theme/ThemeToggle";
 import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
+import { getRoleDashboardPath } from "@/lib/dashboard-routes";
 
 type DashboardShellProps = {
   children: ReactNode;
@@ -35,13 +36,7 @@ export default function DashboardShell({ children }: DashboardShellProps) {
   const pathname = usePathname();
   const { data: session, isPending } = useAppAuthSession();
 
-  useEffect(() => {
-    if (!isPending && !session?.user) {
-      router.replace("/login");
-    }
-  }, [isPending, router, session?.user]);
-
-  if (isPending || !session?.user) {
+  if (isPending) {
     return (
       <div className="min-h-screen bg-surface">
         <DashboardPageLoader label="Loading dashboard..." />
@@ -49,9 +44,18 @@ export default function DashboardShell({ children }: DashboardShellProps) {
     );
   }
 
+  if (!session?.user) {
+    return (
+      <div className="min-h-screen bg-surface">
+        <DashboardPageLoader label="Verifying dashboard access..." />
+      </div>
+    );
+  }
+
   const user = session.user;
   const role = (user.role as UserRole | undefined) ?? "student";
   const navItems = dashboardNavByRole[role];
+  const roleDashboardHome = getRoleDashboardPath(role);
   const displayName = getDisplayName(user);
   const avatarSrc = user.image?.trim();
   const sidebarActionClass =
@@ -75,7 +79,10 @@ export default function DashboardShell({ children }: DashboardShellProps) {
 
           <nav className="flex-1 space-y-1">
             {navItems.map((item) => {
-              const isActive = pathname === item.href;
+              const isHomeItem = item.href === roleDashboardHome;
+              const isActive = isHomeItem
+                ? pathname === item.href
+                : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
               return (
                 <Link

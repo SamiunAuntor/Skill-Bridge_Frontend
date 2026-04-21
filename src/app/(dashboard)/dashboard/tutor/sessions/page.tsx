@@ -1,5 +1,5 @@
 import DashboardSessionsList from "@/Components/Dashboard/DashboardSessionsList";
 
-export default function DashboardSessionsPage() {
+export default function TutorDashboardSessionsPage() {
   return <DashboardSessionsList />;
 }

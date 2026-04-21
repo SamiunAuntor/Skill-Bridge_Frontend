@@ -12,6 +12,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { useAppAuthSession } from "@/lib/auth";
+import { getRoleDashboardPath } from "@/lib/dashboard-routes";
 import {
   BookingApiError,
   cancelBooking,
@@ -284,7 +285,7 @@ export default function TutorDashboardHome() {
               </p>
             </div>
             <Link
-              href="/dashboard/sessions"
+              href={getRoleDashboardPath("tutor", "sessions")}
               className="text-sm font-bold text-secondary hover:underline"
             >
               View All

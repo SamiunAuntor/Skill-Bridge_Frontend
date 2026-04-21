@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { logoutWithAppAuth, useAppAuthSession, type AppAuthUser } from "@/lib/auth";
 import { showAuthErrorToast, showAuthSuccessToast } from "@/lib/auth-alerts";
+import { getRoleDashboardPath } from "@/lib/dashboard-routes";
 
 type NavbarSessionProps = {
   variant: "desktop" | "mobile";
@@ -111,7 +112,7 @@ export default function NavbarSession({
   const user: AppAuthUser = session.user;
   const displayName = user.name?.trim() || user.email || "Account";
   const avatarSrc = user.image?.trim();
-  const dashboardHref = "/dashboard";
+  const dashboardHref = getRoleDashboardPath(user.role);
 
   const avatarButton = (
     <button

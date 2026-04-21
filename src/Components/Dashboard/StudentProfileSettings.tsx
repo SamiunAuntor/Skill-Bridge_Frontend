@@ -38,16 +38,16 @@ export default function StudentProfileSettings() {
     setHasInitialized(true);
   }, [hasInitialized, session?.user]);
 
-  if (session?.user?.role && session.user.role !== "student") {
-    return null;
-  }
-
   const hasChanges = useMemo(() => {
     return (
       displayName.trim() !== initialDisplayName ||
       (profileImageUrl ?? null) !== (initialProfileImageUrl ?? null)
     );
   }, [displayName, initialDisplayName, initialProfileImageUrl, profileImageUrl]);
+
+  if (session?.user?.role && session.user.role !== "student") {
+    return null;
+  }
 
   async function handleImageChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
