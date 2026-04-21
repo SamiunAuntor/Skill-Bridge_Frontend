@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Swal from "sweetalert2";
+import { ChevronDown, Search } from "lucide-react";
 import {
   getAdminUsers,
   updateAdminUserStatus,
@@ -28,23 +30,145 @@ const defaultQuery = {
   limit: 10,
 };
 
+function parsePositiveInt(value: string | null, fallback: number): number {
+  if (!value) {
+    return fallback;
+  }
+
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function parseQueryParams(searchParams: URLSearchParams) {
+  const role = searchParams.get("role");
+  const banned = searchParams.get("banned");
+  const verified = searchParams.get("verified");
+  const sortBy = searchParams.get("sortBy");
+
+  return {
+    q: searchParams.get("q") ?? defaultQuery.q,
+    role:
+      role === "student" || role === "tutor" ? role : defaultQuery.role,
+    banned:
+      banned === "true" || banned === "false" ? banned : defaultQuery.banned,
+    verified:
+      verified === "true" || verified === "false"
+        ? verified
+        : defaultQuery.verified,
+    sortBy:
+      sortBy &&
+      [
+        "newest",
+        "oldest",
+        "name_asc",
+        "name_desc",
+        "email_asc",
+        "email_desc",
+      ].includes(sortBy)
+        ? (sortBy as AdminUserSortOption)
+        : defaultQuery.sortBy,
+    page: parsePositiveInt(searchParams.get("page"), defaultQuery.page),
+    limit: 10,
+  };
+}
+
+function SelectField({
+  value,
+  onChange,
+  children,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="relative">
+      <ChevronDown className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant" />
+      <select
+        className="w-full appearance-none rounded-xl border border-outline-variant/20 bg-surface-container-lowest py-3 pl-11 pr-4 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      >
+        {children}
+      </select>
+    </div>
+  );
+}
+
 export default function AdminUsersPage() {
-  const [query, setQuery] = useState(defaultQuery);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const query = useMemo(
+    () => parseQueryParams(searchParams),
+    [searchParams]
+  );
   const [data, setData] = useState<AdminUsersResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [actionUserId, setActionUserId] = useState<string | null>(null);
+  const [searchInput, setSearchInput] = useState(query.q);
+
+  useEffect(() => {
+    setSearchInput(query.q);
+  }, [query.q]);
+
+  function updateQuery(next: Partial<typeof defaultQuery>) {
+    const params = new URLSearchParams(searchParams.toString());
+    const merged = { ...query, ...next };
+
+    if (merged.q.trim()) {
+      params.set("q", merged.q.trim());
+    } else {
+      params.delete("q");
+    }
+
+    if (merged.role !== "all") {
+      params.set("role", merged.role);
+    } else {
+      params.delete("role");
+    }
+
+    if (merged.banned !== "all") {
+      params.set("banned", merged.banned);
+    } else {
+      params.delete("banned");
+    }
+
+    if (merged.verified !== "all") {
+      params.set("verified", merged.verified);
+    } else {
+      params.delete("verified");
+    }
+
+    if (merged.sortBy !== defaultQuery.sortBy) {
+      params.set("sortBy", merged.sortBy);
+    } else {
+      params.delete("sortBy");
+    }
+
+    if (merged.page > 1) {
+      params.set("page", String(merged.page));
+    } else {
+      params.delete("page");
+    }
+
+    params.set("limit", "10");
+
+    const nextUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    router.replace(nextUrl, { scroll: false });
+  }
 
   async function loadUsers() {
     setIsLoading(true);
 
     try {
-        const result = await getAdminUsers({
-          q: query.q || undefined,
-          role:
-            query.role === "all"
-              ? undefined
-              : (query.role as "student" | "tutor"),
+      const result = await getAdminUsers({
+        q: query.q || undefined,
+        role:
+          query.role === "all"
+            ? undefined
+            : (query.role as "student" | "tutor"),
         banned:
           query.banned === "all" ? undefined : query.banned === "true",
         verified:
@@ -70,6 +194,14 @@ export default function AdminUsersPage() {
   useEffect(() => {
     void loadUsers();
   }, [query]);
+
+  function handleSearchSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    updateQuery({
+      q: searchInput,
+      page: 1,
+    });
+  }
 
   async function handleToggleBan(userId: string, isBanned: boolean, name: string) {
     const confirmation = await Swal.fire({
@@ -119,76 +251,65 @@ export default function AdminUsersPage() {
 
   return (
     <div>
-      <AdminPageHeader
-        eyebrow="Admin Users"
-        title="Manage students and tutors"
-        description="Filter by role, verification state, or ban state, then take moderation actions without leaving the dashboard."
-      />
+      <AdminPageHeader title="Manage students and tutors" />
 
       <AdminCard title="Filters">
         <div className="grid gap-4 lg:grid-cols-[1.3fr_repeat(4,minmax(0,1fr))]">
-          <input
-            className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm text-on-surface outline-none"
-            value={query.q}
-            onChange={(event) =>
-              setQuery((current) => ({ ...current, q: event.target.value, page: 1 }))
-            }
-            placeholder="Search by name or email"
-          />
-          <select
-            className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm"
+          <form onSubmit={handleSearchSubmit} className="relative">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant" />
+            <input
+              className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-lowest py-3 pl-11 pr-4 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
+              placeholder="Search by name or email"
+            />
+          </form>
+          <SelectField
             value={query.role}
-            onChange={(event) =>
-              setQuery((current) => ({
-                ...current,
-                role: event.target.value as typeof current.role,
+            onChange={(value) =>
+              updateQuery({
+                role: value as typeof query.role,
                 page: 1,
-              }))
+              })
             }
           >
             <option value="all">All roles</option>
             <option value="student">Students</option>
             <option value="tutor">Tutors</option>
-          </select>
-          <select
-            className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm"
+          </SelectField>
+          <SelectField
             value={query.banned}
-            onChange={(event) =>
-              setQuery((current) => ({
-                ...current,
-                banned: event.target.value as typeof current.banned,
+            onChange={(value) =>
+              updateQuery({
+                banned: value as typeof query.banned,
                 page: 1,
-              }))
+              })
             }
           >
             <option value="all">Any ban state</option>
             <option value="true">Banned</option>
             <option value="false">Active</option>
-          </select>
-          <select
-            className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm"
+          </SelectField>
+          <SelectField
             value={query.verified}
-            onChange={(event) =>
-              setQuery((current) => ({
-                ...current,
-                verified: event.target.value as typeof current.verified,
+            onChange={(value) =>
+              updateQuery({
+                verified: value as typeof query.verified,
                 page: 1,
-              }))
+              })
             }
           >
             <option value="all">Any verification</option>
             <option value="true">Verified</option>
             <option value="false">Unverified</option>
-          </select>
-          <select
-            className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm"
+          </SelectField>
+          <SelectField
             value={query.sortBy}
-            onChange={(event) =>
-              setQuery((current) => ({
-                ...current,
-                sortBy: event.target.value as AdminUserSortOption,
+            onChange={(value) =>
+              updateQuery({
+                sortBy: value as AdminUserSortOption,
                 page: 1,
-              }))
+              })
             }
           >
             <option value="newest">Newest first</option>
@@ -197,7 +318,7 @@ export default function AdminUsersPage() {
             <option value="name_desc">Name Z-A</option>
             <option value="email_asc">Email A-Z</option>
             <option value="email_desc">Email Z-A</option>
-          </select>
+          </SelectField>
         </div>
       </AdminCard>
 
@@ -209,30 +330,30 @@ export default function AdminUsersPage() {
         ) : data && data.users.length > 0 ? (
           <AdminCard title="User directory">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-outline-variant/15 text-left">
+              <table className="min-w-full border border-outline-variant/20 text-left">
                 <thead>
                   <tr className="text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
-                    <th className="pb-4 pr-4">User</th>
-                    <th className="pb-4 pr-4">Role</th>
-                    <th className="pb-4 pr-4">Verification</th>
-                    <th className="pb-4 pr-4">Status</th>
-                    <th className="pb-4 pr-4">Joined</th>
-                    <th className="pb-4 text-right">Action</th>
+                    <th className="border border-outline-variant/20 px-4 py-4">User</th>
+                    <th className="border border-outline-variant/20 px-4 py-4">Role</th>
+                    <th className="border border-outline-variant/20 px-4 py-4">Verification</th>
+                    <th className="border border-outline-variant/20 px-4 py-4">Status</th>
+                    <th className="border border-outline-variant/20 px-4 py-4">Joined</th>
+                    <th className="border border-outline-variant/20 px-4 py-4 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-outline-variant/10">
+                <tbody>
                   {data.users.map((user) => (
                     <tr key={user.id}>
-                      <td className="py-4 pr-4">
+                      <td className="border border-outline-variant/20 px-4 py-4">
                         <div>
                           <p className="font-semibold text-primary">{user.name}</p>
                           <p className="text-sm text-on-surface-variant">{user.email}</p>
                         </div>
                       </td>
-                      <td className="py-4 pr-4 text-sm capitalize text-on-surface-variant">
+                      <td className="border border-outline-variant/20 px-4 py-4 text-sm capitalize text-on-surface-variant">
                         {user.role}
                       </td>
-                      <td className="py-4 pr-4">
+                      <td className="border border-outline-variant/20 px-4 py-4">
                         <span
                           className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] ${
                             user.emailVerified
@@ -243,7 +364,7 @@ export default function AdminUsersPage() {
                           {user.emailVerified ? "Verified" : "Pending"}
                         </span>
                       </td>
-                      <td className="py-4 pr-4">
+                      <td className="border border-outline-variant/20 px-4 py-4">
                         <span
                           className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] ${
                             user.isBanned
@@ -254,10 +375,10 @@ export default function AdminUsersPage() {
                           {user.isBanned ? "Banned" : "Active"}
                         </span>
                       </td>
-                      <td className="py-4 pr-4 text-sm text-on-surface-variant">
+                      <td className="border border-outline-variant/20 px-4 py-4 text-sm text-on-surface-variant">
                         {formatAdminDate(user.createdAt)}
                       </td>
-                      <td className="py-4 text-right">
+                      <td className="border border-outline-variant/20 px-4 py-4 text-right">
                         <button
                           type="button"
                           disabled={actionUserId === user.id}
@@ -286,7 +407,7 @@ export default function AdminUsersPage() {
             <AdminPaginationControls
               page={data.pagination.page}
               totalPages={data.pagination.totalPages}
-              onChange={(page) => setQuery((current) => ({ ...current, page }))}
+              onChange={(page) => updateQuery({ page })}
             />
           </AdminCard>
         ) : (

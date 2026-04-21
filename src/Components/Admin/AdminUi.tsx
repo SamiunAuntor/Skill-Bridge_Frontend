@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
 
 export function AdminPageHeader({
   eyebrow,
@@ -8,23 +9,27 @@ export function AdminPageHeader({
   description,
   action,
 }: {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
-  description: string;
+  description?: string;
   action?: React.ReactNode;
 }) {
   return (
     <header className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
       <div>
-        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-secondary">
-          {eyebrow}
-        </p>
-        <h1 className="mt-2 font-headline text-3xl font-extrabold tracking-tight text-primary md:text-4xl">
+        {eyebrow ? (
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-secondary">
+            {eyebrow}
+          </p>
+        ) : null}
+        <h1 className="font-headline text-3xl font-extrabold tracking-tight text-primary md:text-4xl">
           {title}
         </h1>
-        <p className="mt-3 max-w-3xl text-sm leading-relaxed text-on-surface-variant md:text-base">
-          {description}
-        </p>
+        {description ? (
+          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-on-surface-variant md:text-base">
+            {description}
+          </p>
+        ) : null}
       </div>
       {action ? <div>{action}</div> : null}
     </header>
@@ -87,11 +92,7 @@ export function AdminTableEmpty({
 }
 
 export function AdminLoadingMessage({ label }: { label: string }) {
-  return (
-    <div className="rounded-2xl bg-surface-container-lowest px-5 py-8 text-center text-sm font-medium text-on-surface-variant">
-      {label}
-    </div>
-  );
+  return <DashboardPageLoader label={label} />;
 }
 
 export function AdminErrorMessage({ message }: { message: string }) {
