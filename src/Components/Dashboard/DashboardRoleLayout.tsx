@@ -1,10 +1,7 @@
-"use client";
-
-import { ReactNode, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
-import { useAppAuthSession } from "@/lib/auth";
-import { getRoleDashboardPath } from "@/lib/dashboard-routes";
+import { ReactNode } from "react";
+import { redirect } from "next/navigation";
+import { getServerAuthSession } from "@/lib/auth/server-session";
+import { getRoleDashboardRoot } from "@/lib/dashboard-routes";
 import type { UserRole } from "@/types/auth";
 
 type DashboardRoleLayoutProps = {
@@ -12,26 +9,19 @@ type DashboardRoleLayoutProps = {
   children: ReactNode;
 };
 
-export default function DashboardRoleLayout({
+export default async function DashboardRoleLayout({
   role,
   children,
 }: DashboardRoleLayoutProps) {
-  const router = useRouter();
-  const { data: session, isPending } = useAppAuthSession();
+  const session = await getServerAuthSession();
   const actualRole = session?.user?.role;
 
-  useEffect(() => {
-    if (!isPending && actualRole && actualRole !== role) {
-      router.replace(getRoleDashboardPath(actualRole));
-    }
-  }, [actualRole, isPending, role, router]);
-
-  if (isPending || !actualRole) {
-    return <DashboardPageLoader label="Loading workspace..." />;
+  if (!actualRole) {
+    redirect("/login?next=/dashboard");
   }
 
   if (actualRole !== role) {
-    return <DashboardPageLoader label="Redirecting to your workspace..." />;
+    redirect(getRoleDashboardRoot(actualRole));
   }
 
   return <>{children}</>;

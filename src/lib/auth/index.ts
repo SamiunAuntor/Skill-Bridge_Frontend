@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { UserRole } from "@/types/auth";
+import type { AppAuthSession, AppAuthUser } from "./session.types";
 
 const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ??
@@ -9,24 +10,13 @@ const apiBaseUrl =
 
 const authChangedEvent = "skillbridge-auth-changed";
 
-export type AppAuthUser = {
-  id: string;
-  role: UserRole;
-  email: string;
-  name: string;
-  emailVerified: boolean;
-  image: string | null;
-};
-
-export type AppAuthSession = {
-  user: AppAuthUser;
-} | null;
-
 type AuthJsonResponse<T> = {
   success: boolean;
   message: string;
   data: T;
 };
+
+export type { AppAuthSession, AppAuthUser } from "./session.types";
 
 async function readJson<T>(response: Response): Promise<AuthJsonResponse<T>> {
   const payload = (await response.json().catch(() => null)) as
