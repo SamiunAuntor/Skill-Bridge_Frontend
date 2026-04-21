@@ -74,11 +74,11 @@ export default function LoginForm() {
   const onSubmit = handleSubmit(async (values) => {
     try {
       await loginWithAppAuth(values);
-      await showAuthSuccessToast(
+      void showAuthSuccessToast(
         "Signed in successfully",
         "Welcome back to SkillBridge."
       );
-      router.push("/");
+      router.replace("/dashboard");
       router.refresh();
     } catch (e) {
       const message = formatAuthError(e);
