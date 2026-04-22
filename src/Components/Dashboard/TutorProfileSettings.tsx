@@ -18,7 +18,6 @@ import {
 } from "@/lib/upload-image";
 import { normalizeText } from "@/lib/text";
 import type {
-  TutorEditableDegreeOption,
   TutorEditableProfileResponse,
   TutorEditableSubjectOption,
   TutorProfileUpdateEducationInput,
@@ -83,12 +82,10 @@ function toFriendlyTutorProfileError(error: unknown): string {
 }
 
 function createBlankEducation(
-  defaultDegreeId?: string,
-  degreeLabel?: string
+  defaultDegreeId?: string
 ): TutorProfileUpdateEducationInput {
   return {
     degreeId: defaultDegreeId ?? "",
-    degree: degreeLabel ?? "",
     institution: "",
     fieldOfStudy: "",
     startYear: new Date().getFullYear(),
@@ -115,14 +112,13 @@ function mapProfileToFormState(
         ? data.profile.education.map((item) => ({
             id: item.id,
             degreeId: item.degreeId,
-            degree: item.degree,
             institution: item.institution,
             fieldOfStudy: item.fieldOfStudy,
             startYear: item.startYear,
             endYear: item.endYear,
             description: item.description ?? "",
           }))
-        : [createBlankEducation(defaultDegree?.id, defaultDegree?.name)],
+        : [createBlankEducation(defaultDegree?.id)],
   };
 }
 
@@ -153,13 +149,6 @@ function getCompletionRatio(completed: number, total: number): number {
   }
 
   return Math.round((completed / total) * 100);
-}
-
-function resolveDegreeLabel(
-  degreeId: string,
-  options: TutorEditableDegreeOption[]
-): string {
-  return options.find((item) => item.id === degreeId)?.name ?? "";
 }
 
 function getAvailableSubjectsForSelection(
@@ -359,7 +348,7 @@ export default function TutorProfileSettings() {
         education:
           current.education.length > 1
             ? current.education.filter((_, educationIndex) => educationIndex !== index)
-            : [createBlankEducation(defaultDegree?.id, defaultDegree?.name)],
+            : [createBlankEducation(defaultDegree?.id)],
       };
     });
   }
@@ -411,7 +400,6 @@ export default function TutorProfileSettings() {
           .map((item) => ({
             ...(item.id ? { id: item.id } : {}),
             degreeId: item.degreeId,
-            degree: resolveDegreeLabel(item.degreeId, profileData.availableDegrees),
             institution: normalizeText(item.institution),
             fieldOfStudy: normalizeText(item.fieldOfStudy),
             startYear: Number(item.startYear),
@@ -883,7 +871,7 @@ export default function TutorProfileSettings() {
                 updateFormState((current) => ({
                   ...current,
                   education: [
-                    createBlankEducation(defaultDegree?.id, defaultDegree?.name),
+                    createBlankEducation(defaultDegree?.id),
                     ...current.education,
                   ],
                 }));
@@ -921,10 +909,6 @@ export default function TutorProfileSettings() {
                               ? {
                                   ...educationItem,
                                   degreeId: event.target.value,
-                                  degree: resolveDegreeLabel(
-                                    event.target.value,
-                                    profileData.availableDegrees
-                                  ),
                                 }
                               : educationItem
                           ),
