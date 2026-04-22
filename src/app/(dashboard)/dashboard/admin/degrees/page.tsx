@@ -1,6 +1,8 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Plus } from "lucide-react";
 import Swal from "sweetalert2";
 import {
   AdminApiError,
@@ -9,43 +11,85 @@ import {
   getAdminDegrees,
   updateAdminDegree,
 } from "@/lib/admin-api";
+import { buildAdminListUrl, parsePositiveInt } from "@/lib/admin-list-query";
 import type {
   AdminDegreeUpsertInput,
   AdminDegreesResponse,
   AdminMasterSortOption,
 } from "@/types/admin";
 import {
-  AdminCard,
   AdminErrorMessage,
   AdminLoadingMessage,
   AdminPageHeader,
-  AdminPaginationControls,
   AdminTableEmpty,
 } from "@/Components/Admin/AdminUi";
-import { formatAdminDate } from "@/Components/Admin/admin-formatters";
+import { DegreeFilters } from "@/Components/Admin/Degrees/DegreeFilters";
+import { DegreeDetailsModal } from "@/Components/Admin/Degrees/DegreeDetailsModal";
+import { DegreeFormModal } from "@/Components/Admin/Degrees/DegreeFormModal";
+import { DegreeTable } from "@/Components/Admin/Degrees/DegreeTable";
+
+const defaultQuery = {
+  q: "",
+  isActive: "all",
+  sortBy: "name_asc" as AdminMasterSortOption,
+  page: 1,
+  limit: 10,
+};
 
 const blankForm: AdminDegreeUpsertInput = {
   name: "",
-  slug: "",
   level: "",
-  isActive: true,
-  displayOrder: 0,
 };
 
-export default function AdminDegreesPage() {
-  const [query, setQuery] = useState({
-    q: "",
-    isActive: "all",
-    sortBy: "display_asc" as AdminMasterSortOption,
-    page: 1,
+function parseQueryParams(searchParams: URLSearchParams) {
+  const isActive = searchParams.get("isActive");
+  const sortBy = searchParams.get("sortBy");
+
+  return {
+    q: searchParams.get("q") ?? defaultQuery.q,
+    isActive:
+      isActive === "true" || isActive === "false" ? isActive : defaultQuery.isActive,
+    sortBy:
+      sortBy && ["name_asc", "name_desc", "newest", "oldest"].includes(sortBy)
+        ? (sortBy as AdminMasterSortOption)
+        : defaultQuery.sortBy,
+    page: parsePositiveInt(searchParams.get("page"), defaultQuery.page),
     limit: 10,
-  });
+  };
+}
+
+export default function AdminDegreesPage() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const query = useMemo(() => parseQueryParams(searchParams), [searchParams]);
+
   const [data, setData] = useState<AdminDegreesResponse | null>(null);
-  const [form, setForm] = useState(blankForm);
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [searchInput, setSearchInput] = useState(query.q);
+  const [editingDegreeId, setEditingDegreeId] = useState<string | null>(null);
+  const [viewingDegree, setViewingDegree] =
+    useState<AdminDegreesResponse["degrees"][number] | null>(null);
+  const [form, setForm] = useState<AdminDegreeUpsertInput>(blankForm);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [rowActionId, setRowActionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSearchInput(query.q);
+  }, [query.q]);
+
+  function updateQuery(next: Partial<typeof defaultQuery>) {
+    const merged = { ...query, ...next, limit: 10 };
+    const nextUrl = buildAdminListUrl({
+      pathname,
+      searchParams,
+      values: merged,
+      defaults: defaultQuery,
+    });
+    router.replace(nextUrl, { scroll: false });
+  }
 
   async function loadDegrees() {
     setIsLoading(true);
@@ -53,8 +97,7 @@ export default function AdminDegreesPage() {
     try {
       const result = await getAdminDegrees({
         q: query.q || undefined,
-        isActive:
-          query.isActive === "all" ? undefined : query.isActive === "true",
+        isActive: query.isActive === "all" ? undefined : query.isActive === "true",
         sortBy: query.sortBy,
         page: query.page,
         limit: query.limit,
@@ -77,9 +120,37 @@ export default function AdminDegreesPage() {
     void loadDegrees();
   }, [query]);
 
-  function resetForm() {
+  function openCreateModal() {
+    setEditingDegreeId(null);
     setForm(blankForm);
-    setEditingId(null);
+    setIsModalOpen(true);
+  }
+
+  function openEditModal(degree: AdminDegreesResponse["degrees"][number]) {
+    setEditingDegreeId(degree.id);
+    setForm({
+      name: degree.name,
+      level: degree.level ?? "",
+    });
+    setIsModalOpen(true);
+  }
+
+  function closeModal() {
+    if (isSubmitting) {
+      return;
+    }
+
+    setIsModalOpen(false);
+    setEditingDegreeId(null);
+    setForm(blankForm);
+  }
+
+  function handleSearchSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    updateQuery({
+      q: searchInput,
+      page: 1,
+    });
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -87,17 +158,17 @@ export default function AdminDegreesPage() {
     setIsSubmitting(true);
 
     try {
-      if (editingId) {
-        await updateAdminDegree(editingId, form);
+      if (editingDegreeId) {
+        await updateAdminDegree(editingDegreeId, form);
       } else {
         await createAdminDegree(form);
       }
 
-      resetForm();
+      closeModal();
       await loadDegrees();
       await Swal.fire({
         icon: "success",
-        title: editingId ? "Degree updated" : "Degree created",
+        title: editingDegreeId ? "Degree updated" : "Degree created",
         confirmButtonColor: "#1d3b66",
       });
     } catch (error) {
@@ -115,11 +186,36 @@ export default function AdminDegreesPage() {
     }
   }
 
-  async function handleDelete(id: string, name: string) {
+  async function handleToggleActive(degree: AdminDegreesResponse["degrees"][number]) {
+    setRowActionId(degree.id);
+
+    try {
+      await updateAdminDegree(degree.id, {
+        name: degree.name,
+        level: degree.level,
+        isActive: !degree.isActive,
+      });
+      await loadDegrees();
+    } catch (error) {
+      await Swal.fire({
+        icon: "error",
+        title: "Status update failed",
+        text:
+          error instanceof AdminApiError
+            ? error.message
+            : "We couldn't update this degree right now.",
+        confirmButtonColor: "#1d3b66",
+      });
+    } finally {
+      setRowActionId(null);
+    }
+  }
+
+  async function handleDelete(degree: AdminDegreesResponse["degrees"][number]) {
     const confirmation = await Swal.fire({
       icon: "warning",
       title: "Delete this degree?",
-      text: `${name} will be removed permanently if it is not referenced by tutor education history.`,
+      text: `${degree.name} will be removed permanently if it is not referenced by tutor education history.`,
       showCancelButton: true,
       confirmButtonText: "Delete degree",
       cancelButtonText: "Cancel",
@@ -131,11 +227,10 @@ export default function AdminDegreesPage() {
       return;
     }
 
+    setRowActionId(degree.id);
+
     try {
-      await deleteAdminDegree(id);
-      if (editingId === id) {
-        resetForm();
-      }
+      await deleteAdminDegree(degree.id);
       await loadDegrees();
       await Swal.fire({
         icon: "success",
@@ -152,230 +247,80 @@ export default function AdminDegreesPage() {
             : "We couldn't delete this degree right now.",
         confirmButtonColor: "#1d3b66",
       });
+    } finally {
+      setRowActionId(null);
     }
   }
 
   return (
     <div>
       <AdminPageHeader
-        eyebrow="Admin Degrees"
-        title="Control tutor degree options"
-        description="Degrees are master-data values used in tutor academic history, so tutors choose from a platform-approved dropdown instead of typing inconsistent free-form text."
+        title="Manage degrees"
+        action={
+          <button
+            type="button"
+            onClick={openCreateModal}
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-on-primary"
+          >
+            <Plus className="h-4 w-4" />
+            Add Degree
+          </button>
+        }
       />
 
-      <div className="grid gap-6 xl:grid-cols-[1.3fr_0.9fr]">
-        <div className="space-y-6">
-          <AdminCard title="Filters">
-            <div className="grid gap-4 md:grid-cols-3">
-              <input
-                className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm"
-                value={query.q}
-                onChange={(event) =>
-                  setQuery((current) => ({ ...current, q: event.target.value, page: 1 }))
-                }
-                placeholder="Search degrees"
-              />
-              <select
-                className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm"
-                value={query.isActive}
-                onChange={(event) =>
-                  setQuery((current) => ({
-                    ...current,
-                    isActive: event.target.value as typeof current.isActive,
-                    page: 1,
-                  }))
-                }
-              >
-                <option value="all">Any status</option>
-                <option value="true">Active</option>
-                <option value="false">Inactive</option>
-              </select>
-              <select
-                className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm"
-                value={query.sortBy}
-                onChange={(event) =>
-                  setQuery((current) => ({
-                    ...current,
-                    sortBy: event.target.value as AdminMasterSortOption,
-                    page: 1,
-                  }))
-                }
-              >
-                <option value="display_asc">Display order ↑</option>
-                <option value="display_desc">Display order ↓</option>
-                <option value="name_asc">Name A-Z</option>
-                <option value="name_desc">Name Z-A</option>
-                <option value="newest">Newest</option>
-                <option value="oldest">Oldest</option>
-              </select>
-            </div>
-          </AdminCard>
+      <DegreeFilters
+        searchInput={searchInput}
+        isActive={query.isActive}
+        sortBy={query.sortBy}
+        onSearchInputChange={setSearchInput}
+        onSearchSubmit={handleSearchSubmit}
+        onStatusChange={(value) => updateQuery({ isActive: value, page: 1 })}
+        onSortChange={(value) => updateQuery({ sortBy: value, page: 1 })}
+      />
 
-          {errorMessage ? <AdminErrorMessage message={errorMessage} /> : null}
+      <div className="mt-6">
+        {errorMessage ? <AdminErrorMessage message={errorMessage} /> : null}
 
-          {isLoading ? (
-            <AdminLoadingMessage label="Loading degrees..." />
-          ) : data && data.degrees.length > 0 ? (
-            <AdminCard title="Degrees">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-outline-variant/15 text-left">
-                  <thead>
-                    <tr className="text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
-                      <th className="pb-4 pr-4">Degree</th>
-                      <th className="pb-4 pr-4">Level</th>
-                      <th className="pb-4 pr-4">Status</th>
-                      <th className="pb-4 pr-4">Usage</th>
-                      <th className="pb-4 pr-4">Display</th>
-                      <th className="pb-4 pr-4">Created</th>
-                      <th className="pb-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-outline-variant/10">
-                    {data.degrees.map((degree) => (
-                      <tr key={degree.id}>
-                        <td className="py-4 pr-4">
-                          <p className="font-semibold text-primary">{degree.name}</p>
-                          <p className="text-sm text-on-surface-variant">{degree.slug}</p>
-                        </td>
-                        <td className="py-4 pr-4 text-sm text-on-surface-variant">
-                          {degree.level || "—"}
-                        </td>
-                        <td className="py-4 pr-4">
-                          <span className="rounded-full bg-secondary-container px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-on-secondary-container">
-                            {degree.isActive ? "Active" : "Inactive"}
-                          </span>
-                        </td>
-                        <td className="py-4 pr-4 text-sm text-on-surface-variant">
-                          {degree.usageCount}
-                        </td>
-                        <td className="py-4 pr-4 text-sm text-on-surface-variant">
-                          {degree.displayOrder}
-                        </td>
-                        <td className="py-4 pr-4 text-sm text-on-surface-variant">
-                          {formatAdminDate(degree.createdAt)}
-                        </td>
-                        <td className="py-4 text-right">
-                          <div className="flex justify-end gap-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setEditingId(degree.id);
-                                setForm({
-                                  name: degree.name,
-                                  slug: degree.slug,
-                                  level: degree.level,
-                                  isActive: degree.isActive,
-                                  displayOrder: degree.displayOrder,
-                                });
-                              }}
-                              className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-on-primary"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => void handleDelete(degree.id, degree.name)}
-                              className="rounded-xl bg-error-container px-4 py-2 text-sm font-semibold text-on-error-container"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <AdminPaginationControls
-                page={data.pagination.page}
-                totalPages={data.pagination.totalPages}
-                onChange={(page) => setQuery((current) => ({ ...current, page }))}
-              />
-            </AdminCard>
-          ) : (
-            <AdminTableEmpty
-              title="No degrees match the current filters"
-              description="Create the first degree option or loosen the filters to show the catalog."
-            />
-          )}
-        </div>
-
-        <AdminCard title={editingId ? "Edit degree" : "Create degree"}>
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <input
-              className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm"
-              value={form.name}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, name: event.target.value }))
-              }
-              placeholder="Degree name"
-              required
-            />
-            <input
-              className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm"
-              value={form.slug ?? ""}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, slug: event.target.value }))
-              }
-              placeholder="Slug (optional)"
-            />
-            <input
-              className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm"
-              value={form.level ?? ""}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, level: event.target.value }))
-              }
-              placeholder="Level (e.g. Undergraduate, Graduate)"
-            />
-            <div className="grid gap-4 md:grid-cols-2">
-              <input
-                type="number"
-                className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm"
-                value={form.displayOrder ?? 0}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    displayOrder: Number(event.target.value),
-                  }))
-                }
-                placeholder="Display order"
-              />
-              <label className="flex items-center gap-3 rounded-xl bg-surface-container-lowest px-4 py-3 text-sm font-medium text-on-surface-variant">
-                <input
-                  type="checkbox"
-                  checked={form.isActive ?? true}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      isActive: event.target.checked,
-                    }))
-                  }
-                />
-                Active degree
-              </label>
-            </div>
-            <div className="flex gap-3">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-on-primary disabled:opacity-60"
-              >
-                {isSubmitting ? "Saving..." : editingId ? "Update degree" : "Create degree"}
-              </button>
-              {editingId ? (
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-5 py-3 text-sm font-semibold text-primary"
-                >
-                  Cancel edit
-                </button>
-              ) : null}
-            </div>
-          </form>
-        </AdminCard>
+        {isLoading ? (
+          <AdminLoadingMessage label="Loading degrees..." />
+        ) : data && data.degrees.length > 0 ? (
+          <DegreeTable
+            degrees={data.degrees}
+            page={data.pagination.page}
+            totalPages={data.pagination.totalPages}
+            rowActionId={rowActionId}
+            onView={setViewingDegree}
+            onEdit={openEditModal}
+            onToggleActive={(degree) => {
+              void handleToggleActive(degree);
+            }}
+            onDelete={(degree) => {
+              void handleDelete(degree);
+            }}
+            onPageChange={(page) => updateQuery({ page })}
+          />
+        ) : (
+          <AdminTableEmpty
+            title="No degrees match the current filters"
+            description="Create a degree option or widen the filters to bring more results into the table."
+          />
+        )}
       </div>
+
+      <DegreeFormModal
+        isOpen={isModalOpen}
+        isSubmitting={isSubmitting}
+        isEditing={Boolean(editingDegreeId)}
+        form={form}
+        onClose={closeModal}
+        onChange={setForm}
+        onSubmit={handleSubmit}
+      />
+
+      <DegreeDetailsModal
+        degree={viewingDegree}
+        onClose={() => setViewingDegree(null)}
+      />
     </div>
   );
 }

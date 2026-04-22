@@ -15,8 +15,6 @@ export type AdminBookingSortOption =
   | "oldest";
 
 export type AdminMasterSortOption =
-  | "display_asc"
-  | "display_desc"
   | "name_asc"
   | "name_desc"
   | "newest"
@@ -134,10 +132,8 @@ export type AdminCategoriesResponse = {
   categories: Array<{
     id: string;
     name: string;
-    slug: string;
     description: string | null;
     isActive: boolean;
-    displayOrder: number;
     subjectCount: number;
     tutorCount: number;
     createdAt: string;
@@ -156,13 +152,10 @@ export type AdminSubjectsResponse = {
     categoryId: string;
     categoryName: string;
     name: string;
-    slug: string;
-    shortDescription: string | null;
-    longDescription: string | null;
-    iconKey: string | null;
-    heroImageUrl: string | null;
+    description: string | null;
+    iconUrl: string | null;
+    iconPublicId: string | null;
     isActive: boolean;
-    displayOrder: number;
     tutorCount: number;
     createdAt: string;
   }>;
@@ -174,10 +167,8 @@ export type AdminDegreesResponse = {
   degrees: Array<{
     id: string;
     name: string;
-    slug: string;
     level: string | null;
     isActive: boolean;
-    displayOrder: number;
     usageCount: number;
     createdAt: string;
   }>;
@@ -187,28 +178,21 @@ export type AdminDegreesResponse = {
 
 export type AdminCategoryUpsertInput = {
   name: string;
-  slug?: string;
   description?: string | null;
   isActive?: boolean;
-  displayOrder?: number;
 };
 
 export type AdminSubjectUpsertInput = {
   categoryId: string;
   name: string;
-  slug?: string;
-  shortDescription?: string | null;
-  longDescription?: string | null;
-  iconKey?: string | null;
-  heroImageUrl?: string | null;
+  description?: string | null;
+  iconUrl?: string | null;
+  iconPublicId?: string | null;
   isActive?: boolean;
-  displayOrder?: number;
 };
 
 export type AdminDegreeUpsertInput = {
   name: string;
-  slug?: string;
   level?: string | null;
   isActive?: boolean;
-  displayOrder?: number;
 };

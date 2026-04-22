@@ -1,6 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Plus } from "lucide-react";
 import Swal from "sweetalert2";
 import {
   AdminApiError,
@@ -10,7 +12,13 @@ import {
   getAdminSubjects,
   updateAdminSubject,
 } from "@/lib/admin-api";
-import { subjectIconOptions } from "@/lib/subject-icons";
+import { buildAdminListUrl, parsePositiveInt } from "@/lib/admin-list-query";
+import {
+  deleteUploadedAsset,
+  type UploadedImageResult,
+  ImageUploadError,
+  uploadImage,
+} from "@/lib/upload-image";
 import type {
   AdminCategoriesResponse,
   AdminMasterSortOption,
@@ -18,50 +26,89 @@ import type {
   AdminSubjectsResponse,
 } from "@/types/admin";
 import {
-  AdminCard,
   AdminErrorMessage,
   AdminLoadingMessage,
   AdminPageHeader,
-  AdminPaginationControls,
   AdminTableEmpty,
 } from "@/Components/Admin/AdminUi";
-import { formatAdminDate } from "@/Components/Admin/admin-formatters";
+import { SubjectDetailsModal } from "@/Components/Admin/Subjects/SubjectDetailsModal";
+import { SubjectFilters } from "@/Components/Admin/Subjects/SubjectFilters";
+import { SubjectFormModal } from "@/Components/Admin/Subjects/SubjectFormModal";
+import { SubjectTable } from "@/Components/Admin/Subjects/SubjectTable";
+
+const defaultQuery = {
+  q: "",
+  categoryId: "all",
+  isActive: "all",
+  sortBy: "name_asc" as AdminMasterSortOption,
+  page: 1,
+  limit: 10,
+};
 
 const blankForm: AdminSubjectUpsertInput = {
   categoryId: "",
   name: "",
-  slug: "",
-  shortDescription: "",
-  longDescription: "",
-  iconKey: "",
-  heroImageUrl: "",
-  isActive: true,
-  displayOrder: 0,
+  description: "",
+  iconUrl: null,
+  iconPublicId: null,
 };
 
-export default function AdminSubjectsPage() {
-  const [query, setQuery] = useState({
-    q: "",
-    categoryId: "all",
-    isActive: "all",
-    sortBy: "display_asc" as AdminMasterSortOption,
-    page: 1,
+function parseQueryParams(searchParams: URLSearchParams) {
+  const categoryId = searchParams.get("categoryId");
+  const isActive = searchParams.get("isActive");
+  const sortBy = searchParams.get("sortBy");
+
+  return {
+    q: searchParams.get("q") ?? defaultQuery.q,
+    categoryId: categoryId || defaultQuery.categoryId,
+    isActive:
+      isActive === "true" || isActive === "false" ? isActive : defaultQuery.isActive,
+    sortBy:
+      sortBy && ["name_asc", "name_desc", "newest", "oldest"].includes(sortBy)
+        ? (sortBy as AdminMasterSortOption)
+        : defaultQuery.sortBy,
+    page: parsePositiveInt(searchParams.get("page"), defaultQuery.page),
     limit: 10,
-  });
+  };
+}
+
+export default function AdminSubjectsPage() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const query = useMemo(() => parseQueryParams(searchParams), [searchParams]);
+
   const [data, setData] = useState<AdminSubjectsResponse | null>(null);
-  const [categoryData, setCategoryData] = useState<AdminCategoriesResponse | null>(null);
-  const [form, setForm] = useState(blankForm);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [categories, setCategories] = useState<AdminCategoriesResponse["categories"]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const categoryOptions = categoryData?.categories ?? [];
-
-  const canSubmit = useMemo(
-    () => form.categoryId.trim().length > 0 && form.name.trim().length > 0,
-    [form.categoryId, form.name]
+  const [searchInput, setSearchInput] = useState(query.q);
+  const [editingSubjectId, setEditingSubjectId] = useState<string | null>(null);
+  const [viewingSubject, setViewingSubject] =
+    useState<AdminSubjectsResponse["subjects"][number] | null>(null);
+  const [form, setForm] = useState<AdminSubjectUpsertInput>(blankForm);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [rowActionId, setRowActionId] = useState<string | null>(null);
+  const [pendingUploadedIcon, setPendingUploadedIcon] = useState<UploadedImageResult | null>(
+    null
   );
+  const [isUploadingIcon, setIsUploadingIcon] = useState(false);
+
+  useEffect(() => {
+    setSearchInput(query.q);
+  }, [query.q]);
+
+  function updateQuery(next: Partial<typeof defaultQuery>) {
+    const merged = { ...query, ...next, limit: 10 };
+    const nextUrl = buildAdminListUrl({
+      pathname,
+      searchParams,
+      values: merged,
+      defaults: defaultQuery,
+    });
+    router.replace(nextUrl, { scroll: false });
+  }
 
   async function loadPageData() {
     setIsLoading(true);
@@ -71,28 +118,21 @@ export default function AdminSubjectsPage() {
         getAdminSubjects({
           q: query.q || undefined,
           categoryId: query.categoryId === "all" ? undefined : query.categoryId,
-          isActive:
-            query.isActive === "all" ? undefined : query.isActive === "true",
+          isActive: query.isActive === "all" ? undefined : query.isActive === "true",
           sortBy: query.sortBy,
           page: query.page,
           limit: query.limit,
         }),
         getAdminCategories({
-          sortBy: "display_asc",
+          sortBy: "name_asc",
           page: 1,
           limit: 100,
         }),
       ]);
 
       setData(subjectsResult);
-      setCategoryData(categoriesResult);
+      setCategories(categoriesResult.categories);
       setErrorMessage(null);
-      if (!form.categoryId && categoriesResult.categories[0]) {
-        setForm((current) => ({
-          ...current,
-          categoryId: categoriesResult.categories[0]?.id ?? "",
-        }));
-      }
     } catch (error) {
       setErrorMessage(
         error instanceof AdminApiError
@@ -108,12 +148,106 @@ export default function AdminSubjectsPage() {
     void loadPageData();
   }, [query]);
 
-  function resetForm() {
+  async function rollbackPendingIcon() {
+    if (!pendingUploadedIcon) {
+      return;
+    }
+
+    try {
+      await deleteUploadedAsset({
+        publicId: pendingUploadedIcon.publicId,
+        resourceType: pendingUploadedIcon.resourceType,
+        deleteToken: pendingUploadedIcon.deleteToken,
+      });
+    } catch {
+      // Best-effort cleanup only.
+    } finally {
+      setPendingUploadedIcon(null);
+    }
+  }
+
+  function openCreateModal() {
+    setEditingSubjectId(null);
     setForm({
       ...blankForm,
-      categoryId: categoryOptions[0]?.id ?? "",
+      categoryId: categories[0]?.id ?? "",
     });
-    setEditingId(null);
+    setIsModalOpen(true);
+  }
+
+  function openEditModal(subject: AdminSubjectsResponse["subjects"][number]) {
+    setEditingSubjectId(subject.id);
+    setForm({
+      categoryId: subject.categoryId,
+      name: subject.name,
+      description: subject.description ?? "",
+      iconUrl: subject.iconUrl,
+      iconPublicId: subject.iconPublicId,
+    });
+    setIsModalOpen(true);
+  }
+
+  async function closeModal() {
+    if (isSubmitting) {
+      return;
+    }
+
+    await rollbackPendingIcon();
+    setIsModalOpen(false);
+    setEditingSubjectId(null);
+    setForm(blankForm);
+  }
+
+  function handleSearchSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    updateQuery({
+      q: searchInput,
+      page: 1,
+    });
+  }
+
+  async function handleIconUpload(file: File) {
+    setIsUploadingIcon(true);
+
+    try {
+      const uploaded = await uploadImage(file);
+
+      if (pendingUploadedIcon) {
+        await deleteUploadedAsset({
+          publicId: pendingUploadedIcon.publicId,
+          resourceType: pendingUploadedIcon.resourceType,
+          deleteToken: pendingUploadedIcon.deleteToken,
+        }).catch(() => undefined);
+      }
+
+      setPendingUploadedIcon(uploaded);
+      setForm((current) => ({
+        ...current,
+        iconUrl: uploaded.secureUrl,
+        iconPublicId: uploaded.publicId,
+      }));
+    } catch (error) {
+      await Swal.fire({
+        icon: "error",
+        title: "Upload failed",
+        text:
+          error instanceof ImageUploadError
+            ? error.message
+            : "We couldn't upload this subject icon right now.",
+        confirmButtonColor: "#1d3b66",
+      });
+    } finally {
+      setIsUploadingIcon(false);
+    }
+  }
+
+  async function handleRemoveIcon() {
+    await rollbackPendingIcon();
+    setForm((current) => ({
+      ...current,
+      iconUrl: null,
+      iconPublicId: null,
+    }));
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -121,17 +255,20 @@ export default function AdminSubjectsPage() {
     setIsSubmitting(true);
 
     try {
-      if (editingId) {
-        await updateAdminSubject(editingId, form);
+      if (editingSubjectId) {
+        await updateAdminSubject(editingSubjectId, form);
       } else {
         await createAdminSubject(form);
       }
 
-      resetForm();
+      setPendingUploadedIcon(null);
+      setIsModalOpen(false);
+      setEditingSubjectId(null);
+      setForm(blankForm);
       await loadPageData();
       await Swal.fire({
         icon: "success",
-        title: editingId ? "Subject updated" : "Subject created",
+        title: editingSubjectId ? "Subject updated" : "Subject created",
         confirmButtonColor: "#1d3b66",
       });
     } catch (error) {
@@ -149,11 +286,39 @@ export default function AdminSubjectsPage() {
     }
   }
 
-  async function handleDelete(id: string, name: string) {
+  async function handleToggleActive(subject: AdminSubjectsResponse["subjects"][number]) {
+    setRowActionId(subject.id);
+
+    try {
+      await updateAdminSubject(subject.id, {
+        categoryId: subject.categoryId,
+        name: subject.name,
+        description: subject.description,
+        iconUrl: subject.iconUrl,
+        iconPublicId: subject.iconPublicId,
+        isActive: !subject.isActive,
+      });
+      await loadPageData();
+    } catch (error) {
+      await Swal.fire({
+        icon: "error",
+        title: "Status update failed",
+        text:
+          error instanceof AdminApiError
+            ? error.message
+            : "We couldn't update this subject right now.",
+        confirmButtonColor: "#1d3b66",
+      });
+    } finally {
+      setRowActionId(null);
+    }
+  }
+
+  async function handleDelete(subject: AdminSubjectsResponse["subjects"][number]) {
     const confirmation = await Swal.fire({
       icon: "warning",
       title: "Delete this subject?",
-      text: `${name} will be removed permanently if it is not linked to tutors.`,
+      text: `${subject.name} will be removed permanently if it is not linked to tutors.`,
       showCancelButton: true,
       confirmButtonText: "Delete subject",
       cancelButtonText: "Cancel",
@@ -165,11 +330,10 @@ export default function AdminSubjectsPage() {
       return;
     }
 
+    setRowActionId(subject.id);
+
     try {
-      await deleteAdminSubject(id);
-      if (editingId === id) {
-        resetForm();
-      }
+      await deleteAdminSubject(subject.id);
       await loadPageData();
       await Swal.fire({
         icon: "success",
@@ -186,309 +350,93 @@ export default function AdminSubjectsPage() {
             : "We couldn't delete this subject right now.",
         confirmButtonColor: "#1d3b66",
       });
+    } finally {
+      setRowActionId(null);
     }
   }
 
   return (
     <div>
       <AdminPageHeader
-        eyebrow="Admin Subjects"
-        title="Manage subjects under categories"
-        description="Subjects are the actual teaching units tutors choose from inside selected categories. They also power the landing marquee and public subject pages."
+        title="Manage subjects"
+        action={
+          <button
+            type="button"
+            onClick={openCreateModal}
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-on-primary"
+          >
+            <Plus className="h-4 w-4" />
+            Add Subject
+          </button>
+        }
       />
 
-      <div className="grid gap-6 xl:grid-cols-[1.35fr_0.95fr]">
-        <div className="space-y-6">
-          <AdminCard title="Filters">
-            <div className="grid gap-4 lg:grid-cols-4">
-              <input
-                className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm"
-                value={query.q}
-                onChange={(event) =>
-                  setQuery((current) => ({ ...current, q: event.target.value, page: 1 }))
-                }
-                placeholder="Search subjects"
-              />
-              <select
-                className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm"
-                value={query.categoryId}
-                onChange={(event) =>
-                  setQuery((current) => ({
-                    ...current,
-                    categoryId: event.target.value,
-                    page: 1,
-                  }))
-                }
-              >
-                <option value="all">All categories</option>
-                {categoryOptions.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-              <select
-                className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm"
-                value={query.isActive}
-                onChange={(event) =>
-                  setQuery((current) => ({
-                    ...current,
-                    isActive: event.target.value as typeof current.isActive,
-                    page: 1,
-                  }))
-                }
-              >
-                <option value="all">Any status</option>
-                <option value="true">Active</option>
-                <option value="false">Inactive</option>
-              </select>
-              <select
-                className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm"
-                value={query.sortBy}
-                onChange={(event) =>
-                  setQuery((current) => ({
-                    ...current,
-                    sortBy: event.target.value as AdminMasterSortOption,
-                    page: 1,
-                  }))
-                }
-              >
-                <option value="display_asc">Display order ↑</option>
-                <option value="display_desc">Display order ↓</option>
-                <option value="name_asc">Name A-Z</option>
-                <option value="name_desc">Name Z-A</option>
-                <option value="newest">Newest</option>
-                <option value="oldest">Oldest</option>
-              </select>
-            </div>
-          </AdminCard>
+      <SubjectFilters
+        searchInput={searchInput}
+        categoryId={query.categoryId}
+        isActive={query.isActive}
+        sortBy={query.sortBy}
+        categories={categories}
+        onSearchInputChange={setSearchInput}
+        onSearchSubmit={handleSearchSubmit}
+        onCategoryChange={(value) => updateQuery({ categoryId: value, page: 1 })}
+        onStatusChange={(value) => updateQuery({ isActive: value, page: 1 })}
+        onSortChange={(value) => updateQuery({ sortBy: value, page: 1 })}
+      />
 
-          {errorMessage ? <AdminErrorMessage message={errorMessage} /> : null}
+      <div className="mt-6">
+        {errorMessage ? <AdminErrorMessage message={errorMessage} /> : null}
 
-          {isLoading ? (
-            <AdminLoadingMessage label="Loading subjects..." />
-          ) : data && data.subjects.length > 0 ? (
-            <AdminCard title="Subjects">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-outline-variant/15 text-left">
-                  <thead>
-                    <tr className="text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
-                      <th className="pb-4 pr-4">Subject</th>
-                      <th className="pb-4 pr-4">Category</th>
-                      <th className="pb-4 pr-4">Status</th>
-                      <th className="pb-4 pr-4">Tutors</th>
-                      <th className="pb-4 pr-4">Display</th>
-                      <th className="pb-4 pr-4">Created</th>
-                      <th className="pb-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-outline-variant/10">
-                    {data.subjects.map((subject) => (
-                      <tr key={subject.id}>
-                        <td className="py-4 pr-4">
-                          <p className="font-semibold text-primary">{subject.name}</p>
-                          <p className="text-sm text-on-surface-variant">{subject.slug}</p>
-                        </td>
-                        <td className="py-4 pr-4 text-sm text-on-surface-variant">
-                          {subject.categoryName}
-                        </td>
-                        <td className="py-4 pr-4">
-                          <span className="rounded-full bg-secondary-container px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-on-secondary-container">
-                            {subject.isActive ? "Active" : "Inactive"}
-                          </span>
-                        </td>
-                        <td className="py-4 pr-4 text-sm text-on-surface-variant">
-                          {subject.tutorCount}
-                        </td>
-                        <td className="py-4 pr-4 text-sm text-on-surface-variant">
-                          {subject.displayOrder}
-                        </td>
-                        <td className="py-4 pr-4 text-sm text-on-surface-variant">
-                          {formatAdminDate(subject.createdAt)}
-                        </td>
-                        <td className="py-4 text-right">
-                          <div className="flex justify-end gap-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setEditingId(subject.id);
-                                setForm({
-                                  categoryId: subject.categoryId,
-                                  name: subject.name,
-                                  slug: subject.slug,
-                                  shortDescription: subject.shortDescription,
-                                  longDescription: subject.longDescription,
-                                  iconKey: subject.iconKey,
-                                  heroImageUrl: subject.heroImageUrl,
-                                  isActive: subject.isActive,
-                                  displayOrder: subject.displayOrder,
-                                });
-                              }}
-                              className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-on-primary"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => void handleDelete(subject.id, subject.name)}
-                              className="rounded-xl bg-error-container px-4 py-2 text-sm font-semibold text-on-error-container"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <AdminPaginationControls
-                page={data.pagination.page}
-                totalPages={data.pagination.totalPages}
-                onChange={(page) => setQuery((current) => ({ ...current, page }))}
-              />
-            </AdminCard>
-          ) : (
-            <AdminTableEmpty
-              title="No subjects match the current filters"
-              description="Create the first subject or widen the filters to show the catalog."
-            />
-          )}
-        </div>
-
-        <AdminCard title={editingId ? "Edit subject" : "Create subject"}>
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <select
-              className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm"
-              value={form.categoryId}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, categoryId: event.target.value }))
-              }
-              required
-            >
-              <option value="">Select category</option>
-              {categoryOptions.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-            <input
-              className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm"
-              value={form.name}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, name: event.target.value }))
-              }
-              placeholder="Subject name"
-              required
-            />
-            <input
-              className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm"
-              value={form.slug ?? ""}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, slug: event.target.value }))
-              }
-              placeholder="Slug (optional)"
-            />
-            <textarea
-              className="min-h-24 w-full rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm"
-              value={form.shortDescription ?? ""}
-              onChange={(event) =>
-                setForm((current) => ({
-                  ...current,
-                  shortDescription: event.target.value,
-                }))
-              }
-              placeholder="Short description"
-            />
-            <textarea
-              className="min-h-32 w-full rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm"
-              value={form.longDescription ?? ""}
-              onChange={(event) =>
-                setForm((current) => ({
-                  ...current,
-                  longDescription: event.target.value,
-                }))
-              }
-              placeholder="Long description"
-            />
-            <div className="grid gap-4 md:grid-cols-2">
-              <select
-                className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm"
-                value={form.iconKey ?? ""}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, iconKey: event.target.value }))
-                }
-              >
-                <option value="">Default icon</option>
-                {subjectIconOptions.map((iconKey) => (
-                  <option key={iconKey} value={iconKey}>
-                    {iconKey}
-                  </option>
-                ))}
-              </select>
-              <input
-                className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm"
-                value={form.heroImageUrl ?? ""}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    heroImageUrl: event.target.value,
-                  }))
-                }
-                placeholder="Hero image URL (optional)"
-              />
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              <input
-                type="number"
-                className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm"
-                value={form.displayOrder ?? 0}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    displayOrder: Number(event.target.value),
-                  }))
-                }
-                placeholder="Display order"
-              />
-              <label className="flex items-center gap-3 rounded-xl bg-surface-container-lowest px-4 py-3 text-sm font-medium text-on-surface-variant">
-                <input
-                  type="checkbox"
-                  checked={form.isActive ?? true}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      isActive: event.target.checked,
-                    }))
-                  }
-                />
-                Active subject
-              </label>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                type="submit"
-                disabled={!canSubmit || isSubmitting}
-                className="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-on-primary disabled:opacity-60"
-              >
-                {isSubmitting ? "Saving..." : editingId ? "Update subject" : "Create subject"}
-              </button>
-              {editingId ? (
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-5 py-3 text-sm font-semibold text-primary"
-                >
-                  Cancel edit
-                </button>
-              ) : null}
-            </div>
-          </form>
-        </AdminCard>
+        {isLoading ? (
+          <AdminLoadingMessage label="Loading subjects..." />
+        ) : data && data.subjects.length > 0 ? (
+          <SubjectTable
+            subjects={data.subjects}
+            page={data.pagination.page}
+            totalPages={data.pagination.totalPages}
+            rowActionId={rowActionId}
+            onView={setViewingSubject}
+            onEdit={openEditModal}
+            onToggleActive={(subject) => {
+              void handleToggleActive(subject);
+            }}
+            onDelete={(subject) => {
+              void handleDelete(subject);
+            }}
+            onPageChange={(page) => updateQuery({ page })}
+          />
+        ) : (
+          <AdminTableEmpty
+            title="No subjects match the current filters"
+            description="Create a subject or widen the filters to bring more results into the table."
+          />
+        )}
       </div>
+
+      <SubjectFormModal
+        isOpen={isModalOpen}
+        isSubmitting={isSubmitting}
+        isEditing={Boolean(editingSubjectId)}
+        isUploadingIcon={isUploadingIcon}
+        form={form}
+        categories={categories}
+        onClose={() => {
+          void closeModal();
+        }}
+        onChange={setForm}
+        onSubmit={handleSubmit}
+        onUploadIcon={(file) => {
+          void handleIconUpload(file);
+        }}
+        onRemoveIcon={() => {
+          void handleRemoveIcon();
+        }}
+      />
+
+      <SubjectDetailsModal
+        subject={viewingSubject}
+        onClose={() => setViewingSubject(null)}
+      />
     </div>
   );
 }

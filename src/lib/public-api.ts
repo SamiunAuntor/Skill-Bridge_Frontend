@@ -70,8 +70,8 @@ export type LandingPageResponse = {
     id: string;
     name: string;
     slug: string;
-    iconKey: string | null;
-    shortDescription: string | null;
+    iconUrl: string | null;
+    description: string | null;
     categoryName: string;
   }>;
 };
@@ -85,8 +85,8 @@ export type PublicSubjectsResponse = {
     id: string;
     name: string;
     slug: string;
-    iconKey: string | null;
-    shortDescription: string | null;
+    iconUrl: string | null;
+    description: string | null;
     category: {
       id: string;
       name: string;
@@ -101,10 +101,8 @@ export type PublicSubjectDetailResponse = {
     id: string;
     name: string;
     slug: string;
-    shortDescription: string | null;
-    longDescription: string | null;
-    iconKey: string | null;
-    heroImageUrl: string | null;
+    description: string | null;
+    iconUrl: string | null;
     category: {
       id: string;
       name: string;

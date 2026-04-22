@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import Image from "next/image";
+import { ArrowRight, BookOpen } from "lucide-react";
 import { getPublicSubjects } from "@/lib/public-api";
-import { getSubjectIcon } from "@/lib/subject-icons";
 
 export const metadata = {
   title: "Subjects | SkillBridge",
@@ -40,8 +40,6 @@ export default async function SubjectsPage() {
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
           {data.subjects.map((subject) => {
-            const Icon = getSubjectIcon(subject.iconKey);
-
             return (
               <Link
                 key={subject.id}
@@ -50,7 +48,17 @@ export default async function SubjectsPage() {
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-fixed text-primary">
-                    <Icon className="h-7 w-7" />
+                    {subject.iconUrl ? (
+                      <Image
+                        src={subject.iconUrl}
+                        alt={`${subject.name} icon`}
+                        width={32}
+                        height={32}
+                        className="h-8 w-8 object-contain"
+                      />
+                    ) : (
+                      <BookOpen className="h-7 w-7" />
+                    )}
                   </div>
                   <span className="rounded-full bg-secondary-container px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-on-secondary-container">
                     {subject.tutorCount} tutor{subject.tutorCount === 1 ? "" : "s"}
@@ -65,7 +73,7 @@ export default async function SubjectsPage() {
                     {subject.name}
                   </h2>
                   <p className="mt-4 text-sm leading-relaxed text-on-surface-variant">
-                    {subject.shortDescription ||
+                    {subject.description ||
                       "Discover tutors, compare teaching styles, and start learning this subject with confidence."}
                   </p>
                 </div>

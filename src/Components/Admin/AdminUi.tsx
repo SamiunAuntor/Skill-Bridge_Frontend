@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ChevronDown, X } from "lucide-react";
 import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
 
 export function AdminPageHeader({
@@ -136,5 +137,97 @@ export function AdminPaginationControls({
         </button>
       </div>
     </div>
+  );
+}
+
+export function AdminSelectField({
+  value,
+  onChange,
+  children,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="relative">
+      <ChevronDown className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant" />
+      <select
+        className="w-full appearance-none rounded-xl border border-outline-variant/20 bg-surface-container-lowest py-3 pl-11 pr-4 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      >
+        {children}
+      </select>
+    </div>
+  );
+}
+
+export function AdminModal({
+  isOpen,
+  title,
+  onClose,
+  children,
+}: {
+  isOpen: boolean;
+  title: string;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/45 backdrop-blur-sm px-4 py-6">
+      <div className="w-full max-w-2xl rounded-[1.5rem] bg-surface-container-low p-6 shadow-[0px_20px_50px_rgba(0,51,88,0.2)]">
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <h2 className="font-headline text-2xl font-bold text-primary">{title}</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full p-2 text-on-surface-variant transition hover:bg-surface-container-high"
+            aria-label="Close modal"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export function AdminIconActionButton({
+  icon,
+  label,
+  variant = "neutral",
+  disabled,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  variant?: "neutral" | "primary" | "danger";
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  const className =
+    variant === "primary"
+      ? "bg-primary text-on-primary hover:opacity-90"
+      : variant === "danger"
+        ? "bg-error-container text-on-error-container hover:opacity-90"
+        : "border border-outline-variant/20 bg-surface-container-lowest text-primary hover:bg-surface-container-high";
+
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      disabled={disabled}
+      onClick={onClick}
+      className={`inline-flex h-10 w-10 items-center justify-center rounded-xl transition disabled:opacity-60 ${className}`}
+    >
+      {icon}
+    </button>
   );
 }

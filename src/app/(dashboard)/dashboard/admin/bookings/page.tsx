@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { ChevronDown, Search } from "lucide-react";
 import { AdminApiError, getAdminBookings } from "@/lib/admin-api";
 import type { AdminBookingsResponse, AdminBookingSortOption } from "@/types/admin";
 import {
@@ -25,11 +27,125 @@ const defaultQuery = {
   limit: 10,
 };
 
+function parsePositiveInt(value: string | null, fallback: number): number {
+  if (!value) {
+    return fallback;
+  }
+
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function parseQueryParams(searchParams: URLSearchParams) {
+  const status = searchParams.get("status");
+  const paymentStatus = searchParams.get("paymentStatus");
+  const sortBy = searchParams.get("sortBy");
+
+  return {
+    q: searchParams.get("q") ?? defaultQuery.q,
+    status:
+      status &&
+      ["confirmed", "completed", "cancelled", "no_show"].includes(status)
+        ? status
+        : defaultQuery.status,
+    paymentStatus:
+      paymentStatus &&
+      ["pending", "paid", "failed"].includes(paymentStatus)
+        ? paymentStatus
+        : defaultQuery.paymentStatus,
+    sortBy:
+      sortBy &&
+      [
+        "session_desc",
+        "session_asc",
+        "amount_high",
+        "amount_low",
+        "newest",
+        "oldest",
+      ].includes(sortBy)
+        ? (sortBy as AdminBookingSortOption)
+        : defaultQuery.sortBy,
+    page: parsePositiveInt(searchParams.get("page"), defaultQuery.page),
+    limit: 10,
+  };
+}
+
+function SelectField({
+  value,
+  onChange,
+  children,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="relative">
+      <ChevronDown className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant" />
+      <select
+        className="w-full appearance-none rounded-xl border border-outline-variant/20 bg-surface-container-lowest py-3 pl-11 pr-4 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      >
+        {children}
+      </select>
+    </div>
+  );
+}
+
 export default function AdminBookingsPage() {
-  const [query, setQuery] = useState(defaultQuery);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const query = useMemo(() => parseQueryParams(searchParams), [searchParams]);
   const [data, setData] = useState<AdminBookingsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [searchInput, setSearchInput] = useState(query.q);
+
+  useEffect(() => {
+    setSearchInput(query.q);
+  }, [query.q]);
+
+  function updateQuery(next: Partial<typeof defaultQuery>) {
+    const params = new URLSearchParams(searchParams.toString());
+    const merged = { ...query, ...next };
+
+    if (merged.q.trim()) {
+      params.set("q", merged.q.trim());
+    } else {
+      params.delete("q");
+    }
+
+    if (merged.status !== "all") {
+      params.set("status", merged.status);
+    } else {
+      params.delete("status");
+    }
+
+    if (merged.paymentStatus !== "all") {
+      params.set("paymentStatus", merged.paymentStatus);
+    } else {
+      params.delete("paymentStatus");
+    }
+
+    if (merged.sortBy !== defaultQuery.sortBy) {
+      params.set("sortBy", merged.sortBy);
+    } else {
+      params.delete("sortBy");
+    }
+
+    if (merged.page > 1) {
+      params.set("page", String(merged.page));
+    } else {
+      params.delete("page");
+    }
+
+    params.set("limit", "10");
+
+    const nextUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    router.replace(nextUrl, { scroll: false });
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -79,33 +195,37 @@ export default function AdminBookingsPage() {
     };
   }, [query]);
 
+  function handleSearchSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    updateQuery({
+      q: searchInput,
+      page: 1,
+    });
+  }
+
   return (
     <div>
-      <AdminPageHeader
-        eyebrow="Admin Bookings"
-        title="Monitor every session booking"
-        description="Track booking lifecycle, session timing, and payment status in one table so the upcoming payment gateway work has the right operational home."
-      />
+      <AdminPageHeader title="Monitor every session booking" />
 
       <AdminCard title="Filters">
         <div className="grid gap-4 lg:grid-cols-[1.3fr_repeat(3,minmax(0,1fr))]">
-          <input
-            className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm text-on-surface outline-none"
-            value={query.q}
-            onChange={(event) =>
-              setQuery((current) => ({ ...current, q: event.target.value, page: 1 }))
-            }
-            placeholder="Search by tutor or student"
-          />
-          <select
-            className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm"
+          <form onSubmit={handleSearchSubmit} className="relative">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant" />
+            <input
+              className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-lowest py-3 pl-11 pr-4 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
+              placeholder="Search by tutor or student"
+            />
+          </form>
+
+          <SelectField
             value={query.status}
-            onChange={(event) =>
-              setQuery((current) => ({
-                ...current,
-                status: event.target.value as typeof current.status,
+            onChange={(value) =>
+              updateQuery({
+                status: value as typeof query.status,
                 page: 1,
-              }))
+              })
             }
           >
             <option value="all">All booking states</option>
@@ -113,32 +233,30 @@ export default function AdminBookingsPage() {
             <option value="completed">Completed</option>
             <option value="cancelled">Cancelled</option>
             <option value="no_show">No show</option>
-          </select>
-          <select
-            className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm"
+          </SelectField>
+
+          <SelectField
             value={query.paymentStatus}
-            onChange={(event) =>
-              setQuery((current) => ({
-                ...current,
-                paymentStatus: event.target.value as typeof current.paymentStatus,
+            onChange={(value) =>
+              updateQuery({
+                paymentStatus: value as typeof query.paymentStatus,
                 page: 1,
-              }))
+              })
             }
           >
             <option value="all">All payment states</option>
             <option value="pending">Pending</option>
             <option value="paid">Paid</option>
             <option value="failed">Failed</option>
-          </select>
-          <select
-            className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm"
+          </SelectField>
+
+          <SelectField
             value={query.sortBy}
-            onChange={(event) =>
-              setQuery((current) => ({
-                ...current,
-                sortBy: event.target.value as AdminBookingSortOption,
+            onChange={(value) =>
+              updateQuery({
+                sortBy: value as AdminBookingSortOption,
                 page: 1,
-              }))
+              })
             }
           >
             <option value="session_desc">Latest session first</option>
@@ -147,7 +265,7 @@ export default function AdminBookingsPage() {
             <option value="amount_low">Lowest amount</option>
             <option value="newest">Newest booking record</option>
             <option value="oldest">Oldest booking record</option>
-          </select>
+          </SelectField>
         </div>
       </AdminCard>
 
@@ -159,21 +277,21 @@ export default function AdminBookingsPage() {
         ) : data && data.bookings.length > 0 ? (
           <AdminCard title="All bookings">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-outline-variant/15 text-left">
+              <table className="min-w-full border border-outline-variant/20 text-left">
                 <thead>
                   <tr className="text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
-                    <th className="pb-4 pr-4">Participants</th>
-                    <th className="pb-4 pr-4">Session Time</th>
-                    <th className="pb-4 pr-4">Booking Status</th>
-                    <th className="pb-4 pr-4">Payment</th>
-                    <th className="pb-4 pr-4">Amount</th>
-                    <th className="pb-4">Created</th>
+                    <th className="border border-outline-variant/20 px-4 py-4">Participants</th>
+                    <th className="border border-outline-variant/20 px-4 py-4">Session Time</th>
+                    <th className="border border-outline-variant/20 px-4 py-4">Booking Status</th>
+                    <th className="border border-outline-variant/20 px-4 py-4">Payment</th>
+                    <th className="border border-outline-variant/20 px-4 py-4">Amount</th>
+                    <th className="border border-outline-variant/20 px-4 py-4">Created</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-outline-variant/10">
+                <tbody>
                   {data.bookings.map((booking) => (
                     <tr key={booking.id}>
-                      <td className="py-4 pr-4">
+                      <td className="border border-outline-variant/20 px-4 py-4">
                         <div>
                           <p className="font-semibold text-primary">{booking.student.name}</p>
                           <p className="text-sm text-on-surface-variant">
@@ -187,16 +305,16 @@ export default function AdminBookingsPage() {
                           </p>
                         </div>
                       </td>
-                      <td className="py-4 pr-4 text-sm text-on-surface-variant">
+                      <td className="border border-outline-variant/20 px-4 py-4 text-sm text-on-surface-variant">
                         <div>{formatAdminDateTime(booking.startTime)}</div>
                         <div className="mt-1">to {formatAdminDateTime(booking.endTime)}</div>
                       </td>
-                      <td className="py-4 pr-4">
+                      <td className="border border-outline-variant/20 px-4 py-4">
                         <span className="rounded-full bg-tertiary-fixed px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-on-tertiary-fixed-variant">
                           {booking.bookingStatus.replace("_", " ")}
                         </span>
                       </td>
-                      <td className="py-4 pr-4">
+                      <td className="border border-outline-variant/20 px-4 py-4">
                         <span
                           className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] ${
                             booking.paymentStatus === "paid"
@@ -209,10 +327,10 @@ export default function AdminBookingsPage() {
                           {booking.paymentStatus}
                         </span>
                       </td>
-                      <td className="py-4 pr-4 font-semibold text-primary">
+                      <td className="border border-outline-variant/20 px-4 py-4 font-semibold text-primary">
                         {formatAdminCurrency(booking.priceAtBooking)}
                       </td>
-                      <td className="py-4 text-sm text-on-surface-variant">
+                      <td className="border border-outline-variant/20 px-4 py-4 text-sm text-on-surface-variant">
                         {formatAdminDateTime(booking.createdAt)}
                       </td>
                     </tr>
@@ -224,7 +342,7 @@ export default function AdminBookingsPage() {
             <AdminPaginationControls
               page={data.pagination.page}
               totalPages={data.pagination.totalPages}
-              onChange={(page) => setQuery((current) => ({ ...current, page }))}
+              onChange={(page) => updateQuery({ page })}
             />
           </AdminCard>
         ) : (

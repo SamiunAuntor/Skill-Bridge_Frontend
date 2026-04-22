@@ -850,9 +850,9 @@ export default function TutorProfileSettings() {
                                   }`}
                                 >
                                   <div className="text-sm font-bold">{subject.name}</div>
-                                  {subject.shortDescription ? (
+                                  {subject.description ? (
                                     <div className="mt-1 text-[11px] leading-relaxed">
-                                      {subject.shortDescription}
+                                      {subject.description}
                                     </div>
                                   ) : null}
                                 </button>

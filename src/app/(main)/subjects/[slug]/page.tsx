@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { ArrowLeft, BadgeCheck, Star } from "lucide-react";
+import Image from "next/image";
+import { ArrowLeft, BadgeCheck, BookOpen, Star } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getPublicSubjectBySlug, PublicApiError } from "@/lib/public-api";
-import { getSubjectIcon } from "@/lib/subject-icons";
 
 type SubjectDetailPageProps = {
   params: Promise<{ slug: string }>;
@@ -30,7 +30,6 @@ export default async function SubjectDetailPage({
   }
 
   const { subject, tutors } = data;
-  const Icon = getSubjectIcon(subject.iconKey);
 
   return (
     <section className="px-6 pb-20 pt-8 md:px-8">
@@ -47,7 +46,17 @@ export default async function SubjectDetailPage({
           <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
             <div className="max-w-4xl">
               <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-primary-fixed text-primary">
-                <Icon className="h-8 w-8" />
+                {subject.iconUrl ? (
+                  <Image
+                    src={subject.iconUrl}
+                    alt={`${subject.name} icon`}
+                    width={36}
+                    height={36}
+                    className="h-9 w-9 object-contain"
+                  />
+                ) : (
+                  <BookOpen className="h-8 w-8" />
+                )}
               </div>
               <p className="mt-6 text-sm font-bold uppercase tracking-[0.2em] text-secondary">
                 {subject.category.name}
@@ -56,8 +65,7 @@ export default async function SubjectDetailPage({
                 {subject.name}
               </h1>
               <p className="mt-5 max-w-3xl text-lg leading-relaxed text-on-surface-variant">
-                {subject.longDescription ||
-                  subject.shortDescription ||
+                {subject.description ||
                   "Explore tutors who teach this subject and choose a guide who matches your goals, pace, and learning style."}
               </p>
             </div>
