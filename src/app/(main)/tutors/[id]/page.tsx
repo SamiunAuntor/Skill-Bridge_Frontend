@@ -166,7 +166,7 @@ function EducationCard({
       <h3 className="text-lg font-bold text-primary">{item.degree}</h3>
       <p className="mt-1 text-sm text-on-surface-variant">{item.institution}</p>
       <p className="mt-1 text-xs font-medium text-on-surface-variant">
-        {item.fieldOfStudy}
+        {item.categoryName}
       </p>
       {item.description ? (
         <p className="mt-4 text-sm italic text-on-tertiary-fixed-variant">

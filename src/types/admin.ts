@@ -146,6 +146,10 @@ export type AdminSubjectsQuery = AdminCategoriesQuery & {
   categoryId?: string;
 };
 
+export type AdminDegreesQuery = AdminCategoriesQuery & {
+  categoryId?: string;
+};
+
 export type AdminSubjectsResponse = {
   subjects: Array<{
     id: string;
@@ -166,6 +170,8 @@ export type AdminSubjectsResponse = {
 export type AdminDegreesResponse = {
   degrees: Array<{
     id: string;
+    categoryId: string;
+    categoryName: string;
     name: string;
     level: string | null;
     isActive: boolean;
@@ -173,7 +179,7 @@ export type AdminDegreesResponse = {
     createdAt: string;
   }>;
   pagination: AdminPagination;
-  filters: AdminCategoriesQuery;
+  filters: AdminDegreesQuery;
 };
 
 export type AdminCategoryUpsertInput = {
@@ -192,6 +198,7 @@ export type AdminSubjectUpsertInput = {
 };
 
 export type AdminDegreeUpsertInput = {
+  categoryId: string;
   name: string;
   level?: string | null;
   isActive?: boolean;

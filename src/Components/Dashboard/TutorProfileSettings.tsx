@@ -74,6 +74,18 @@ function toFriendlyTutorProfileError(error: unknown): string {
     return "Each education entry must use one of the available degree options.";
   }
 
+  if (/education\[\d+\]\.categoryId/i.test(message)) {
+    return "Each education entry must include an education category.";
+  }
+
+  if (/selected education categories are invalid/i.test(message)) {
+    return "One or more selected education categories are invalid. Please choose them again.";
+  }
+
+  if (/education degree must belong to its selected education category/i.test(message)) {
+    return "Each degree must be chosen from the same education category.";
+  }
+
   if (/education\[\d+\]\.startYear cannot be greater than endYear/i.test(message)) {
     return "One education entry has a start year later than its end year.";
   }
@@ -82,12 +94,12 @@ function toFriendlyTutorProfileError(error: unknown): string {
 }
 
 function createBlankEducation(
-  defaultDegreeId?: string
+  defaultDegree?: TutorEditableProfileResponse["availableDegrees"][number]
 ): TutorProfileUpdateEducationInput {
   return {
-    degreeId: defaultDegreeId ?? "",
+    degreeId: defaultDegree?.id ?? "",
+    categoryId: defaultDegree?.categoryId ?? "",
     institution: "",
-    fieldOfStudy: "",
     startYear: new Date().getFullYear(),
     endYear: null,
     description: "",
@@ -112,13 +124,13 @@ function mapProfileToFormState(
         ? data.profile.education.map((item) => ({
             id: item.id,
             degreeId: item.degreeId,
+            categoryId: item.categoryId,
             institution: item.institution,
-            fieldOfStudy: item.fieldOfStudy,
             startYear: item.startYear,
             endYear: item.endYear,
             description: item.description ?? "",
           }))
-        : [createBlankEducation(defaultDegree?.id)],
+        : [createBlankEducation(defaultDegree)],
   };
 }
 
@@ -134,8 +146,8 @@ function serializeFormState(state: ProfileFormState): string {
     education: state.education.map((item) => ({
       id: item.id ?? null,
       degreeId: item.degreeId,
+      categoryId: item.categoryId,
       institution: normalizeText(item.institution),
-      fieldOfStudy: normalizeText(item.fieldOfStudy),
       startYear: Number(item.startYear),
       endYear: item.endYear ?? null,
       description: normalizeText(item.description),
@@ -229,6 +241,11 @@ export default function TutorProfileSettings() {
           )
         : [],
     [profileData, formState]
+  );
+
+  const availableDegrees = useMemo(
+    () => profileData?.availableDegrees ?? [],
+    [profileData]
   );
 
   const completionStats = useMemo(() => {
@@ -341,14 +358,14 @@ export default function TutorProfileSettings() {
     }
 
     updateFormState((current) => {
-      const defaultDegree = profileData?.availableDegrees[0];
+      const defaultDegree = availableDegrees[0] ?? profileData?.availableDegrees[0];
 
       return {
         ...current,
         education:
           current.education.length > 1
             ? current.education.filter((_, educationIndex) => educationIndex !== index)
-            : [createBlankEducation(defaultDegree?.id)],
+            : [createBlankEducation(defaultDegree)],
       };
     });
   }
@@ -400,8 +417,8 @@ export default function TutorProfileSettings() {
           .map((item) => ({
             ...(item.id ? { id: item.id } : {}),
             degreeId: item.degreeId,
+            categoryId: item.categoryId,
             institution: normalizeText(item.institution),
-            fieldOfStudy: normalizeText(item.fieldOfStudy),
             startYear: Number(item.startYear),
             ...(item.endYear ? { endYear: Number(item.endYear) } : {}),
             description: normalizeText(item.description),
@@ -866,12 +883,10 @@ export default function TutorProfileSettings() {
               hidden={!isEditing}
               disabled={isInteractionDisabled}
               onClick={() => {
-                const defaultDegree = profileData.availableDegrees[0];
-
                 updateFormState((current) => ({
                   ...current,
                   education: [
-                    createBlankEducation(defaultDegree?.id),
+                    createBlankEducation(),
                     ...current.education,
                   ],
                 }));
@@ -895,6 +910,38 @@ export default function TutorProfileSettings() {
                 <div className="mt-4 space-y-4">
                   <div className="space-y-2">
                     <label className="block text-[13px] font-semibold text-on-surface">
+                      Education Category
+                    </label>
+                    <select
+                      className={inputClass}
+                      disabled={isInteractionDisabled}
+                      value={item.categoryId}
+                      onChange={(event) =>
+                        updateFormState((current) => ({
+                          ...current,
+                          education: current.education.map((educationItem, educationIndex) =>
+                            educationIndex === index
+                              ? {
+                                  ...educationItem,
+                                  categoryId: event.target.value,
+                                  degreeId: "",
+                                }
+                              : educationItem
+                          ),
+                        }))
+                      }
+                    >
+                      <option value="">Select education category</option>
+                      {profileData.availableCategories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-[13px] font-semibold text-on-surface">
                       Degree
                     </label>
                     <select
@@ -916,12 +963,16 @@ export default function TutorProfileSettings() {
                       }
                     >
                       <option value="">Select degree</option>
-                      {profileData.availableDegrees.map((degree) => (
+                      {availableDegrees
+                        .filter((degree) =>
+                          item.categoryId ? degree.categoryId === item.categoryId : false
+                        )
+                        .map((degree) => (
                         <option key={degree.id} value={degree.id}>
-                          {degree.name}
+                          {degree.name} - {degree.categoryName}
                           {degree.level ? ` (${degree.level})` : ""}
                         </option>
-                      ))}
+                        ))}
                     </select>
                   </div>
 
@@ -939,27 +990,6 @@ export default function TutorProfileSettings() {
                           education: current.education.map((educationItem, educationIndex) =>
                             educationIndex === index
                               ? { ...educationItem, institution: event.target.value }
-                              : educationItem
-                          ),
-                        }))
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-[13px] font-semibold text-on-surface">
-                      Field of Study
-                    </label>
-                    <input
-                      className={inputClass}
-                      disabled={isInteractionDisabled}
-                      value={item.fieldOfStudy ?? ""}
-                      onChange={(event) =>
-                        updateFormState((current) => ({
-                          ...current,
-                          education: current.education.map((educationItem, educationIndex) =>
-                            educationIndex === index
-                              ? { ...educationItem, fieldOfStudy: event.target.value }
                               : educationItem
                           ),
                         }))

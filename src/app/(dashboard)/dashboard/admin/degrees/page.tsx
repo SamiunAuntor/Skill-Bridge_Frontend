@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import Swal from "sweetalert2";
 import {
   AdminApiError,
+  getAdminCategories,
   createAdminDegree,
   deleteAdminDegree,
   getAdminDegrees,
@@ -30,6 +31,7 @@ import { DegreeTable } from "@/Components/Admin/Degrees/DegreeTable";
 
 const defaultQuery = {
   q: "",
+  categoryId: "all",
   isActive: "all",
   sortBy: "name_asc" as AdminMasterSortOption,
   page: 1,
@@ -37,16 +39,19 @@ const defaultQuery = {
 };
 
 const blankForm: AdminDegreeUpsertInput = {
+  categoryId: "",
   name: "",
   level: "",
 };
 
 function parseQueryParams(searchParams: URLSearchParams) {
+  const categoryId = searchParams.get("categoryId");
   const isActive = searchParams.get("isActive");
   const sortBy = searchParams.get("sortBy");
 
   return {
     q: searchParams.get("q") ?? defaultQuery.q,
+    categoryId: categoryId || defaultQuery.categoryId,
     isActive:
       isActive === "true" || isActive === "false" ? isActive : defaultQuery.isActive,
     sortBy:
@@ -72,6 +77,7 @@ export default function AdminDegreesPage() {
   const [viewingDegree, setViewingDegree] =
     useState<AdminDegreesResponse["degrees"][number] | null>(null);
   const [form, setForm] = useState<AdminDegreeUpsertInput>(blankForm);
+  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rowActionId, setRowActionId] = useState<string | null>(null);
@@ -97,6 +103,7 @@ export default function AdminDegreesPage() {
     try {
       const result = await getAdminDegrees({
         q: query.q || undefined,
+        categoryId: query.categoryId === "all" ? undefined : query.categoryId,
         isActive: query.isActive === "all" ? undefined : query.isActive === "true",
         sortBy: query.sortBy,
         page: query.page,
@@ -120,15 +127,55 @@ export default function AdminDegreesPage() {
     void loadDegrees();
   }, [query]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadCategories() {
+      try {
+        const result = await getAdminCategories({
+          page: 1,
+          limit: 100,
+          sortBy: "name_asc",
+          isActive: true,
+        });
+
+        if (!isMounted) {
+          return;
+        }
+
+        setCategories(
+          result.categories.map((category) => ({
+            id: category.id,
+            name: category.name,
+          }))
+        );
+      } catch {
+        if (isMounted) {
+          setCategories([]);
+        }
+      }
+    }
+
+    void loadCategories();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   function openCreateModal() {
     setEditingDegreeId(null);
-    setForm(blankForm);
+    setForm({
+      ...blankForm,
+      categoryId: categories[0]?.id ?? "",
+    });
     setIsModalOpen(true);
   }
 
   function openEditModal(degree: AdminDegreesResponse["degrees"][number]) {
     setEditingDegreeId(degree.id);
     setForm({
+      categoryId: degree.categoryId,
       name: degree.name,
       level: degree.level ?? "",
     });
@@ -191,6 +238,7 @@ export default function AdminDegreesPage() {
 
     try {
       await updateAdminDegree(degree.id, {
+        categoryId: degree.categoryId,
         name: degree.name,
         level: degree.level,
         isActive: !degree.isActive,
@@ -270,10 +318,13 @@ export default function AdminDegreesPage() {
 
       <DegreeFilters
         searchInput={searchInput}
+        categoryId={query.categoryId}
+        categories={categories}
         isActive={query.isActive}
         sortBy={query.sortBy}
         onSearchInputChange={setSearchInput}
         onSearchSubmit={handleSearchSubmit}
+        onCategoryChange={(value) => updateQuery({ categoryId: value, page: 1 })}
         onStatusChange={(value) => updateQuery({ isActive: value, page: 1 })}
         onSortChange={(value) => updateQuery({ sortBy: value, page: 1 })}
       />
@@ -312,6 +363,7 @@ export default function AdminDegreesPage() {
         isSubmitting={isSubmitting}
         isEditing={Boolean(editingDegreeId)}
         form={form}
+        categories={categories}
         onClose={closeModal}
         onChange={setForm}
         onSubmit={handleSubmit}

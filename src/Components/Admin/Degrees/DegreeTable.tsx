@@ -37,6 +37,7 @@ export function DegreeTable({
           <thead>
             <tr className="text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
               <th className="border border-outline-variant/20 px-4 py-4">Degree</th>
+              <th className="border border-outline-variant/20 px-4 py-4">Category</th>
               <th className="border border-outline-variant/20 px-4 py-4">Status</th>
               <th className="border border-outline-variant/20 px-4 py-4">Usage</th>
               <th className="border border-outline-variant/20 px-4 py-4">Created</th>
@@ -50,6 +51,9 @@ export function DegreeTable({
               <tr key={degree.id}>
                 <td className="border border-outline-variant/20 px-4 py-4 font-semibold text-primary">
                   {degree.name}
+                </td>
+                <td className="border border-outline-variant/20 px-4 py-4 text-sm text-on-surface-variant">
+                  {degree.categoryName}
                 </td>
                 <td className="border border-outline-variant/20 px-4 py-4">
                   <span

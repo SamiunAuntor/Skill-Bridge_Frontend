@@ -6,6 +6,7 @@ import type {
   AdminCategoryUpsertInput,
   AdminDashboardResponse,
   AdminDegreeUpsertInput,
+  AdminDegreesQuery,
   AdminDegreesResponse,
   AdminSubjectUpsertInput,
   AdminSubjectsQuery,
@@ -190,7 +191,7 @@ export async function deleteAdminSubject(id: string): Promise<void> {
 }
 
 export async function getAdminDegrees(
-  query: Partial<AdminCategoriesQuery>
+  query: Partial<AdminDegreesQuery>
 ): Promise<AdminDegreesResponse> {
   const params = toSearchParams(query);
   return adminFetch<AdminDegreesResponse>(`/api/admin/degrees?${params.toString()}`);

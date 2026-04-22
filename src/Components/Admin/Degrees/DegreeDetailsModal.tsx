@@ -30,6 +30,12 @@ export function DegreeDetailsModal({
             </div>
             <div className="rounded-xl bg-surface-container-lowest p-4">
               <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-on-surface-variant">
+                Category
+              </p>
+              <p className="mt-2 font-semibold text-primary">{degree.categoryName}</p>
+            </div>
+            <div className="rounded-xl bg-surface-container-lowest p-4">
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-on-surface-variant">
                 Created
               </p>
               <p className="mt-2 font-semibold text-primary">

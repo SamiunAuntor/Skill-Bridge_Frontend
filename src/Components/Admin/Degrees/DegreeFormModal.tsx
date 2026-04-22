@@ -1,7 +1,7 @@
 "use client";
 
 import type { AdminDegreeUpsertInput } from "@/types/admin";
-import { AdminModal } from "@/Components/Admin/AdminUi";
+import { AdminModal, AdminSelectField } from "@/Components/Admin/AdminUi";
 
 export function DegreeFormModal({
   isOpen,
@@ -11,11 +11,13 @@ export function DegreeFormModal({
   onClose,
   onChange,
   onSubmit,
+  categories,
 }: {
   isOpen: boolean;
   isSubmitting: boolean;
   isEditing: boolean;
   form: AdminDegreeUpsertInput;
+  categories: Array<{ id: string; name: string }>;
   onClose: () => void;
   onChange: (next: AdminDegreeUpsertInput) => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
@@ -27,6 +29,22 @@ export function DegreeFormModal({
       onClose={onClose}
     >
       <form className="space-y-4" onSubmit={onSubmit}>
+        <AdminSelectField
+          value={form.categoryId ?? ""}
+          onChange={(value) =>
+            onChange({
+              ...form,
+              categoryId: value,
+            })
+          }
+        >
+          <option value="">Select category</option>
+          {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </AdminSelectField>
         <input
           className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm"
           value={form.name}
@@ -60,7 +78,7 @@ export function DegreeFormModal({
           </button>
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !form.categoryId || !form.name.trim()}
             className="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-on-primary disabled:opacity-60"
           >
             {isSubmitting

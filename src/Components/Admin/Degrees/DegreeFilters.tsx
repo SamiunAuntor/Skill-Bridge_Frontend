@@ -6,24 +6,30 @@ import { AdminCard, AdminSelectField } from "@/Components/Admin/AdminUi";
 
 export function DegreeFilters({
   searchInput,
+  categoryId,
+  categories,
   isActive,
   sortBy,
   onSearchInputChange,
   onSearchSubmit,
+  onCategoryChange,
   onStatusChange,
   onSortChange,
 }: {
   searchInput: string;
+  categoryId: string;
+  categories: Array<{ id: string; name: string }>;
   isActive: string;
   sortBy: AdminMasterSortOption;
   onSearchInputChange: (value: string) => void;
   onSearchSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  onCategoryChange: (value: string) => void;
   onStatusChange: (value: string) => void;
   onSortChange: (value: AdminMasterSortOption) => void;
 }) {
   return (
     <AdminCard title="Filters">
-      <div className="grid gap-4 lg:grid-cols-[1.5fr_repeat(2,minmax(0,1fr))]">
+      <div className="grid gap-4 lg:grid-cols-[1.5fr_repeat(3,minmax(0,1fr))]">
         <form onSubmit={onSearchSubmit} className="relative">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant" />
           <input
@@ -33,6 +39,14 @@ export function DegreeFilters({
             placeholder="Search by name or level"
           />
         </form>
+        <AdminSelectField value={categoryId} onChange={onCategoryChange}>
+          <option value="all">All categories</option>
+          {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </AdminSelectField>
         <AdminSelectField value={isActive} onChange={onStatusChange}>
           <option value="all">Any status</option>
           <option value="true">Active</option>
