@@ -23,11 +23,18 @@ async function fetchPublicApi<T>(
   path: string,
   revalidateSeconds = 300
 ): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
-    next: {
-      revalidate: revalidateSeconds,
-    },
-  });
+  const response = await fetch(
+    `${apiBaseUrl}${path}`,
+    revalidateSeconds <= 0
+      ? {
+          cache: "no-store",
+        }
+      : {
+          next: {
+            revalidate: revalidateSeconds,
+          },
+        }
+  );
 
   const payload = (await response.json().catch(() => null)) as
     | BackendEnvelope<T>
@@ -74,10 +81,22 @@ export type LandingPageResponse = {
     description: string | null;
     categoryName: string;
   }>;
+  platformReviews: Array<{
+    id: string;
+    rating: number;
+    title: string | null;
+    message: string;
+    createdAt: string;
+    user: {
+      id: string;
+      name: string;
+      avatarUrl: string | null;
+    };
+  }>;
 };
 
 export async function getLandingPageData(): Promise<LandingPageResponse> {
-  return fetchPublicApi<LandingPageResponse>("/api/public/landing", 300);
+  return fetchPublicApi<LandingPageResponse>("/api/public/landing", 0);
 }
 
 export type PublicSubjectsResponse = {

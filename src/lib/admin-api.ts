@@ -8,6 +8,9 @@ import type {
   AdminDegreeUpsertInput,
   AdminDegreesQuery,
   AdminDegreesResponse,
+  AdminPlatformReviewsQuery,
+  AdminPlatformReviewsResponse,
+  AdminPlatformReviewStatus,
   AdminSubjectUpsertInput,
   AdminSubjectsQuery,
   AdminSubjectsResponse,
@@ -224,6 +227,34 @@ export async function updateAdminDegree(
 
 export async function deleteAdminDegree(id: string): Promise<void> {
   await adminFetch(`/api/admin/degrees/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function getAdminPlatformReviews(
+  query: Partial<AdminPlatformReviewsQuery>
+): Promise<AdminPlatformReviewsResponse> {
+  const params = toSearchParams(query);
+  return adminFetch<AdminPlatformReviewsResponse>(
+    `/api/admin/platform-reviews?${params.toString()}`
+  );
+}
+
+export async function updateAdminPlatformReviewStatus(
+  id: string,
+  status: AdminPlatformReviewStatus
+): Promise<void> {
+  await adminFetch(`/api/admin/platform-reviews/${id}/status`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ status }),
+  });
+}
+
+export async function deleteAdminPlatformReview(id: string): Promise<void> {
+  await adminFetch(`/api/admin/platform-reviews/${id}`, {
     method: "DELETE",
   });
 }

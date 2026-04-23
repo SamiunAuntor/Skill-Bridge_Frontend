@@ -48,5 +48,10 @@ export const dashboardNavByRole: Record<UserRole, DashboardNavItem[]> = {
       label: "Degrees",
       icon: "school",
     },
+    {
+      href: getRoleDashboardPath("admin", "platform-reviews"),
+      label: "Reviews",
+      icon: "rate_review",
+    },
   ],
 };

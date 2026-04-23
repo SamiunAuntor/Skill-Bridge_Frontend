@@ -6,6 +6,8 @@ import SubjectsSection from "@/Components/LandingPage/SubjectsSection";
 import TrustSection from "@/Components/LandingPage/TrustSection";
 import { getLandingPageData } from "@/lib/public-api";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const landingData = await getLandingPageData();
 
@@ -15,7 +17,7 @@ export default async function Home() {
       <StatsSection stats={landingData.stats} />
       <FeaturedTutorsSection tutors={landingData.featuredTutors} />
       <SubjectsSection subjects={landingData.subjects} />
-      <TrustSection />
+      <TrustSection platformReviews={landingData.platformReviews ?? []} />
       <CtaSection />
     </>
   );

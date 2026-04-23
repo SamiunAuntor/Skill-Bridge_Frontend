@@ -20,6 +20,14 @@ export type AdminMasterSortOption =
   | "newest"
   | "oldest";
 
+export type AdminPlatformReviewStatus = "visible" | "hidden";
+
+export type AdminPlatformReviewSortOption =
+  | "newest"
+  | "oldest"
+  | "rating_high"
+  | "rating_low";
+
 export type AdminPagination = {
   page: number;
   limit: number;
@@ -180,6 +188,33 @@ export type AdminDegreesResponse = {
   }>;
   pagination: AdminPagination;
   filters: AdminDegreesQuery;
+};
+
+export type AdminPlatformReviewsQuery = {
+  q?: string;
+  status?: AdminPlatformReviewStatus;
+  sortBy: AdminPlatformReviewSortOption;
+  page: number;
+  limit: number;
+};
+
+export type AdminPlatformReviewsResponse = {
+  reviews: Array<{
+    id: string;
+    rating: number;
+    title: string | null;
+    message: string;
+    status: AdminPlatformReviewStatus;
+    createdAt: string;
+    user: {
+      id: string;
+      name: string;
+      email: string;
+      avatarUrl: string | null;
+    };
+  }>;
+  pagination: AdminPagination;
+  filters: AdminPlatformReviewsQuery;
 };
 
 export type AdminCategoryUpsertInput = {

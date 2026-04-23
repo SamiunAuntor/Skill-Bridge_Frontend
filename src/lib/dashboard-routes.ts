@@ -11,7 +11,8 @@ export type DashboardSection =
   | "bookings"
   | "categories"
   | "subjects"
-  | "degrees";
+  | "degrees"
+  | "platform-reviews";
 
 export function getRoleDashboardRoot(role: UserRole): string {
   switch (role) {
@@ -76,6 +77,10 @@ export function getLegacyDashboardRedirectPath(
     case "/dashboard/degrees":
       return role === "admin"
         ? getRoleDashboardPath(role, "degrees")
+        : getRoleDashboardPath(role, "home");
+    case "/dashboard/platform-reviews":
+      return role === "admin"
+        ? getRoleDashboardPath(role, "platform-reviews")
         : getRoleDashboardPath(role, "home");
     case "/dashboard/bookings":
       return role === "admin"
