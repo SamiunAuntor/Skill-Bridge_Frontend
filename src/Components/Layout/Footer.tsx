@@ -65,7 +65,7 @@ export default function Footer() {
     setIsSubmitting(true);
 
     try {
-      await submitPlatformReview({
+      const result = await submitPlatformReview({
         rating,
         title: title.trim() || undefined,
         message,
@@ -76,8 +76,11 @@ export default function Footer() {
       router.refresh();
       await Swal.fire({
         icon: "success",
-        title: "Review published",
-        text: "Thanks for helping future learners understand SkillBridge better.",
+        title: result.action === "updated" ? "Review updated" : "Review published",
+        text:
+          result.action === "updated"
+            ? "Your latest review is now visible to future learners."
+            : "Thanks for helping future learners understand SkillBridge better.",
         confirmButtonColor: "#1d3b66",
       });
     } catch (error) {

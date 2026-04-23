@@ -261,8 +261,8 @@ export default function DashboardSessionsList() {
             <option value="2">2 - Fair</option>
             <option value="1">1 - Poor</option>
           </select>
-          <label style="font-size:13px;font-weight:600;color:#1d3b66;">Comment (optional)</label>
-          <textarea id="review-comment" class="swal2-textarea" placeholder="Share a few words about your learning experience with ${counterpart}." style="margin:0;width:100%;min-height:120px;"></textarea>
+          <label style="font-size:13px;font-weight:600;color:#1d3b66;">Comment (optional, max 1000 characters)</label>
+          <textarea id="review-comment" class="swal2-textarea" maxlength="1000" placeholder="Share a few words about your learning experience with ${counterpart}." style="margin:0;width:100%;min-height:120px;"></textarea>
         </div>
       `,
       showCancelButton: true,
@@ -278,6 +278,11 @@ export default function DashboardSessionsList() {
 
         if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
           Swal.showValidationMessage("Please select a rating between 1 and 5.");
+          return null;
+        }
+
+        if (commentValue.trim().length > 1000) {
+          Swal.showValidationMessage("Review comment must be 1000 characters or fewer.");
           return null;
         }
 

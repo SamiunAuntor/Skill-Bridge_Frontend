@@ -20,6 +20,9 @@ import {
 import { formatTimeRange } from "@/lib/format/date";
 import type { AvailabilitySlotItem } from "@/types/tutor";
 
+const MIN_SLOT_DURATION_MINUTES = 5;
+const MAX_SLOT_DURATION_MINUTES = 180;
+
 type GroupedAvailability = {
   dateKey: string;
   dateLabel: string;
@@ -256,6 +259,28 @@ export default function TutorAvailabilitySettings() {
       return;
     }
 
+    const durationMinutes = (endAt.getTime() - startAt.getTime()) / (1000 * 60);
+
+    if (durationMinutes < MIN_SLOT_DURATION_MINUTES) {
+      await Swal.fire({
+        icon: "warning",
+        title: "Slot is too short",
+        text: `Availability must be at least ${MIN_SLOT_DURATION_MINUTES} minutes long.`,
+        confirmButtonColor: "#1d3b66",
+      });
+      return;
+    }
+
+    if (durationMinutes > MAX_SLOT_DURATION_MINUTES) {
+      await Swal.fire({
+        icon: "warning",
+        title: "Slot is too long",
+        text: "Availability cannot be longer than 3 hours.",
+        confirmButtonColor: "#1d3b66",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -463,6 +488,9 @@ export default function TutorAvailabilitySettings() {
             ) : null}
           </div>
         </form>
+        <p className="mt-4 text-xs font-medium text-on-surface-variant">
+          Slots must be between 5 minutes and 3 hours.
+        </p>
       </section>
 
       <section className="rounded-[1.75rem] border border-outline-variant/20 bg-surface-container-lowest p-8 shadow-[0px_16px_40px_rgba(0,51,88,0.08)]">

@@ -18,6 +18,10 @@ export class PlatformReviewApiError extends Error {
   }
 }
 
+export type PlatformReviewSubmitResult = {
+  action: "created" | "updated";
+};
+
 async function parsePlatformReviewResponse<T>(response: Response): Promise<T> {
   const payload = (await response.json().catch(() => null)) as
     | BackendEnvelope<T>
@@ -42,7 +46,7 @@ export async function submitPlatformReview(input: {
   rating: number;
   title?: string;
   message: string;
-}): Promise<void> {
+}): Promise<PlatformReviewSubmitResult> {
   const response = await fetch(`${apiBaseUrl}/api/platform-reviews`, {
     method: "POST",
     credentials: "include",
@@ -52,5 +56,5 @@ export async function submitPlatformReview(input: {
     body: JSON.stringify(input),
   });
 
-  await parsePlatformReviewResponse(response);
+  return parsePlatformReviewResponse<PlatformReviewSubmitResult>(response);
 }

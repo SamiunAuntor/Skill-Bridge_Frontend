@@ -6,7 +6,6 @@ export type DashboardSection =
   | "sessions"
   | "availability"
   | "finances"
-  | "resources"
   | "users"
   | "bookings"
   | "categories"
@@ -57,10 +56,6 @@ export function getLegacyDashboardRedirectPath(
     case "/dashboard/finances":
       return role === "tutor"
         ? getRoleDashboardPath(role, "finances")
-        : getRoleDashboardPath(role, "home");
-    case "/dashboard/resources":
-      return role === "tutor" || role === "admin"
-        ? getRoleDashboardPath(role, "resources")
         : getRoleDashboardPath(role, "home");
     case "/dashboard/users":
       return role === "admin"
