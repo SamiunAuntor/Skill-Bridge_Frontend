@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
-import { Camera, Mail, UserRound } from "lucide-react";
+import { BadgeCheck, Camera, GraduationCap, Mail, UserRound } from "lucide-react";
 import { notifyAuthChanged, useAppAuthSession } from "@/lib/auth";
 import { updateMyStudentProfile } from "@/lib/student-profile-api";
 import {
@@ -106,6 +106,16 @@ export default function StudentProfileSettings() {
       return;
     }
 
+    if (trimmedName.length > 80) {
+      await Swal.fire({
+        icon: "warning",
+        title: "Name is too long",
+        text: "Please keep your display name within 80 characters.",
+        confirmButtonColor: "#1d3b66",
+      });
+      return;
+    }
+
     if (!hasChanges) {
       return;
     }
@@ -113,7 +123,7 @@ export default function StudentProfileSettings() {
     setIsSaving(true);
 
     try {
-      const result = await updateMyStudentProfile({
+      await updateMyStudentProfile({
         fullName: trimmedName,
         profileImageUrl: profileImageUrl ?? null,
       });
@@ -174,6 +184,42 @@ export default function StudentProfileSettings() {
       </div>
 
       <form onSubmit={handleSave} className="space-y-5">
+        <div className="grid gap-3 md:grid-cols-3">
+          <div className="rounded-2xl border border-outline-variant/20 bg-surface px-4 py-3">
+            <div className="flex items-center gap-2 text-secondary">
+              <GraduationCap className="h-4 w-4" />
+              <span className="text-[11px] font-bold uppercase tracking-[0.16em]">
+                Role
+              </span>
+            </div>
+            <p className="mt-2 text-sm font-semibold capitalize text-primary">
+              {session?.user.role ?? "student"}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-outline-variant/20 bg-surface px-4 py-3">
+            <div className="flex items-center gap-2 text-secondary">
+              <BadgeCheck className="h-4 w-4" />
+              <span className="text-[11px] font-bold uppercase tracking-[0.16em]">
+                Verification
+              </span>
+            </div>
+            <p className="mt-2 text-sm font-semibold text-primary">
+              {session?.user.emailVerified ? "Email verified" : "Email not verified"}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-outline-variant/20 bg-surface px-4 py-3">
+            <div className="flex items-center gap-2 text-secondary">
+              <UserRound className="h-4 w-4" />
+              <span className="text-[11px] font-bold uppercase tracking-[0.16em]">
+                Profile
+              </span>
+            </div>
+            <p className="mt-2 text-sm font-semibold text-primary">
+              {profileImageUrl ? "Photo added" : "Photo optional"}
+            </p>
+          </div>
+        </div>
+
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
           <div className="flex items-center gap-4">
             {profileImageUrl ? (
@@ -212,11 +258,15 @@ export default function StudentProfileSettings() {
               <input
                 type="text"
                 value={displayName}
+                maxLength={80}
                 onChange={(event) => setDisplayName(event.target.value)}
                 className="w-full border-none bg-transparent text-[13px] text-on-surface outline-none focus:ring-0"
                 placeholder="Your full name"
               />
             </div>
+            <p className="text-[11px] text-on-surface-variant">
+              This name appears on your student dashboard and session records.
+            </p>
           </label>
 
           <label className="space-y-2">

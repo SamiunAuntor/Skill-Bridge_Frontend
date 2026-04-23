@@ -526,7 +526,7 @@ export default function DashboardSessionsList() {
         ) : (
           <div className="flex items-center gap-3 rounded-2xl bg-surface-container p-4 text-[13px] text-on-surface-variant">
             <CircleAlert className="h-4 w-4" />
-            No sessions match your current search or sorting selection.
+            No sessions match this view. Clear the search or switch the status filter to see more sessions.
           </div>
         )}
       </section>

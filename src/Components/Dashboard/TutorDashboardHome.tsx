@@ -354,7 +354,7 @@ export default function TutorDashboardHome() {
               ))
             ) : (
               <div className="rounded-2xl bg-surface-container-low p-5 text-sm text-on-surface-variant">
-                No upcoming sessions yet.
+                No upcoming sessions yet. Add availability slots so students can book time with you.
               </div>
             )}
           </div>

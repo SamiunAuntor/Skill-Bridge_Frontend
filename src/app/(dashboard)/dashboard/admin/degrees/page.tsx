@@ -234,6 +234,24 @@ export default function AdminDegreesPage() {
   }
 
   async function handleToggleActive(degree: AdminDegreesResponse["degrees"][number]) {
+    const nextIsActive = !degree.isActive;
+    const confirmation = await Swal.fire({
+      icon: "warning",
+      title: nextIsActive ? "Activate this degree?" : "Archive this degree?",
+      text: nextIsActive
+        ? `${degree.name} will become selectable in tutor education setup.`
+        : `${degree.name} will be hidden from new education entries, but existing tutor history will remain.`,
+      showCancelButton: true,
+      confirmButtonText: nextIsActive ? "Activate degree" : "Archive degree",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: nextIsActive ? "#1d3b66" : "#9f1d1d",
+      cancelButtonColor: "#6b7280",
+    });
+
+    if (!confirmation.isConfirmed) {
+      return;
+    }
+
     setRowActionId(degree.id);
 
     try {
@@ -241,7 +259,7 @@ export default function AdminDegreesPage() {
         categoryId: degree.categoryId,
         name: degree.name,
         level: degree.level,
-        isActive: !degree.isActive,
+        isActive: nextIsActive,
       });
       await loadDegrees();
     } catch (error) {

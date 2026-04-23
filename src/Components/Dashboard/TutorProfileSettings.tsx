@@ -176,6 +176,65 @@ function getAvailableSubjectsForSelection(
   );
 }
 
+function getTutorProfileValidationMessage(state: ProfileFormState): string | null {
+  if (!normalizeText(state.professionalTitle)) {
+    return "Add a professional title so students immediately understand your teaching identity.";
+  }
+
+  if (normalizeText(state.bio).length < 20) {
+    return "Write a bio of at least 20 characters so students get a meaningful introduction.";
+  }
+
+  if (!Number.isFinite(Number(state.hourlyRate)) || Number(state.hourlyRate) <= 0) {
+    return "Set an hourly rate greater than 0.";
+  }
+
+  if (!Number.isFinite(Number(state.experienceYears)) || Number(state.experienceYears) < 0) {
+    return "Experience years cannot be negative.";
+  }
+
+  if (state.categoryIds.length === 0) {
+    return "Choose at least one teaching category.";
+  }
+
+  if (state.subjectIds.length === 0) {
+    return "Select at least one subject under your chosen categories.";
+  }
+
+  const invalidEducation = state.education.find((item) => {
+    const hasAnyValue =
+      normalizeText(item.categoryId) ||
+      normalizeText(item.degreeId) ||
+      normalizeText(item.institution) ||
+      normalizeText(item.description);
+
+    if (!hasAnyValue) {
+      return false;
+    }
+
+    return (
+      !normalizeText(item.categoryId) ||
+      !normalizeText(item.degreeId) ||
+      !normalizeText(item.institution) ||
+      !Number.isFinite(Number(item.startYear))
+    );
+  });
+
+  if (invalidEducation) {
+    return "Complete category, degree, institution, and start year for each education entry you keep.";
+  }
+
+  const invalidYearRange = state.education.find(
+    (item) => item.endYear !== null && Number(item.startYear) > Number(item.endYear)
+  );
+
+  if (invalidYearRange) {
+    return "Education start year cannot be later than end year.";
+  }
+
+  return null;
+}
+
 export default function TutorProfileSettings() {
   const { data: session } = useAppAuthSession();
   const [profileData, setProfileData] = useState<TutorEditableProfileResponse | null>(
@@ -381,21 +440,13 @@ export default function TutorProfileSettings() {
       return;
     }
 
-    if (normalizeText(formState.bio).length < 20) {
-      await Swal.fire({
-        icon: "warning",
-        title: "Bio is too short",
-        text: "Please write at least 20 characters so students get a meaningful introduction.",
-        confirmButtonColor: "#1d3b66",
-      });
-      return;
-    }
+    const validationMessage = getTutorProfileValidationMessage(formState);
 
-    if (formState.subjectIds.length === 0) {
+    if (validationMessage) {
       await Swal.fire({
         icon: "warning",
-        title: "Select at least one subject",
-        text: "Students need to know exactly which subjects you teach.",
+        title: "Profile is incomplete",
+        text: validationMessage,
         confirmButtonColor: "#1d3b66",
       });
       return;
@@ -636,6 +687,11 @@ export default function TutorProfileSettings() {
               </div>
             </div>
 
+            <div className="mt-4 grid gap-2 rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-4 text-[12px] text-on-surface-variant md:grid-cols-2">
+              <p>Required: professional title, bio, hourly rate, category, and subject.</p>
+              <p>Education is optional, but any added entry needs category, degree, institution, and start year.</p>
+            </div>
+
             {errorMessage ? (
               <div className="mt-4 rounded-xl bg-error-container px-4 py-3 text-[13px] text-on-error-container">
                 {errorMessage}
@@ -662,6 +718,7 @@ export default function TutorProfileSettings() {
               <input
                 id="professionalTitle"
                 className={inputClass}
+                required
                 disabled={isInteractionDisabled}
                 value={formState.professionalTitle}
                 onChange={(event) =>
@@ -681,6 +738,7 @@ export default function TutorProfileSettings() {
               <textarea
                 id="bio"
                 className={textAreaClass}
+                minLength={20}
                 disabled={isInteractionDisabled}
                 value={formState.bio}
                 onChange={(event) =>
@@ -691,6 +749,9 @@ export default function TutorProfileSettings() {
                 }
                 placeholder="I help students master complex topics through structured, practical sessions."
               />
+              <p className="text-[11px] text-on-surface-variant">
+                Minimum 20 characters. Be specific about how you help students.
+              </p>
             </div>
           </article>
 
@@ -706,7 +767,7 @@ export default function TutorProfileSettings() {
                 </label>
                 <input
                   id="rate"
-                  min={0}
+                  min={1}
                   step="1"
                   type="number"
                   className={inputClass}

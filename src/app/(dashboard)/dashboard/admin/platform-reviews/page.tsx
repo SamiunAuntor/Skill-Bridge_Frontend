@@ -178,6 +178,24 @@ export default function AdminPlatformReviewsPage() {
     review: PlatformReviewRow,
     status: AdminPlatformReviewStatus
   ) {
+    const confirmation = await Swal.fire({
+      icon: "warning",
+      title: status === "visible" ? "Show this review publicly?" : "Hide this review?",
+      text:
+        status === "visible"
+          ? "This review may appear on public SkillBridge pages."
+          : "This review will be removed from public pages but kept in admin records.",
+      showCancelButton: true,
+      confirmButtonText: status === "visible" ? "Show review" : "Hide review",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: status === "visible" ? "#1d3b66" : "#9f1d1d",
+      cancelButtonColor: "#6b7280",
+    });
+
+    if (!confirmation.isConfirmed) {
+      return;
+    }
+
     setActionReviewId(review.id);
 
     try {

@@ -287,6 +287,24 @@ export default function AdminSubjectsPage() {
   }
 
   async function handleToggleActive(subject: AdminSubjectsResponse["subjects"][number]) {
+    const nextIsActive = !subject.isActive;
+    const confirmation = await Swal.fire({
+      icon: "warning",
+      title: nextIsActive ? "Activate this subject?" : "Archive this subject?",
+      text: nextIsActive
+        ? `${subject.name} will become selectable and visible where active subjects are shown.`
+        : `${subject.name} will be hidden from new tutor selections, but existing tutor links will remain.`,
+      showCancelButton: true,
+      confirmButtonText: nextIsActive ? "Activate subject" : "Archive subject",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: nextIsActive ? "#1d3b66" : "#9f1d1d",
+      cancelButtonColor: "#6b7280",
+    });
+
+    if (!confirmation.isConfirmed) {
+      return;
+    }
+
     setRowActionId(subject.id);
 
     try {
@@ -296,7 +314,7 @@ export default function AdminSubjectsPage() {
         description: subject.description,
         iconUrl: subject.iconUrl,
         iconPublicId: subject.iconPublicId,
-        isActive: !subject.isActive,
+        isActive: nextIsActive,
       });
       await loadPageData();
     } catch (error) {

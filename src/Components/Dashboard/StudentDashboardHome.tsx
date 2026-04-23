@@ -158,7 +158,7 @@ export default function StudentDashboardHome() {
             ))
           ) : (
             <div className="rounded-2xl bg-surface-container-low p-5 text-sm text-on-surface-variant">
-              No recent sessions yet.
+              No sessions yet. Find a tutor, choose an available slot, and completed bookings will appear here.
             </div>
           )}
         </div>

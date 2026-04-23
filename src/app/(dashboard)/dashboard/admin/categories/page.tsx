@@ -189,13 +189,31 @@ export default function AdminCategoriesPage() {
   async function handleToggleActive(
     category: AdminCategoriesResponse["categories"][number]
   ) {
+    const nextIsActive = !category.isActive;
+    const confirmation = await Swal.fire({
+      icon: "warning",
+      title: nextIsActive ? "Activate this category?" : "Archive this category?",
+      text: nextIsActive
+        ? `${category.name} will become available for tutor profile setup and public browsing.`
+        : `${category.name} will be hidden from new selections, but existing linked data will stay intact.`,
+      showCancelButton: true,
+      confirmButtonText: nextIsActive ? "Activate category" : "Archive category",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: nextIsActive ? "#1d3b66" : "#9f1d1d",
+      cancelButtonColor: "#6b7280",
+    });
+
+    if (!confirmation.isConfirmed) {
+      return;
+    }
+
     setRowActionId(category.id);
 
     try {
       await updateAdminCategory(category.id, {
         name: category.name,
         description: category.description,
-        isActive: !category.isActive,
+        isActive: nextIsActive,
       });
       await loadCategories();
     } catch (error) {
