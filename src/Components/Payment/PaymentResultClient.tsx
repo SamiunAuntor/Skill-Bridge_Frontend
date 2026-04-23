@@ -146,7 +146,7 @@ export default function PaymentResultClient({
                 className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-on-primary"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Back to tutor
+                Back to previous page
               </Link>
             </div>
           </div>
@@ -187,7 +187,7 @@ export default function PaymentResultClient({
               className="inline-flex items-center gap-2 rounded-xl border border-outline-variant/20 bg-surface px-4 py-3 text-sm font-semibold text-primary"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back to tutor
+              Back to previous page
             </Link>
           </div>
         </div>
@@ -255,7 +255,7 @@ export default function PaymentResultClient({
             className="inline-flex items-center gap-2 rounded-xl border border-outline-variant/20 bg-surface px-4 py-3 text-sm font-semibold text-primary"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to tutor
+            Back to previous page
           </Link>
         </div>
       </div>

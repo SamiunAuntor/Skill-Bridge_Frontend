@@ -41,10 +41,12 @@ export function AdminStatCard({
   label,
   value,
   href,
+  helper,
 }: {
   label: string;
   value: number | string;
   href?: string;
+  helper?: string;
 }) {
   const content = (
     <div className="rounded-[1.4rem] bg-surface-container-lowest p-6 shadow-[0px_12px_28px_rgba(0,51,88,0.05)] transition-all hover:-translate-y-0.5">
@@ -52,6 +54,9 @@ export function AdminStatCard({
         {label}
       </p>
       <p className="mt-3 font-headline text-4xl font-black text-primary">{value}</p>
+      {helper ? (
+        <p className="mt-2 text-xs font-medium text-on-surface-variant">{helper}</p>
+      ) : null}
     </div>
   );
 

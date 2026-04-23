@@ -128,7 +128,7 @@ export default function PaymentFailedClient({
             className="inline-flex items-center gap-2 rounded-xl border border-outline-variant/20 bg-surface px-4 py-3 text-sm font-semibold text-primary"
           >
             <ArrowLeft className="h-4 w-4" />
-            Choose another slot
+              Back to previous page
           </Link>
           <Link
             href="/dashboard/student/sessions"

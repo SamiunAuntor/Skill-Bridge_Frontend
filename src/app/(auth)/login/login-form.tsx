@@ -89,8 +89,9 @@ export default function LoginForm() {
       ) {
         await showAuthErrorToast(
           "Email verification required",
-          "Please verify your email before signing in. Check your inbox; we sent you a new verification link."
+          "Please verify your email before signing in. We will take you to the resend page."
         );
+        router.push(`/verify-pending?email=${encodeURIComponent(values.email)}`);
         return;
       }
       await showAuthErrorToast("Sign-in failed", message);

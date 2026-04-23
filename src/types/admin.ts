@@ -46,6 +46,12 @@ export type AdminDashboardResponse = {
     totalCategories: number;
     totalSubjects: number;
     totalDegrees: number;
+    activeCategories: number;
+    inactiveCategories: number;
+    activeSubjects: number;
+    inactiveSubjects: number;
+    activeDegrees: number;
+    inactiveDegrees: number;
     bannedUsers: number;
   };
   charts: {

@@ -134,9 +134,24 @@ export default function AdminDashboardPage() {
             <AdminStatCard label="Students" value={data.stats.totalStudents} href="/dashboard/admin/users" />
             <AdminStatCard label="Tutors" value={data.stats.totalTutors} href="/dashboard/admin/users" />
             <AdminStatCard label="Bookings" value={data.stats.totalBookings} href="/dashboard/admin/bookings" />
-            <AdminStatCard label="Categories" value={data.stats.totalCategories} href="/dashboard/admin/categories" />
-            <AdminStatCard label="Subjects" value={data.stats.totalSubjects} href="/dashboard/admin/subjects" />
-            <AdminStatCard label="Degrees" value={data.stats.totalDegrees} href="/dashboard/admin/degrees" />
+            <AdminStatCard
+              label="Categories"
+              value={`${data.stats.activeCategories}/${data.stats.totalCategories}`}
+              helper={`${data.stats.inactiveCategories} inactive`}
+              href="/dashboard/admin/categories"
+            />
+            <AdminStatCard
+              label="Subjects"
+              value={`${data.stats.activeSubjects}/${data.stats.totalSubjects}`}
+              helper={`${data.stats.inactiveSubjects} inactive`}
+              href="/dashboard/admin/subjects"
+            />
+            <AdminStatCard
+              label="Degrees"
+              value={`${data.stats.activeDegrees}/${data.stats.totalDegrees}`}
+              helper={`${data.stats.inactiveDegrees} inactive`}
+              href="/dashboard/admin/degrees"
+            />
             <AdminStatCard label="Banned Users" value={data.stats.bannedUsers} href="/dashboard/admin/users" />
           </div>
 
