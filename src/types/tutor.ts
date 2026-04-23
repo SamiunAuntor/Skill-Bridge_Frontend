@@ -127,22 +127,6 @@ export interface AvailabilityListResponse {
   slots: AvailabilitySlotItem[];
 }
 
-export interface BookingConfirmationResponse {
-  booking: {
-    id: string;
-    sessionId: string;
-    tutorId: string;
-    slotId: string;
-    sessionDate: string;
-    startTime: string;
-    endTime: string;
-    priceAtBooking: number;
-    status: "confirmed";
-    paymentStatus: "paid";
-    sessionStatus: "scheduled";
-  };
-}
-
 export interface DashboardSessionItem {
   bookingId: string;
   sessionId: string;

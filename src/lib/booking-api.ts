@@ -1,5 +1,4 @@
 import {
-  BookingConfirmationResponse,
   DashboardSessionSortOption,
   DashboardSessionListResponse,
   TutorDashboardSummaryResponse,
@@ -49,22 +48,6 @@ async function parseApiResponse<T>(response: Response): Promise<T> {
   }
 
   return payload.data;
-}
-
-export async function createBooking(payload: {
-  tutorId: string;
-  slotId: string;
-}): Promise<BookingConfirmationResponse> {
-  const response = await fetch(`${apiBaseUrl}/api/bookings`, {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  return parseApiResponse<BookingConfirmationResponse>(response);
 }
 
 export async function getMySessions(params?: {

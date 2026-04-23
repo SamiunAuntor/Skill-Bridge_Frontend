@@ -50,6 +50,14 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  if (pathname.startsWith("/payment")) {
+    if (!hasAuthCookie) {
+      return buildLoginRedirect(request);
+    }
+
+    return NextResponse.next();
+  }
+
   return NextResponse.next();
 }
 
@@ -61,5 +69,6 @@ export const config = {
     "/forgot-password",
     "/reset-password",
     "/verify-pending",
+    "/payment/:path*",
   ],
 };

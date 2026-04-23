@@ -10,7 +10,8 @@ import {
   AvailabilityApiError,
   getTutorAvailability,
 } from "@/lib/availability-api";
-import { BookingApiError, createBooking } from "@/lib/booking-api";
+import { createPaymentIntent, PaymentApiError } from "@/lib/payment-api";
+import { savePaymentCheckoutSession } from "@/lib/payment-checkout";
 import { TutorAvailabilitySlot } from "@/types/tutor";
 
 type TutorBookingSidebarProps = {
@@ -92,8 +93,8 @@ function calculateSlotPrice(hourlyRate: number, slot: TutorAvailabilitySlot): nu
   return Number((hourlyRate * Math.max(durationHours, 0)).toFixed(2));
 }
 
-function toBookingErrorMessage(error: unknown): string {
-  if (error instanceof BookingApiError) {
+function toPaymentErrorMessage(error: unknown): string {
+  if (error instanceof PaymentApiError) {
     return error.message;
   }
 
@@ -101,7 +102,7 @@ function toBookingErrorMessage(error: unknown): string {
     return error.message;
   }
 
-  return "Unable to create this booking right now.";
+  return "Unable to start checkout right now.";
 }
 
 export default function TutorBookingSidebar({
@@ -258,34 +259,26 @@ export default function TutorBookingSidebar({
 
     void (async () => {
       try {
-        const result = await createBooking({
+        const returnTo = `/tutors/${tutorId}`;
+        const result = await createPaymentIntent({
           tutorId,
           slotId: selectedSlot.id,
         });
 
-        setSlots((currentSlots) =>
-          currentSlots.filter((slot) => slot.id !== selectedSlot.id)
-        );
+        savePaymentCheckoutSession(result.bookingId, returnTo, result);
         setIsModalOpen(false);
-
-        await Swal.fire({
-          icon: "success",
-          title: "Booking confirmed",
-          html: `
-            <div style="text-align:left;font-size:14px;line-height:1.7">
-              <p><strong>Amount:</strong> ${formatAmount(result.booking.priceAtBooking)}</p>
-              <p><strong>Date:</strong> ${formatDateLabel(result.booking.startTime)}</p>
-              <p><strong>Time:</strong> ${formatTimeLabel(result.booking.startTime)} - ${formatTimeLabel(result.booking.endTime)}</p>
-              <p style="margin-top:8px;color:#5f6368;">Payment gateway integration will be added later. This booking is currently marked as paid by the direct-booking flow.</p>
-            </div>
-          `,
-          confirmButtonColor: "#1d3b66",
-        });
+        router.push(
+          `/payment/checkout/${encodeURIComponent(
+            result.bookingId
+          )}?payment_intent=${encodeURIComponent(
+            result.paymentIntentId
+          )}&next=${encodeURIComponent(returnTo)}`
+        );
       } catch (error) {
         await Swal.fire({
           icon: "error",
-          title: "Booking failed",
-          text: toBookingErrorMessage(error),
+          title: "Checkout unavailable",
+          text: toPaymentErrorMessage(error),
           confirmButtonColor: "#1d3b66",
         });
       } finally {

@@ -31,10 +31,10 @@ export default function BookingConfirmationModal({
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
             <h3 className="font-headline text-2xl font-bold text-primary">
-              Confirm Booking
+              Continue to payment
             </h3>
             <p className="mt-2 text-sm text-on-surface-variant">
-              Review the selected session details before confirming.
+              Review the selected session details before moving to secure checkout.
             </p>
           </div>
           <button
@@ -69,8 +69,8 @@ export default function BookingConfirmationModal({
           <div className="flex items-start gap-3">
             <WalletCards className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
             <p>
-              Payment gateway integration will be implemented later. For now,
-              this booking is confirmed directly and marked as paid.
+              You will be redirected to Stripe-powered secure checkout. Your
+              booking becomes confirmed only after the payment succeeds.
             </p>
           </div>
         </div>
@@ -93,10 +93,10 @@ export default function BookingConfirmationModal({
             {isSubmitting ? (
               <span className="inline-flex items-center gap-2">
                 <LoaderCircle className="h-4 w-4 animate-spin" />
-                Booking...
+                Preparing checkout...
               </span>
             ) : (
-              "Confirm Booking"
+              "Proceed to Payment"
             )}
           </button>
         </div>
