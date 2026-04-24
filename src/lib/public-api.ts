@@ -57,6 +57,7 @@ async function fetchPublicApi<T>(
 
 export type LandingPageResponse = {
   stats: {
+    activeStudents: number;
     activeSubjects: number;
     expertTutors: number;
     sessionsBooked: number;

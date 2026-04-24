@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import ThemeToggle from "@/Components/Theme/ThemeToggle";
 import NavbarSession from "@/Components/Layout/NavbarSession";
+import BrandLogo from "@/Components/Layout/BrandLogo";
 
 const navLinks = [
   { href: "/tutors", label: "Find Tutors" },
@@ -20,8 +21,8 @@ export default function Navbar() {
   return (
     <nav className="fixed top-0 z-50 w-full bg-background/80 shadow-[0px_4px_20px_rgba(0,51,88,0.04)] backdrop-blur-md transition-colors duration-300">
       <div className="mx-auto flex h-20 w-11/12 max-w-[1440px] items-center justify-between">
-        <Link href="/" className="text-2xl font-black tracking-tighter text-primary">
-          Skill Bridge
+        <Link href="/" aria-label="SkillBridge home">
+          <BrandLogo className="text-2xl tracking-tighter" />
         </Link>
 
         <div className="hidden items-center space-x-8 lg:flex">

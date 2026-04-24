@@ -13,7 +13,7 @@ export default async function Home() {
 
   return (
     <>
-      <Hero />
+      <Hero activeStudents={landingData.stats.activeStudents} />
       <StatsSection stats={landingData.stats} />
       <FeaturedTutorsSection tutors={landingData.featuredTutors} />
       <SubjectsSection subjects={landingData.subjects} />

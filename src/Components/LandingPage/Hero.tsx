@@ -3,7 +3,17 @@ import Image from "next/image";
 import Link from "next/link";
 import heroImage from "@/assets/hero-image.png";
 
-export default function Hero() {
+type HeroProps = {
+  activeStudents: number;
+};
+
+function formatStudentCount(value: number): string {
+  return new Intl.NumberFormat("en").format(value);
+}
+
+export default function Hero({ activeStudents }: HeroProps) {
+  const studentLabel = activeStudents === 1 ? "Active Student" : "Active Students";
+
   return (
     <section className="relative flex min-h-[780px] items-center overflow-hidden bg-surface">
       <div className="absolute right-0 top-0 h-full w-1/3 translate-x-20 skew-x-12 bg-surface-container-low opacity-50" />
@@ -27,7 +37,9 @@ export default function Hero() {
               <div className="h-10 w-10 rounded-full border-2 border-white bg-slate-400" />
             </div>
             <div>
-              <p className="text-sm font-bold text-primary">12k+ Active Students</p>
+              <p className="text-sm font-bold text-primary">
+                {formatStudentCount(activeStudents)} {studentLabel}
+              </p>
               <div className="flex text-xs text-secondary">
                 {Array.from({ length: 5 }).map((_, index) => (
                   <Star key={index} size={14} fill="currentColor" />

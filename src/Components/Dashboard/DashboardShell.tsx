@@ -11,6 +11,7 @@ import { UserRole } from "@/types/auth";
 import ThemeToggle from "@/Components/Theme/ThemeToggle";
 import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
 import { getRoleDashboardPath } from "@/lib/dashboard-routes";
+import BrandLogo from "@/Components/Layout/BrandLogo";
 
 type DashboardShellProps = {
   children: ReactNode;
@@ -68,9 +69,9 @@ export default function DashboardShell({ children }: DashboardShellProps) {
           <div className="mb-10">
             <Link
               href="/"
-              className="font-headline text-[1.6rem] font-black tracking-tight text-primary"
+              aria-label="SkillBridge home"
             >
-              Skilll Bridge
+              <BrandLogo className="text-[1.6rem]" />
             </Link>
             <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.18em] text-on-surface-variant">
               Academic Excellence
