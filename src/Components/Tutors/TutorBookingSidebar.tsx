@@ -12,11 +12,12 @@ import {
 } from "@/lib/availability-api";
 import { createPaymentIntent, PaymentApiError } from "@/lib/payment-api";
 import { savePaymentCheckoutSession } from "@/lib/payment-checkout";
-import { TutorAvailabilitySlot } from "@/types/tutor";
+import { TutorAvailabilitySlot, TutorSubject } from "@/types/tutor";
 
 type TutorBookingSidebarProps = {
   tutorId: string;
   hourlyRate: number;
+  subjects: TutorSubject[];
 };
 
 type GroupedSlots = {
@@ -108,6 +109,7 @@ function toPaymentErrorMessage(error: unknown): string {
 export default function TutorBookingSidebar({
   tutorId,
   hourlyRate,
+  subjects,
 }: TutorBookingSidebarProps) {
   const router = useRouter();
   const { data: session, isPending: sessionPending } = useAppAuthSession();
@@ -115,10 +117,13 @@ export default function TutorBookingSidebar({
   const [isLoadingSlots, setIsLoadingSlots] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBookingPending, setIsBookingPending] = useState(false);
+  const [selectedSubjectId, setSelectedSubjectId] = useState("");
   const groupedSlots = useMemo(
     () => groupSlotsByDate(slots).slice(0, 7),
     [slots]
   );
+  const selectedSubject =
+    subjects.find((item) => item.id === selectedSubjectId) ?? null;
   const [selectedDateKey, setSelectedDateKey] = useState(
     groupedSlots[0]?.dateKey ?? ""
   );
@@ -239,6 +244,16 @@ export default function TutorBookingSidebar({
       return;
     }
 
+    if (!selectedSubject) {
+      await Swal.fire({
+        icon: "info",
+        title: "Choose a subject",
+        text: "Select the tutoring subject you want help with before booking a slot.",
+        confirmButtonColor: "#1d3b66",
+      });
+      return;
+    }
+
     setIsModalOpen(true);
   }
 
@@ -251,7 +266,7 @@ export default function TutorBookingSidebar({
   }
 
   function handleConfirmBooking() {
-    if (!selectedSlot) {
+    if (!selectedSlot || !selectedSubject) {
       return;
     }
 
@@ -262,6 +277,7 @@ export default function TutorBookingSidebar({
         const returnTo = `/tutors/${tutorId}`;
         const result = await createPaymentIntent({
           tutorId,
+          subjectId: selectedSubject.id,
           slotId: selectedSlot.id,
         });
 
@@ -303,6 +319,44 @@ export default function TutorBookingSidebar({
         </div>
 
         <div className="space-y-5 p-5">
+          <section>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="font-headline text-[14px] font-bold text-primary">
+                Select Subject
+              </h3>
+              <span className="text-[11px] font-semibold text-secondary">
+                {selectedSubject?.categoryName ?? "Required"}
+              </span>
+            </div>
+
+            {subjects.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {subjects.map((subject) => {
+                  const isActive = selectedSubjectId === subject.id;
+
+                  return (
+                    <button
+                      key={subject.id}
+                      type="button"
+                      onClick={() => setSelectedSubjectId(subject.id)}
+                      className={`rounded-full px-3 py-2 text-[12px] font-semibold transition-colors ${
+                        isActive
+                          ? "bg-primary text-on-primary shadow-sm"
+                          : "bg-surface-container-low text-primary hover:bg-surface-container"
+                      }`}
+                    >
+                      {subject.name}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="rounded-xl bg-surface-container-low p-4 text-sm text-on-surface-variant">
+                This tutor has not published any tutoring subjects yet.
+              </div>
+            )}
+          </section>
+
           <section>
             <div className="mb-3 flex items-center justify-between">
               <h3 className="font-headline text-[14px] font-bold text-primary">
@@ -392,7 +446,7 @@ export default function TutorBookingSidebar({
             type="button"
             onClick={() => void handleBookClick()}
             className={`block w-full rounded-md px-4 py-3 text-center font-headline text-[14px] font-bold shadow-lg transition-all ${
-              selectedSlotId && !sessionPending
+              selectedSlotId && selectedSubjectId && !sessionPending
                 ? "bg-gradient-to-r from-primary to-primary-container text-on-primary hover:shadow-xl"
                 : "pointer-events-none bg-surface-container-high text-on-surface-variant"
             }`}
@@ -410,6 +464,7 @@ export default function TutorBookingSidebar({
 
       <BookingConfirmationModal
         isOpen={isModalOpen && !!selectedSlot}
+        subjectLabel={selectedSubject?.name ?? ""}
         dateLabel={selectedSlot ? formatDateLabel(selectedSlot.startAt) : ""}
         timeLabel={
           selectedSlot

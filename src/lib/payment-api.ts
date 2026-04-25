@@ -1,4 +1,5 @@
 import {
+  CreatePaymentIntentInput,
   CreatePaymentIntentResponse,
   PaymentStatusResponse,
 } from "@/types/payment";
@@ -49,10 +50,9 @@ async function parseApiResponse<T>(response: Response): Promise<T> {
   return payload.data;
 }
 
-export async function createPaymentIntent(payload: {
-  tutorId: string;
-  slotId: string;
-}): Promise<CreatePaymentIntentResponse> {
+export async function createPaymentIntent(
+  payload: CreatePaymentIntentInput
+): Promise<CreatePaymentIntentResponse> {
   const response = await fetch(`${apiBaseUrl}/api/payments/create-intent`, {
     method: "POST",
     credentials: "include",

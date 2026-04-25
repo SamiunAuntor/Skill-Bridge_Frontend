@@ -26,6 +26,12 @@ export interface CreatePaymentIntentResponse {
   holdExpiresAt: string;
 }
 
+export interface CreatePaymentIntentInput {
+  tutorId: string;
+  subjectId: string;
+  slotId: string;
+}
+
 export interface PaymentStatusResponse {
   bookingId: string;
   paymentId: string;

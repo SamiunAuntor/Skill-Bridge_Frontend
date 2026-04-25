@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
+  BookOpen,
   CalendarClock,
   Clock3,
   ExternalLink,
@@ -70,7 +71,7 @@ function CounterpartyAvatar({
   avatarUrl: string | null;
 }) {
   return (
-    <div className="relative flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-[1.35rem] bg-surface-container-highest shadow-[0px_6px_18px_rgba(0,51,88,0.08)]">
+    <div className="relative flex h-[56px] w-[56px] shrink-0 items-center justify-center overflow-hidden rounded-[1rem] bg-surface-container-highest shadow-[0px_6px_18px_rgba(0,51,88,0.08)]">
       {avatarUrl ? (
         <Image
           src={avatarUrl}
@@ -125,36 +126,47 @@ export default function DashboardSessionCard({
             />
 
             <div className="min-w-0 flex-1">
-              <div className="space-y-1.5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-on-surface-variant">
-                  {counterpart.label}
-                </p>
+              <div className="space-y-0.5">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[0.68rem] font-medium uppercase tracking-[0.05em] text-on-surface-variant">
+                    {counterpart.label}
+                  </p>
+
+                  <span
+                    className={`inline-flex rounded-full px-1.5 py-[4px] text-[0.64rem] font-medium uppercase tracking-[0.05em] ${getStatusClasses(
+                      item.sessionStatus
+                    )}`}
+                  >
+                    {item.sessionStatus}
+                  </span>
+                </div>
 
                 {tutorProfileHref ? (
                   <Link
                     href={tutorProfileHref}
-                    className="block line-clamp-2 font-headline text-[1.45rem] font-extrabold leading-tight tracking-tight text-primary transition-colors hover:text-secondary"
+                    className="block line-clamp-2 font-headline text-[1.1rem] font-extrabold leading-tight tracking-tight text-primary transition-colors hover:text-secondary"
                   >
                     {counterpart.name}
                   </Link>
                 ) : (
-                  <h3 className="line-clamp-2 font-headline text-[1.45rem] font-extrabold leading-tight tracking-tight text-primary">
+                  <h3 className="line-clamp-2 font-headline text-[1.1rem] font-extrabold leading-tight tracking-tight text-primary">
                     {counterpart.name}
                   </h3>
                 )}
-
-                <span
-                  className={`inline-flex rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${getStatusClasses(
-                    item.sessionStatus
-                  )}`}
-                >
-                  {item.sessionStatus}
-                </span>
               </div>
             </div>
           </div>
 
-          <div className="space-y-2 text-[0.92rem] text-on-surface-variant">
+          <div className="space-y-2 text-[0.8rem] text-on-surface-variant">
+            <div className="flex items-start gap-2 text-secondary">
+              <BookOpen className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>
+                {item.subject.name}
+                {item.subject.categoryName
+                  ? ` · ${item.subject.categoryName}`
+                  : ""}
+              </span>
+            </div>
             <div className="flex items-start gap-2">
               <CalendarClock className="mt-0.5 h-4 w-4 shrink-0" />
               <span>{isCompact ? formatShortDate(item.sessionDate) : formatLongDate(item.sessionDate)}</span>
@@ -177,8 +189,8 @@ export default function DashboardSessionCard({
         </div>
 
         {!isCompact && item.meetingProvider === "zoom" ? (
-          <div className="rounded-[1.1rem] border border-outline-variant/16 bg-surface-container px-4 py-3 text-[12px] text-on-surface-variant">
-            <div className="text-[1.1rem] font-semibold text-primary">Zoom Meeting</div>
+          <div className="rounded-[1.1rem] border border-outline-variant/16 bg-surface-container px-4 py-3 text-[10px] text-on-surface-variant">
+            <div className="text-[0.9rem] font-semibold text-primary">Zoom Meeting</div>
             <div className="mt-2 space-y-1">
               <p>
                 Meeting ID:{" "}

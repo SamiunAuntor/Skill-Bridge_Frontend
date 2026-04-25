@@ -1,6 +1,14 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, BadgeCheck, BookOpen, Star } from "lucide-react";
+import {
+  ArrowLeft,
+  BadgeCheck,
+  BookOpen,
+  ChevronRight,
+  Sparkles,
+  Star,
+  Users,
+} from "lucide-react";
 import { notFound } from "next/navigation";
 import { getPublicSubjectBySlug, PublicApiError } from "@/lib/public-api";
 
@@ -32,8 +40,8 @@ export default async function SubjectDetailPage({
   const { subject, tutors } = data;
 
   return (
-    <section className="px-6 pb-20 pt-8 md:px-8">
-      <div className="mx-auto max-w-[1440px]">
+    <section className="pb-20 pt-8">
+      <div className="mx-auto w-11/12 max-w-7xl">
         <Link
           href="/subjects"
           className="mb-8 inline-flex items-center gap-2 text-sm font-bold text-primary hover:gap-3"
@@ -42,41 +50,68 @@ export default async function SubjectDetailPage({
           Back to subjects
         </Link>
 
-        <header className="rounded-[2rem] bg-surface-container-low px-8 py-10 md:px-12">
-          <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
-            <div className="max-w-4xl">
-              <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-primary-fixed text-primary">
-                {subject.iconUrl ? (
-                  <Image
-                    src={subject.iconUrl}
-                    alt={`${subject.name} icon`}
-                    width={36}
-                    height={36}
-                    className="h-9 w-9 object-contain"
-                  />
-                ) : (
-                  <BookOpen className="h-8 w-8" />
-                )}
+        <header className="overflow-hidden rounded-[2rem] border border-outline-variant/10 bg-surface-container-low shadow-[0px_18px_48px_rgba(0,51,88,0.06)]">
+          <div className="grid grid-cols-1 gap-0 lg:grid-cols-[1.5fr_0.8fr]">
+            <div className="relative px-8 py-10 md:px-10 md:py-12">
+              <div className="absolute left-0 top-0 h-40 w-40 rounded-br-[7rem] bg-primary/5" />
+              <div className="relative">
+                <div className="flex items-start gap-5">
+                  <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[1.75rem] bg-primary-fixed text-primary shadow-sm">
+                    {subject.iconUrl ? (
+                      <Image
+                        src={subject.iconUrl}
+                        alt={`${subject.name} icon`}
+                        width={42}
+                        height={42}
+                        className="h-10 w-10 object-contain"
+                      />
+                    ) : (
+                      <BookOpen className="h-9 w-9" />
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="inline-flex items-center gap-2 rounded-full bg-surface-container-high px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-secondary">
+                      <Sparkles className="h-3.5 w-3.5" />
+                      {subject.category.name}
+                    </div>
+                    <h1 className="mt-4 max-w-4xl font-headline text-4xl font-extrabold leading-[0.95] tracking-tight text-primary md:text-5xl">
+                      {subject.name}
+                    </h1>
+                    <p className="mt-5 max-w-3xl text-base leading-relaxed text-on-surface-variant md:text-lg">
+                      {subject.description ||
+                        "Explore tutors who teach this subject and choose a guide who matches your goals, pace, and learning style."}
+                    </p>
+                  </div>
+                </div>
               </div>
-              <p className="mt-6 text-sm font-bold uppercase tracking-[0.2em] text-secondary">
-                {subject.category.name}
-              </p>
-              <h1 className="mt-3 font-headline text-4xl font-extrabold tracking-tight text-primary md:text-5xl">
-                {subject.name}
-              </h1>
-              <p className="mt-5 max-w-3xl text-lg leading-relaxed text-on-surface-variant">
-                {subject.description ||
-                  "Explore tutors who teach this subject and choose a guide who matches your goals, pace, and learning style."}
-              </p>
             </div>
 
-            <div className="rounded-2xl bg-surface-container-lowest px-6 py-5 text-right shadow-sm">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
-                Tutors available
-              </p>
-              <p className="mt-2 font-headline text-4xl font-black text-primary">
-                {tutors.length}
-              </p>
+            <div className="border-t border-outline-variant/10 bg-surface-container-lowest px-8 py-8 lg:border-l lg:border-t-0">
+              <div className="flex h-full flex-col justify-between gap-6">
+                <div className="rounded-[1.5rem] bg-surface px-6 py-6 text-center shadow-sm">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-secondary-container text-secondary">
+                    <Users className="h-5 w-5" />
+                  </div>
+                  <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
+                    Tutors Available
+                  </p>
+                  <p className="mt-2 font-headline text-5xl font-black text-primary">
+                    {tutors.length}
+                  </p>
+                  <p className="mt-2 text-sm text-on-surface-variant">
+                    Active tutors currently mapped to this subject.
+                  </p>
+                </div>
+
+                <Link
+                  href="/tutors"
+                  className="inline-flex items-center justify-center gap-2 rounded-[1.1rem] bg-primary px-5 py-3 text-sm font-bold text-on-primary transition-transform hover:-translate-y-0.5"
+                >
+                  Browse all tutors
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              </div>
             </div>
           </div>
         </header>

@@ -250,6 +250,7 @@ export default async function TutorProfilePage({
           <TutorBookingSidebar
             tutorId={tutor.id}
             hourlyRate={tutor.hourlyRate}
+            subjects={tutor.subjects}
           />
         </div>
 

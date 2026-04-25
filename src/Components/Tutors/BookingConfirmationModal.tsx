@@ -4,6 +4,7 @@ import { LoaderCircle, WalletCards, X } from "lucide-react";
 
 type BookingConfirmationModalProps = {
   isOpen: boolean;
+  subjectLabel: string;
   dateLabel: string;
   timeLabel: string;
   amountLabel: string;
@@ -14,6 +15,7 @@ type BookingConfirmationModalProps = {
 
 export default function BookingConfirmationModal({
   isOpen,
+  subjectLabel,
   dateLabel,
   timeLabel,
   amountLabel,
@@ -49,6 +51,10 @@ export default function BookingConfirmationModal({
         </div>
 
         <div className="space-y-4 rounded-2xl border border-outline-variant/15 bg-surface p-5">
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-sm font-medium text-on-surface-variant">Subject</span>
+            <span className="text-sm font-semibold text-primary">{subjectLabel}</span>
+          </div>
           <div className="flex items-center justify-between gap-4">
             <span className="text-sm font-medium text-on-surface-variant">Date</span>
             <span className="text-sm font-semibold text-primary">{dateLabel}</span>
