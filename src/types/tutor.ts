@@ -127,7 +127,8 @@ export interface AvailabilitySlotItem {
 }
 
 export interface AvailabilityListResponse {
-  slots: AvailabilitySlotItem[];
+  upcomingSlots: AvailabilitySlotItem[];
+  expiredSlots: AvailabilitySlotItem[];
 }
 
 export interface DashboardSessionItem {

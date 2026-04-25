@@ -151,7 +151,7 @@ export default function TutorBookingSidebar({
         const response = await getTutorAvailability(tutorId);
 
         if (isMounted) {
-          setSlots(response.slots);
+          setSlots(response.upcomingSlots);
         }
       } catch (error) {
         if (!isMounted || !showErrorAlert) {
