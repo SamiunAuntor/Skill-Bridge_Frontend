@@ -38,13 +38,9 @@ export default async function SubjectsPage({
             <p className="text-sm font-bold uppercase tracking-[0.2em] text-secondary">
               Subject Directory
             </p>
-            <h1 className="mt-3 font-headline text-4xl font-extrabold tracking-tight text-primary md:text-5xl">
-              Explore every subject on SkillBridge
+            <h1 className="mt-3 font-headline text-[1.8rem] font-extrabold tracking-tight text-primary md:text-[2.7rem]">
+              Available subjects on SkillBridge
             </h1>
-            <p className="mt-4 max-w-3xl text-lg leading-relaxed text-on-surface-variant">
-              Browse by structured subject taxonomy instead of scattered free-form tags.
-              Every subject here is curated by the platform and connected to tutors who teach it.
-            </p>
           </div>
           <div className="rounded-2xl bg-surface-container-low px-5 py-4 text-center">
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
