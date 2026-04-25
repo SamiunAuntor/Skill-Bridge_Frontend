@@ -2,238 +2,33 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
-import { Camera, LoaderCircle } from "lucide-react";
 import { useAppAuthSession } from "@/lib/auth";
 import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
+import TutorEducationCard from "@/Components/Dashboard/TutorProfile/TutorEducationCard";
+import TutorIdentityCard from "@/Components/Dashboard/TutorProfile/TutorIdentityCard";
+import TutorProfileEditModal from "@/Components/Dashboard/TutorProfile/TutorProfileEditModal";
+import TutorTeachingProfileCard from "@/Components/Dashboard/TutorProfile/TutorTeachingProfileCard";
+import { ProfileFormState, TutorModalType } from "@/Components/Dashboard/TutorProfile/shared";
+import {
+  createBlankEducation,
+  getAvailableSubjectsForSelection,
+  getCompletionRatio,
+  getTutorProfileValidationMessage,
+  mapProfileToFormState,
+  serializeFormState,
+  toFriendlyTutorProfileError,
+} from "@/Components/Dashboard/TutorProfile/profileUtils";
 import {
   getMyTutorProfile,
   TutorProfileApiError,
   updateMyTutorProfile,
 } from "@/lib/tutor-profile-api";
-import {
-  deleteUploadedAsset,
-  ImageUploadError,
-  UploadedImageResult,
-  uploadImage,
-} from "@/lib/upload-image";
+import { deleteUploadedAsset, UploadedImageResult } from "@/lib/upload-image";
 import { normalizeText } from "@/lib/text";
 import type {
   TutorEditableProfileResponse,
-  TutorEditableSubjectOption,
-  TutorProfileUpdateEducationInput,
   TutorProfileUpdateInput,
 } from "@/types/tutor";
-
-type ProfileFormState = TutorProfileUpdateInput;
-
-const sectionCardClass =
-  "rounded-[1.35rem] border border-outline-variant/25 bg-surface-container p-6 shadow-[0px_16px_40px_rgba(0,51,88,0.08)] dark:border-outline-variant/10 dark:bg-surface-container-low dark:shadow-[0px_12px_32px_rgba(0,0,0,0.24)]";
-
-const inputClass =
-  "w-full rounded-xl border border-outline-variant/30 bg-white px-3.5 py-2.5 text-[13px] text-on-surface shadow-sm shadow-slate-900/5 outline-none transition placeholder:text-[13px] focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-70 dark:border-outline-variant/30 dark:bg-surface-container dark:shadow-none";
-
-const textAreaClass = `${inputClass} min-h-32 resize-y`;
-
-function toFriendlyTutorProfileError(error: unknown): string {
-  const message =
-    error instanceof TutorProfileApiError
-      ? error.message
-      : error instanceof Error
-        ? error.message
-        : "We couldn't update your tutor profile right now. Please try again.";
-
-  if (/selected subjects must belong to the selected categories/i.test(message)) {
-    return "One or more selected subjects do not belong to your selected categories.";
-  }
-
-  if (/one or more selected subjects are invalid/i.test(message)) {
-    return "One or more selected subjects are no longer available. Please reselect them.";
-  }
-
-  if (/one or more selected categories are invalid/i.test(message)) {
-    return "One or more selected categories are invalid. Please reselect them.";
-  }
-
-  if (/one or more selected degrees are invalid/i.test(message)) {
-    return "One or more selected degrees are invalid. Please choose the degree again.";
-  }
-
-  if (/at least one subject is required/i.test(message)) {
-    return "Please select at least one subject before saving your profile.";
-  }
-
-  if (/bio must be at least 20 characters long/i.test(message)) {
-    return "Your bio must be at least 20 characters long.";
-  }
-
-  if (/education\[\d+\]\.institution/i.test(message)) {
-    return "Each education entry needs an institution name.";
-  }
-
-  if (/education\[\d+\]\.degreeId/i.test(message)) {
-    return "Each education entry must use one of the available degree options.";
-  }
-
-  if (/education\[\d+\]\.categoryId/i.test(message)) {
-    return "Each education entry must include an education category.";
-  }
-
-  if (/selected education categories are invalid/i.test(message)) {
-    return "One or more selected education categories are invalid. Please choose them again.";
-  }
-
-  if (/education degree must belong to its selected education category/i.test(message)) {
-    return "Each degree must be chosen from the same education category.";
-  }
-
-  if (/education\[\d+\]\.startYear cannot be greater than endYear/i.test(message)) {
-    return "One education entry has a start year later than its end year.";
-  }
-
-  return message;
-}
-
-function createBlankEducation(
-  defaultDegree?: TutorEditableProfileResponse["availableDegrees"][number]
-): TutorProfileUpdateEducationInput {
-  return {
-    degreeId: defaultDegree?.id ?? "",
-    categoryId: defaultDegree?.categoryId ?? "",
-    institution: "",
-    startYear: new Date().getFullYear(),
-    endYear: null,
-    description: "",
-  };
-}
-
-function mapProfileToFormState(
-  data: TutorEditableProfileResponse
-): ProfileFormState {
-  const defaultDegree = data.availableDegrees[0];
-
-  return {
-    profileImageUrl: data.profile.profileImageUrl,
-    professionalTitle: data.profile.professionalTitle ?? "",
-    bio: data.profile.bio ?? "",
-    hourlyRate: data.profile.hourlyRate,
-    experienceYears: data.profile.experienceYears,
-    categoryIds: data.profile.categoryIds,
-    subjectIds: data.profile.subjects.map((item) => item.subjectId),
-    education:
-      data.profile.education.length > 0
-        ? data.profile.education.map((item) => ({
-            id: item.id,
-            degreeId: item.degreeId,
-            categoryId: item.categoryId,
-            institution: item.institution,
-            startYear: item.startYear,
-            endYear: item.endYear,
-            description: item.description ?? "",
-          }))
-        : [createBlankEducation(defaultDegree)],
-  };
-}
-
-function serializeFormState(state: ProfileFormState): string {
-  return JSON.stringify({
-    profileImageUrl: state.profileImageUrl ?? null,
-    professionalTitle: normalizeText(state.professionalTitle),
-    bio: normalizeText(state.bio),
-    hourlyRate: Number(state.hourlyRate) || 0,
-    experienceYears: Number(state.experienceYears) || 0,
-    categoryIds: [...state.categoryIds].sort(),
-    subjectIds: [...state.subjectIds].sort(),
-    education: state.education.map((item) => ({
-      id: item.id ?? null,
-      degreeId: item.degreeId,
-      categoryId: item.categoryId,
-      institution: normalizeText(item.institution),
-      startYear: Number(item.startYear),
-      endYear: item.endYear ?? null,
-      description: normalizeText(item.description),
-    })),
-  });
-}
-
-function getCompletionRatio(completed: number, total: number): number {
-  if (total === 0) {
-    return 0;
-  }
-
-  return Math.round((completed / total) * 100);
-}
-
-function getAvailableSubjectsForSelection(
-  selectedCategoryIds: string[],
-  availableSubjects: TutorEditableSubjectOption[]
-): TutorEditableSubjectOption[] {
-  if (selectedCategoryIds.length === 0) {
-    return [];
-  }
-
-  return availableSubjects.filter((subject) =>
-    selectedCategoryIds.includes(subject.categoryId)
-  );
-}
-
-function getTutorProfileValidationMessage(state: ProfileFormState): string | null {
-  if (!normalizeText(state.professionalTitle)) {
-    return "Add a professional title so students immediately understand your teaching identity.";
-  }
-
-  if (normalizeText(state.bio).length < 20) {
-    return "Write a bio of at least 20 characters so students get a meaningful introduction.";
-  }
-
-  if (!Number.isFinite(Number(state.hourlyRate)) || Number(state.hourlyRate) <= 0) {
-    return "Set an hourly rate greater than 0.";
-  }
-
-  if (!Number.isFinite(Number(state.experienceYears)) || Number(state.experienceYears) < 0) {
-    return "Experience years cannot be negative.";
-  }
-
-  if (state.categoryIds.length === 0) {
-    return "Choose at least one teaching category.";
-  }
-
-  if (state.subjectIds.length === 0) {
-    return "Select at least one subject under your chosen categories.";
-  }
-
-  const invalidEducation = state.education.find((item) => {
-    const hasAnyValue =
-      normalizeText(item.categoryId) ||
-      normalizeText(item.degreeId) ||
-      normalizeText(item.institution) ||
-      normalizeText(item.description);
-
-    if (!hasAnyValue) {
-      return false;
-    }
-
-    return (
-      !normalizeText(item.categoryId) ||
-      !normalizeText(item.degreeId) ||
-      !normalizeText(item.institution) ||
-      !Number.isFinite(Number(item.startYear))
-    );
-  });
-
-  if (invalidEducation) {
-    return "Complete category, degree, institution, and start year for each education entry you keep.";
-  }
-
-  const invalidYearRange = state.education.find(
-    (item) => item.endYear !== null && Number(item.startYear) > Number(item.endYear)
-  );
-
-  if (invalidYearRange) {
-    return "Education start year cannot be later than end year.";
-  }
-
-  return null;
-}
 
 export default function TutorProfileSettings() {
   const { data: session } = useAppAuthSession();
@@ -246,7 +41,7 @@ export default function TutorProfileSettings() {
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const [activeModal, setActiveModal] = useState<TutorModalType | null>(null);
   const [pendingUploadedImage, setPendingUploadedImage] =
     useState<UploadedImageResult | null>(null);
 
@@ -344,7 +139,7 @@ export default function TutorProfileSettings() {
     return null;
   }
 
-  const isInteractionDisabled = !isEditing || isSaving;
+  const isEditing = activeModal !== null;
 
   function updateFormState(updater: (current: ProfileFormState) => ProfileFormState) {
     setFormState((current) => (current ? updater(current) : current));
@@ -368,9 +163,9 @@ export default function TutorProfileSettings() {
     }
   }
 
-  function handleStartEditing() {
+  function handleOpenModal(modal: TutorModalType) {
     setErrorMessage(null);
-    setIsEditing(true);
+    setActiveModal(modal);
   }
 
   async function handleCancelEditing() {
@@ -396,7 +191,8 @@ export default function TutorProfileSettings() {
     if (initialFormState) {
       setFormState(initialFormState);
     }
-    setIsEditing(false);
+
+    setActiveModal(null);
     setErrorMessage(null);
   }
 
@@ -483,7 +279,7 @@ export default function TutorProfileSettings() {
       setFormState(mappedState);
       setInitialFormState(mappedState);
       setPendingUploadedImage(null);
-      setIsEditing(false);
+      setActiveModal(null);
 
       await Swal.fire({
         icon: "success",
@@ -494,6 +290,7 @@ export default function TutorProfileSettings() {
     } catch (error) {
       if (pendingUploadedImage) {
         await rollbackPendingUploadedImage();
+
         if (initialFormState) {
           updateFormState((current) => ({
             ...current,
@@ -530,628 +327,79 @@ export default function TutorProfileSettings() {
     completionStats.completed,
     completionStats.total
   );
+  const roleLabel = session?.user.role ?? "tutor";
+  const isEmailVerified = Boolean(session?.user.emailVerified);
+  const selectedCategoryNames = profileData.availableCategories
+    .filter((category) => formState.categoryIds.includes(category.id))
+    .map((category) => category.name);
+  const selectedSubjectNames = profileData.availableSubjects
+    .filter((subject) => formState.subjectIds.includes(subject.id))
+    .map((subject) => subject.name);
+  const educationSummaries = formState.education
+    .filter((item) => normalizeText(item.degreeId) || normalizeText(item.institution))
+    .map((item, index) => {
+      const degree = availableDegrees.find((entry) => entry.id === item.degreeId);
+
+      return {
+        id: item.id ?? `education-summary-${index}`,
+        degreeName: degree?.name ?? "Education entry",
+        institution: item.institution,
+        period: `${item.startYear}${item.endYear ? ` - ${item.endYear}` : " - Present"}`,
+      };
+    });
+
+  function handleAddEducation() {
+    updateFormState((current) => ({
+      ...current,
+      education: [createBlankEducation(), ...current.education],
+    }));
+  }
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
-      <section className="rounded-[1.55rem] border border-outline-variant/25 bg-surface-container p-6 shadow-[0px_16px_40px_rgba(0,51,88,0.08)] dark:border-outline-variant/10 dark:bg-surface-container-low dark:shadow-[0px_12px_32px_rgba(0,0,0,0.24)]">
-        <div className="grid gap-5 lg:grid-cols-[0.3fr_0.7fr]">
-          <article className="rounded-[1.35rem] border border-outline-variant/20 bg-surface-container-lowest p-5">
-            <div className="flex flex-col items-center gap-4 text-center">
-              <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-3xl bg-surface-container-highest shadow-sm">
-                {formState.profileImageUrl ? (
-                  <img
-                    alt="Tutor profile preview"
-                    className="h-full w-full object-cover"
-                    src={formState.profileImageUrl}
-                  />
-                ) : (
-                  <span className="material-symbols-outlined text-4xl text-on-surface-variant">
-                    account_circle
-                  </span>
-                )}
-              </div>
+      <TutorIdentityCard
+        completionCompleted={completionStats.completed}
+        completionPercentage={completionPercentage}
+        completionTotal={completionStats.total}
+        errorMessage={errorMessage}
+        formState={formState}
+        isEmailVerified={isEmailVerified}
+        onEdit={() => handleOpenModal("basic")}
+        roleLabel={roleLabel}
+        tutorName={profileData.profile.displayName}
+      />
 
-              <div>
-                <h3 className="font-headline text-[1.35rem] font-bold text-primary">
-                  Profile Photo
-                </h3>
-                <p className="mt-1 text-[12px] text-on-surface-variant">
-                  Upload a clear tutor headshot.
-                </p>
-              </div>
-
-              <label
-                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-[12px] font-bold transition ${
-                  isInteractionDisabled || isUploadingImage
-                    ? "cursor-not-allowed bg-surface-container-high text-on-surface-variant opacity-70"
-                    : "cursor-pointer bg-primary text-on-primary hover:opacity-90"
-                }`}
-              >
-                {isUploadingImage ? (
-                  <LoaderCircle className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Camera className="h-4 w-4" />
-                )}
-                <span>{isUploadingImage ? "Uploading..." : "Upload New Image"}</span>
-                <input
-                  className="sr-only"
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  disabled={isInteractionDisabled || isUploadingImage}
-                  onChange={async (event) => {
-                    const file = event.target.files?.[0];
-                    event.target.value = "";
-
-                    if (!file) {
-                      return;
-                    }
-
-                    setErrorMessage(null);
-                    setIsUploadingImage(true);
-
-                    try {
-                      const result = await uploadImage(file);
-                      if (pendingUploadedImage) {
-                        try {
-                          await deleteUploadedAsset({
-                            publicId: pendingUploadedImage.publicId,
-                            resourceType: pendingUploadedImage.resourceType,
-                            deleteToken: pendingUploadedImage.deleteToken,
-                          });
-                        } catch (rollbackError) {
-                          console.warn(
-                            "Unable to remove replaced uploaded image.",
-                            rollbackError
-                          );
-                        }
-                      }
-
-                      setPendingUploadedImage(result);
-                      updateFormState((current) => ({
-                        ...current,
-                        profileImageUrl: result.secureUrl,
-                      }));
-                    } catch (error) {
-                      await Swal.fire({
-                        icon: "error",
-                        title: "Image upload failed",
-                        text:
-                          error instanceof ImageUploadError
-                            ? error.message
-                            : "We couldn't upload this profile image right now. Please try again.",
-                        confirmButtonColor: "#1d3b66",
-                      });
-                    } finally {
-                      setIsUploadingImage(false);
-                    }
-                  }}
-                />
-              </label>
-            </div>
-          </article>
-
-          <div className="rounded-[1.35rem] border border-outline-variant/20 bg-surface-container-lowest p-5">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <h2 className="font-headline text-[1.7rem] font-extrabold tracking-tight text-primary">
-                  Build your public tutoring identity
-                </h2>
-                <p className="mt-1.5 text-[12px] text-on-surface-variant">
-                  Set up the information students will see on your public profile.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                {!isEditing ? (
-                  <button
-                    type="button"
-                    onClick={handleStartEditing}
-                    className="rounded-xl bg-primary px-5 py-2.5 font-headline text-[13px] font-bold text-on-primary transition hover:opacity-90"
-                  >
-                    Edit
-                  </button>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => void handleCancelEditing()}
-                      disabled={isSaving || isUploadingImage}
-                      className="rounded-xl border border-outline-variant/25 bg-surface px-4 py-2.5 text-[13px] font-semibold text-primary transition hover:bg-surface-container-low disabled:opacity-60"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isSaving || isUploadingImage || !hasChanges}
-                      className="rounded-xl bg-primary px-5 py-2.5 font-headline text-[13px] font-bold text-on-primary transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {isSaving ? "Saving..." : "Save Changes"}
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-
-            <div className="mt-5 rounded-2xl bg-primary-fixed/40 p-4">
-              <div className="flex items-center justify-between text-[12px] font-semibold text-primary">
-                <span>
-                  Completion {completionStats.completed}/{completionStats.total}
-                </span>
-                <span>{completionPercentage}%</span>
-              </div>
-              <div className="mt-3 h-3 overflow-hidden rounded-full bg-white/70">
-                <div
-                  className="h-full rounded-full bg-primary transition-all duration-300"
-                  style={{ width: `${completionPercentage}%` }}
-                />
-              </div>
-            </div>
-
-            <div className="mt-4 grid gap-2 rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-4 text-[12px] text-on-surface-variant md:grid-cols-2">
-              <p>Required: professional title, bio, hourly rate, category, and subject.</p>
-              <p>Education is optional, but any added entry needs category, degree, institution, and start year.</p>
-            </div>
-
-            {errorMessage ? (
-              <div className="mt-4 rounded-xl bg-error-container px-4 py-3 text-[13px] text-on-error-container">
-                {errorMessage}
-              </div>
-            ) : null}
-          </div>
-        </div>
+      <section className="grid gap-6 xl:grid-cols-[1.1fr_1fr]">
+        <TutorTeachingProfileCard
+          formState={formState}
+          onEdit={() => handleOpenModal("teaching")}
+          selectedCategoryNames={selectedCategoryNames}
+          selectedSubjectNames={selectedSubjectNames}
+        />
+        <TutorEducationCard
+          educationSummaries={educationSummaries}
+          onManage={() => handleOpenModal("education")}
+        />
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1.15fr_1fr]">
-        <div className="space-y-6">
-          <article className={sectionCardClass}>
-            <h3 className="font-headline text-[1.35rem] font-bold text-primary">
-              Professional Summary
-            </h3>
-
-            <div className="mt-5 space-y-2">
-              <label
-                className="block text-[13px] font-semibold text-on-surface"
-                htmlFor="professionalTitle"
-              >
-                Professional Title
-              </label>
-              <input
-                id="professionalTitle"
-                className={inputClass}
-                required
-                disabled={isInteractionDisabled}
-                value={formState.professionalTitle}
-                onChange={(event) =>
-                  updateFormState((current) => ({
-                    ...current,
-                    professionalTitle: event.target.value,
-                  }))
-                }
-                placeholder="Senior Researcher & Lecturer"
-              />
-            </div>
-
-            <div className="mt-5 space-y-2">
-              <label className="block text-[13px] font-semibold text-on-surface" htmlFor="bio">
-                Bio
-              </label>
-              <textarea
-                id="bio"
-                className={textAreaClass}
-                minLength={20}
-                disabled={isInteractionDisabled}
-                value={formState.bio}
-                onChange={(event) =>
-                  updateFormState((current) => ({
-                    ...current,
-                    bio: event.target.value,
-                  }))
-                }
-                placeholder="I help students master complex topics through structured, practical sessions."
-              />
-              <p className="text-[11px] text-on-surface-variant">
-                Minimum 20 characters. Be specific about how you help students.
-              </p>
-            </div>
-          </article>
-
-          <article className={sectionCardClass}>
-            <h3 className="font-headline text-[1.35rem] font-bold text-primary">
-              Teaching Details
-            </h3>
-
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <label className="block text-[13px] font-semibold text-on-surface" htmlFor="rate">
-                  Hourly Rate ($)
-                </label>
-                <input
-                  id="rate"
-                  min={1}
-                  step="1"
-                  type="number"
-                  className={inputClass}
-                  disabled={isInteractionDisabled}
-                  value={formState.hourlyRate}
-                  onChange={(event) =>
-                    updateFormState((current) => ({
-                      ...current,
-                      hourlyRate: Number(event.target.value),
-                    }))
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label
-                  className="block text-[13px] font-semibold text-on-surface"
-                  htmlFor="experience"
-                >
-                  Experience Years
-                </label>
-                <input
-                  id="experience"
-                  min={0}
-                  step="1"
-                  type="number"
-                  className={inputClass}
-                  disabled={isInteractionDisabled}
-                  value={formState.experienceYears}
-                  onChange={(event) =>
-                    updateFormState((current) => ({
-                      ...current,
-                      experienceYears: Number(event.target.value),
-                    }))
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="mt-5 space-y-3">
-              <label className="block text-[13px] font-semibold text-on-surface">
-                Categories
-              </label>
-              <div className="flex flex-wrap gap-3">
-                {profileData.availableCategories.map((category) => {
-                  const isSelected = formState.categoryIds.includes(category.id);
-
-                  return (
-                    <button
-                      key={category.id}
-                      type="button"
-                      disabled={isInteractionDisabled}
-                      onClick={() =>
-                        updateFormState((current) => {
-                          const nextCategoryIds = isSelected
-                            ? current.categoryIds.filter((id) => id !== category.id)
-                            : [...current.categoryIds, category.id];
-                          const allowedSubjectIds = profileData.availableSubjects
-                            .filter((subject) =>
-                              nextCategoryIds.includes(subject.categoryId)
-                            )
-                            .map((subject) => subject.id);
-
-                          return {
-                            ...current,
-                            categoryIds: nextCategoryIds,
-                            subjectIds: current.subjectIds.filter((subjectId) =>
-                              allowedSubjectIds.includes(subjectId)
-                            ),
-                          };
-                        })
-                      }
-                      className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                        isSelected
-                          ? "bg-primary text-on-primary shadow-sm"
-                          : "bg-white text-on-surface-variant shadow-sm hover:text-primary"
-                      }`}
-                    >
-                      {category.name}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="mt-6 space-y-3">
-              <div className="flex items-center justify-between gap-4">
-                <label className="block text-[13px] font-semibold text-on-surface">
-                  Subjects
-                </label>
-                <p className="text-[11px] text-on-surface-variant">
-                  Select subjects under your chosen categories.
-                </p>
-              </div>
-
-              {formState.categoryIds.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-outline-variant/30 bg-surface-container-lowest px-4 py-5 text-sm text-on-surface-variant">
-                  Choose at least one category first to unlock its subjects.
-                </div>
-              ) : availableSubjects.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-outline-variant/30 bg-surface-container-lowest px-4 py-5 text-sm text-on-surface-variant">
-                  No active subjects are available under the selected categories yet.
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {profileData.availableCategories
-                    .filter((category) => formState.categoryIds.includes(category.id))
-                    .map((category) => {
-                      const categorySubjects = availableSubjects.filter(
-                        (subject) => subject.categoryId === category.id
-                      );
-
-                      if (categorySubjects.length === 0) {
-                        return null;
-                      }
-
-                      return (
-                        <div
-                          key={category.id}
-                          className="rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-4"
-                        >
-                          <h4 className="text-[12px] font-bold uppercase tracking-[0.18em] text-primary">
-                            {category.name}
-                          </h4>
-                          <div className="mt-3 flex flex-wrap gap-3">
-                            {categorySubjects.map((subject) => {
-                              const isSelected = formState.subjectIds.includes(subject.id);
-
-                              return (
-                                <button
-                                  key={subject.id}
-                                  type="button"
-                                  disabled={isInteractionDisabled}
-                                  onClick={() =>
-                                    updateFormState((current) => ({
-                                      ...current,
-                                      subjectIds: isSelected
-                                        ? current.subjectIds.filter((id) => id !== subject.id)
-                                        : [...current.subjectIds, subject.id],
-                                    }))
-                                  }
-                                  className={`rounded-2xl border px-4 py-3 text-left transition ${
-                                    isSelected
-                                      ? "border-primary bg-primary-fixed text-primary"
-                                      : "border-outline-variant/20 bg-white text-on-surface-variant hover:border-primary/30 hover:text-primary"
-                                  }`}
-                                >
-                                  <div className="text-sm font-bold">{subject.name}</div>
-                                  {subject.description ? (
-                                    <div className="mt-1 text-[11px] leading-relaxed">
-                                      {subject.description}
-                                    </div>
-                                  ) : null}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
-              )}
-            </div>
-          </article>
-        </div>
-
-        <article className={sectionCardClass}>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <h3 className="font-headline text-[1.35rem] font-bold text-primary">
-              Education
-            </h3>
-            <button
-              type="button"
-              hidden={!isEditing}
-              disabled={isInteractionDisabled}
-              onClick={() => {
-                updateFormState((current) => ({
-                  ...current,
-                  education: [
-                    createBlankEducation(),
-                    ...current.education,
-                  ],
-                }));
-              }}
-              className="rounded-xl bg-primary px-4 py-2 text-[13px] font-bold text-on-primary"
-            >
-              Add Education
-            </button>
-          </div>
-
-          <div className="mt-5 space-y-4">
-            {formState.education.map((item, index) => (
-              <article
-                key={item.id ?? `education-${index}`}
-                className="rounded-2xl border border-outline-variant/25 bg-white p-5 shadow-sm shadow-slate-900/5 dark:border-outline-variant/20 dark:bg-surface-container dark:shadow-none"
-              >
-                <p className="text-[13px] font-bold text-primary">
-                  Education History {index + 1}
-                </p>
-
-                <div className="mt-4 space-y-4">
-                  <div className="space-y-2">
-                    <label className="block text-[13px] font-semibold text-on-surface">
-                      Education Category
-                    </label>
-                    <select
-                      className={inputClass}
-                      disabled={isInteractionDisabled}
-                      value={item.categoryId}
-                      onChange={(event) =>
-                        updateFormState((current) => ({
-                          ...current,
-                          education: current.education.map((educationItem, educationIndex) =>
-                            educationIndex === index
-                              ? {
-                                  ...educationItem,
-                                  categoryId: event.target.value,
-                                  degreeId: "",
-                                }
-                              : educationItem
-                          ),
-                        }))
-                      }
-                    >
-                      <option value="">Select education category</option>
-                      {profileData.availableCategories.map((category) => (
-                        <option key={category.id} value={category.id}>
-                          {category.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-[13px] font-semibold text-on-surface">
-                      Degree
-                    </label>
-                    <select
-                      className={inputClass}
-                      disabled={isInteractionDisabled}
-                      value={item.degreeId}
-                      onChange={(event) =>
-                        updateFormState((current) => ({
-                          ...current,
-                          education: current.education.map((educationItem, educationIndex) =>
-                            educationIndex === index
-                              ? {
-                                  ...educationItem,
-                                  degreeId: event.target.value,
-                                }
-                              : educationItem
-                          ),
-                        }))
-                      }
-                    >
-                      <option value="">Select degree</option>
-                      {availableDegrees
-                        .filter((degree) =>
-                          item.categoryId ? degree.categoryId === item.categoryId : false
-                        )
-                        .map((degree) => (
-                        <option key={degree.id} value={degree.id}>
-                          {degree.name} - {degree.categoryName}
-                          {degree.level ? ` (${degree.level})` : ""}
-                        </option>
-                        ))}
-                    </select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-[13px] font-semibold text-on-surface">
-                      Institution
-                    </label>
-                    <input
-                      className={inputClass}
-                      disabled={isInteractionDisabled}
-                      value={item.institution}
-                      onChange={(event) =>
-                        updateFormState((current) => ({
-                          ...current,
-                          education: current.education.map((educationItem, educationIndex) =>
-                            educationIndex === index
-                              ? { ...educationItem, institution: event.target.value }
-                              : educationItem
-                          ),
-                        }))
-                      }
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="block text-[13px] font-semibold text-on-surface">
-                        Start Year
-                      </label>
-                      <input
-                        min={1900}
-                        max={3000}
-                        type="number"
-                        className={inputClass}
-                        disabled={isInteractionDisabled}
-                        value={item.startYear}
-                        onChange={(event) =>
-                          updateFormState((current) => ({
-                            ...current,
-                            education: current.education.map((educationItem, educationIndex) =>
-                              educationIndex === index
-                                ? {
-                                    ...educationItem,
-                                    startYear: Number(event.target.value),
-                                  }
-                                : educationItem
-                            ),
-                          }))
-                        }
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="block text-[13px] font-semibold text-on-surface">
-                        End Year
-                      </label>
-                      <input
-                        min={1900}
-                        max={3000}
-                        type="number"
-                        className={inputClass}
-                        disabled={isInteractionDisabled}
-                        value={item.endYear ?? ""}
-                        onChange={(event) =>
-                          updateFormState((current) => ({
-                            ...current,
-                            education: current.education.map((educationItem, educationIndex) =>
-                              educationIndex === index
-                                ? {
-                                    ...educationItem,
-                                    endYear: event.target.value
-                                      ? Number(event.target.value)
-                                      : null,
-                                  }
-                                : educationItem
-                            ),
-                          }))
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-[13px] font-semibold text-on-surface">
-                      Description
-                    </label>
-                    <textarea
-                      className={`${inputClass} min-h-24 resize-y`}
-                      disabled={isInteractionDisabled}
-                      value={item.description ?? ""}
-                      onChange={(event) =>
-                        updateFormState((current) => ({
-                          ...current,
-                          education: current.education.map((educationItem, educationIndex) =>
-                            educationIndex === index
-                              ? { ...educationItem, description: event.target.value }
-                              : educationItem
-                          ),
-                        }))
-                      }
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  hidden={!isEditing}
-                  disabled={isInteractionDisabled}
-                  onClick={() => void handleRemoveEducation(index)}
-                  className="mt-5 w-full rounded-xl border border-error-container bg-error-container/50 px-4 py-3 text-[13px] font-semibold text-on-error-container"
-                >
-                  Remove Education
-                </button>
-              </article>
-            ))}
-          </div>
-        </article>
-      </section>
+      <TutorProfileEditModal
+        activeModal={activeModal}
+        availableDegrees={availableDegrees}
+        availableSubjects={availableSubjects}
+        errorMessage={errorMessage}
+        formState={formState}
+        hasChanges={hasChanges}
+        isSaving={isSaving}
+        isUploadingImage={isUploadingImage}
+        onAddEducation={handleAddEducation}
+        onCancel={handleCancelEditing}
+        onRemoveEducation={handleRemoveEducation}
+        pendingUploadedImage={pendingUploadedImage}
+        profileData={profileData}
+        setIsUploadingImage={setIsUploadingImage}
+        setPendingUploadedImage={setPendingUploadedImage}
+        updateFormState={updateFormState}
+      />
     </form>
   );
 }

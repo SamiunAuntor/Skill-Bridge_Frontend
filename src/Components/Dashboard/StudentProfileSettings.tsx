@@ -254,12 +254,12 @@ export default function StudentProfileSettings() {
                   <img
                     src={profileImageUrl}
                     alt=""
-                    className="h-32 w-32 rounded-full object-cover shadow-[0px_12px_28px_rgba(0,51,88,0.12)]"
+                    className="h-40 w-40 rounded-full object-cover shadow-[0px_12px_28px_rgba(0,51,88,0.12)]"
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <div className="flex h-32 w-32 items-center justify-center rounded-full bg-primary-fixed text-primary shadow-[0px_12px_28px_rgba(0,51,88,0.12)]">
-                    <UserRound className="h-14 w-14" />
+                  <div className="flex h-40 w-40 items-center justify-center rounded-full bg-primary-fixed text-primary shadow-[0px_12px_28px_rgba(0,51,88,0.12)]">
+                    <UserRound className="h-16 w-16" />
                   </div>
                 )}
               </div>
