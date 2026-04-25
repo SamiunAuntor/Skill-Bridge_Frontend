@@ -3,15 +3,9 @@
 import { useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Swal from "sweetalert2";
-import {
-  CircleAlert,
-  ExternalLink,
-  Video,
-  Search,
-} from "lucide-react";
+import { CircleAlert, Search } from "lucide-react";
 import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
 import { useAppAuthSession } from "@/lib/auth";
-import { formatLongDate, formatTimeRange } from "@/lib/format/date";
 import {
   BookingApiError,
   cancelBooking,
@@ -24,10 +18,7 @@ import {
   DashboardSessionSortOption,
 } from "@/types/tutor";
 import { UserRole } from "@/types/auth";
-
-function getCounterpartyLabel(role: UserRole, session: DashboardSessionItem): string {
-  return role === "tutor" ? session.student.name : session.tutor.name;
-}
+import DashboardSessionCard from "@/Components/Dashboard/DashboardSessionCard";
 
 const sessionSortOptions: DashboardSessionSortOption[] = [
   "time_asc",
@@ -38,21 +29,6 @@ const sessionSortOptions: DashboardSessionSortOption[] = [
   "completed_only",
   "cancelled_only",
 ];
-
-function getStatusClasses(status: DashboardSessionItem["sessionStatus"]): string {
-  switch (status) {
-    case "scheduled":
-      return "bg-primary-fixed text-on-primary-fixed-variant";
-    case "ongoing":
-      return "bg-secondary-container text-on-secondary-container";
-    case "completed":
-      return "bg-[#d8f6e6] text-[#1f6a43] dark:bg-[#153828] dark:text-[#9ee2ba]";
-    case "cancelled":
-      return "bg-error-container text-on-error-container";
-    default:
-      return "bg-surface-container-high text-on-surface-variant";
-  }
-}
 
 function toFriendlyError(error: unknown): string {
   if (error instanceof BookingApiError) {
@@ -247,7 +223,7 @@ export default function DashboardSessionsList() {
   }
 
   async function handleLeaveReview(item: DashboardSessionItem) {
-    const counterpart = getCounterpartyLabel(role, item);
+    const counterpart = role === "tutor" ? item.student.name : item.tutor.name;
 
     const result = await Swal.fire({
       title: "Leave a review",
@@ -398,129 +374,16 @@ export default function DashboardSessionsList() {
         {sessions.length > 0 ? (
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
             {sessions.map((item) => (
-              <article
+              <DashboardSessionCard
                 key={item.sessionId}
-                className="rounded-[1.35rem] border border-outline-variant/18 bg-surface-container-low p-4 shadow-[0px_10px_24px_rgba(0,51,88,0.06)]"
-              >
-                <div className="flex h-full flex-col space-y-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-on-surface-variant">
-                        Date
-                      </p>
-                      <p className="mt-1 text-[14px] font-semibold text-primary">
-                        {formatLongDate(item.sessionDate)}
-                      </p>
-                    </div>
-                    <span
-                      className={`inline-flex rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${getStatusClasses(
-                        item.sessionStatus
-                      )}`}
-                    >
-                      {item.sessionStatus}
-                    </span>
-                  </div>
-
-                  <div className="space-y-3 border-t border-outline-variant/14 pt-3">
-                    <div className="text-[13px] text-on-surface-variant">
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-on-surface">
-                          {role === "tutor" ? "Student Name" : "Tutor Name"}
-                        </p>
-                        <p className="mt-0.5 font-semibold text-primary">
-                          {getCounterpartyLabel(role, item)}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="text-[13px] text-on-surface-variant">
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-on-surface">
-                          Time
-                        </p>
-                        <p className="mt-0.5 font-medium text-primary">
-                          {formatTimeRange(item.startTime, item.endTime)}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="text-[13px] text-on-surface-variant">
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-on-surface">
-                          Total Amount
-                        </p>
-                        <p className="mt-0.5 font-semibold text-primary">
-                          ${item.priceAtBooking.toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {item.meetingProvider === "zoom" ? (
-                    <div className="border-t border-outline-variant/14 pt-3">
-                      <div className="rounded-xl border border-outline-variant/16 bg-surface-container px-3 py-3 text-[11px] text-on-surface-variant">
-                      <div className="font-semibold text-primary">Zoom Meeting</div>
-                      <div className="mt-2 space-y-1">
-                        <p>
-                          Meeting ID:{" "}
-                          <span className="font-semibold text-primary">
-                            {item.meetingId ?? "Pending"}
-                          </span>
-                        </p>
-                        <p>
-                          Passcode:{" "}
-                          <span className="font-semibold text-primary">
-                            {item.meetingPassword ?? "Not required"}
-                          </span>
-                        </p>
-                      </div>
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {(item.canJoin || item.canCancel) ? (
-                    <div className="mt-auto border-t border-outline-variant/14 pt-3">
-                      <div className="flex flex-col gap-2">
-                        {item.canJoin ? (
-                          <button
-                            type="button"
-                            onClick={() => handleJoin(item)}
-                            disabled={isPending}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-[13px] font-semibold text-on-primary transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                            Join Session
-                          </button>
-                        ) : null}
-
-                        {item.canCancel ? (
-                          <button
-                            type="button"
-                            onClick={() => void handleCancel(item.bookingId)}
-                            disabled={isPending}
-                            className="rounded-xl border border-error/20 bg-error-container px-4 py-2.5 text-[13px] font-semibold text-on-error-container transition-colors hover:bg-error-container/85 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            Cancel Session
-                          </button>
-                        ) : null}
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {role === "student" && item.canLeaveReview ? (
-                    <div className="mt-auto border-t border-outline-variant/14 pt-3">
-                      <button
-                        type="button"
-                        onClick={() => void handleLeaveReview(item)}
-                        disabled={isPending}
-                        className="w-full rounded-xl border border-secondary/20 bg-secondary-container px-4 py-2.5 text-[13px] font-semibold text-on-secondary-container transition-colors hover:bg-secondary-container/85 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        Leave Review
-                      </button>
-                    </div>
-                  ) : null}
-                </div>
-              </article>
+                item={item}
+                role={role}
+                variant="full"
+                isPending={isPending}
+                onJoin={handleJoin}
+                onCancel={(bookingId) => void handleCancel(bookingId)}
+                onLeaveReview={(sessionItem) => void handleLeaveReview(sessionItem)}
+              />
             ))}
           </div>
         ) : (

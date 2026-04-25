@@ -3,12 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Swal from "sweetalert2";
-import { CalendarClock, Clock3, ReceiptText, UserRound } from "lucide-react";
 import { getMySessions, BookingApiError } from "@/lib/booking-api";
 import { useAppAuthSession } from "@/lib/auth";
 import { getRoleDashboardPath } from "@/lib/dashboard-routes";
-import { formatShortDate, formatTimeRange } from "@/lib/format/date";
 import { DashboardSessionItem } from "@/types/tutor";
+import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
+import DashboardSessionCard from "@/Components/Dashboard/DashboardSessionCard";
 
 function toFriendlyError(error: unknown): string {
   if (error instanceof BookingApiError) {
@@ -23,7 +23,7 @@ function toFriendlyError(error: unknown): string {
 }
 
 export default function StudentDashboardHome() {
-  const { data: session } = useAppAuthSession();
+  const { data: session, isPending } = useAppAuthSession();
   const [sessions, setSessions] = useState<DashboardSessionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const role = session?.user?.role;
@@ -84,6 +84,10 @@ export default function StudentDashboardHome() {
     return null;
   }
 
+  if (isPending || loading) {
+    return <DashboardPageLoader label="Loading student dashboard..." />;
+  }
+
   const recentSessions = stats.upcoming.slice(0, 3);
 
   return (
@@ -92,21 +96,21 @@ export default function StudentDashboardHome() {
         <article className="rounded-[1.5rem] bg-primary px-6 py-6 text-on-primary">
           <p className="text-[13px] font-medium text-on-primary/80">Upcoming Sessions</p>
           <h2 className="mt-2 font-headline text-[2.4rem] font-extrabold">
-            {loading ? "--" : stats.upcoming.length}
+            {stats.upcoming.length}
           </h2>
         </article>
 
         <article className="rounded-[1.5rem] bg-surface-container-lowest p-6 shadow-[0px_12px_32px_rgba(0,51,88,0.06)]">
           <p className="text-[13px] font-medium text-on-surface-variant">Completed Sessions</p>
           <h3 className="mt-2 font-headline text-[2rem] font-bold text-primary">
-            {loading ? "--" : stats.completed.length}
+            {stats.completed.length}
           </h3>
         </article>
 
         <article className="rounded-[1.5rem] bg-surface-container-lowest p-6 shadow-[0px_12px_32px_rgba(0,51,88,0.06)]">
           <p className="text-[13px] font-medium text-on-surface-variant">Total Session Value</p>
           <h3 className="mt-2 font-headline text-[2rem] font-bold text-primary">
-            {loading ? "--" : `$${stats.totalSpent.toFixed(2)}`}
+            {`$${stats.totalSpent.toFixed(2)}`}
           </h3>
         </article>
       </section>
@@ -115,10 +119,10 @@ export default function StudentDashboardHome() {
         <div className="flex items-center justify-between gap-4">
           <div>
             <h2 className="font-headline text-2xl font-bold text-primary">
-              Recent Sessions
+              Upcoming Sessions
             </h2>
             <p className="mt-2 text-sm text-on-surface-variant">
-              A quick overview of your next sessions.
+              A quick overview of your next confirmed sessions.
             </p>
           </div>
           <Link
@@ -129,35 +133,18 @@ export default function StudentDashboardHome() {
           </Link>
         </div>
 
-        <div className="mt-6 space-y-4">
+        <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-3">
           {recentSessions.length > 0 ? (
             recentSessions.map((item) => (
-              <article
+              <DashboardSessionCard
                 key={item.sessionId}
-                className="rounded-2xl border border-outline-variant/14 bg-surface-container-low p-5"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <UserRound className="h-4 w-4" />
-                    <span className="font-semibold text-primary">{item.tutor.name}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <CalendarClock className="h-4 w-4" />
-                    <span>{formatShortDate(item.sessionDate)}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <Clock3 className="h-4 w-4" />
-                    <span>{formatTimeRange(item.startTime, item.endTime)}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-on-surface-variant">
-                    <ReceiptText className="h-4 w-4" />
-                    <span>${item.priceAtBooking.toFixed(2)}</span>
-                  </div>
-                </div>
-              </article>
+                item={item}
+                role="student"
+                variant="compact"
+              />
             ))
           ) : (
-            <div className="rounded-2xl bg-surface-container-low p-5 text-sm text-on-surface-variant">
+            <div className="rounded-2xl bg-surface-container-low p-5 text-sm text-on-surface-variant xl:col-span-3">
               No sessions yet. Find a tutor, choose an available slot, and completed bookings will appear here.
             </div>
           )}

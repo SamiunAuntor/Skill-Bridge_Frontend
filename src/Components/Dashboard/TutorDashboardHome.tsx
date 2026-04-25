@@ -1,16 +1,10 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import Swal from "sweetalert2";
-import {
-  CalendarClock,
-  Clock3,
-  ExternalLink,
-  ReceiptText,
-  Star,
-  UserRound,
-} from "lucide-react";
+import { Star } from "lucide-react";
 import { useAppAuthSession } from "@/lib/auth";
 import { getRoleDashboardPath } from "@/lib/dashboard-routes";
 import {
@@ -21,6 +15,8 @@ import {
 } from "@/lib/booking-api";
 import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
 import { DashboardSessionItem } from "@/types/tutor";
+import DashboardSessionCard from "@/Components/Dashboard/DashboardSessionCard";
+import avatarImage from "@/assets/avatar.png";
 
 function toFriendlyError(error: unknown): string {
   if (error instanceof BookingApiError) {
@@ -43,26 +39,8 @@ function getInitials(name: string): string {
     .join("");
 }
 
-function formatSessionDate(value: string): string {
-  return new Intl.DateTimeFormat("en-BD", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(value));
-}
-
-function formatSessionTime(start: string, end: string): string {
-  const formatter = new Intl.DateTimeFormat("en-BD", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
-  return `${formatter.format(new Date(start))} - ${formatter.format(new Date(end))}`;
-}
-
 export default function TutorDashboardHome() {
-  const { data: session } = useAppAuthSession();
+  const { data: session, isPending: isSessionPending } = useAppAuthSession();
   const role = session?.user?.role;
   const [summary, setSummary] = useState<{
     stats: {
@@ -88,6 +66,10 @@ export default function TutorDashboardHome() {
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
+    if (!role) {
+      return;
+    }
+
     if (role !== "tutor") {
       setLoading(false);
       return;
@@ -122,6 +104,10 @@ export default function TutorDashboardHome() {
     };
   }, [role]);
 
+  if (isSessionPending || !role) {
+    return <DashboardPageLoader label="Loading tutor dashboard..." />;
+  }
+
   if (role !== "tutor") {
     return null;
   }
@@ -134,8 +120,12 @@ export default function TutorDashboardHome() {
   const totalHours = summary?.stats.totalHours ?? 0;
   const averageRating = summary?.stats.averageRating ?? null;
   const totalReviews = summary?.stats.totalReviews ?? 0;
-  const upcomingSessions = summary?.upcomingSessions ?? [];
-  const recentFeedback = summary?.recentFeedback ?? [];
+  const upcomingSessions = Array.isArray(summary?.upcomingSessions)
+    ? summary.upcomingSessions
+    : [];
+  const recentFeedback = Array.isArray(summary?.recentFeedback)
+    ? summary.recentFeedback
+    : [];
 
   async function handleCancel(bookingId: string) {
     const confirmation = await Swal.fire({
@@ -292,68 +282,21 @@ export default function TutorDashboardHome() {
             </Link>
           </div>
 
-          <div className="mt-6 space-y-4">
+          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
             {upcomingSessions.length > 0 ? (
               upcomingSessions.map((sessionItem) => (
-                <article
+                <DashboardSessionCard
                   key={sessionItem.sessionId}
-                  className="rounded-2xl border border-outline-variant/14 bg-surface-container-low p-5"
-                >
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-sm text-on-surface-variant">
-                        <UserRound className="h-4 w-4" />
-                        <span className="font-semibold text-primary">
-                          {sessionItem.student.name}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-on-surface-variant">
-                        <CalendarClock className="h-4 w-4" />
-                        <span>{formatSessionDate(sessionItem.sessionDate)}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-on-surface-variant">
-                        <Clock3 className="h-4 w-4" />
-                        <span>
-                          {formatSessionTime(sessionItem.startTime, sessionItem.endTime)}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-on-surface-variant">
-                        <ReceiptText className="h-4 w-4" />
-                        <span>${sessionItem.priceAtBooking.toFixed(2)}</span>
-                      </div>
-                    </div>
-
-                    {(sessionItem.canJoin || sessionItem.canCancel) ? (
-                      <div className="flex shrink-0 flex-col gap-2 lg:min-w-[170px]">
-                        {sessionItem.canJoin ? (
-                          <button
-                            type="button"
-                            onClick={() => handleJoin(sessionItem)}
-                            disabled={isPending}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-[13px] font-semibold text-on-primary transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                            Join Session
-                          </button>
-                        ) : null}
-
-                        {sessionItem.canCancel ? (
-                          <button
-                            type="button"
-                            onClick={() => void handleCancel(sessionItem.bookingId)}
-                            disabled={isPending}
-                            className="rounded-xl border border-error/20 bg-error-container px-4 py-2.5 text-[13px] font-semibold text-on-error-container transition-colors hover:bg-error-container/85 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            Cancel Session
-                          </button>
-                        ) : null}
-                      </div>
-                    ) : null}
-                  </div>
-                </article>
+                  item={sessionItem}
+                  role="tutor"
+                  variant="compact"
+                  isPending={isPending}
+                  onJoin={handleJoin}
+                  onCancel={(bookingId) => void handleCancel(bookingId)}
+                />
               ))
             ) : (
-              <div className="rounded-2xl bg-surface-container-low p-5 text-sm text-on-surface-variant">
+              <div className="rounded-2xl bg-surface-container-low p-5 text-sm text-on-surface-variant md:col-span-2">
                 No upcoming sessions yet. Add availability slots so students can book time with you.
               </div>
             )}
@@ -379,8 +322,30 @@ export default function TutorDashboardHome() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-xs font-black text-on-primary">
-                        {getInitials(review.student.name)}
+                      <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10">
+                        {review.student.avatarUrl ? (
+                          <Image
+                            src={review.student.avatarUrl}
+                            alt={review.student.name}
+                            fill
+                            sizes="40px"
+                            className="object-cover"
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : (
+                          <>
+                            <Image
+                              src={avatarImage}
+                              alt=""
+                              fill
+                              sizes="40px"
+                              className="object-cover opacity-20"
+                            />
+                            <span className="relative z-10 text-xs font-black text-primary">
+                              {getInitials(review.student.name)}
+                            </span>
+                          </>
+                        )}
                       </div>
                       <div>
                         <h3 className="font-headline text-sm font-bold text-on-surface">
