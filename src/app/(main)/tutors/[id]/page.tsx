@@ -1,21 +1,16 @@
 import {
   BadgeCheck,
+  BookOpen,
   BookOpenCheck,
   FlaskConical,
-  Sigma,
   Star,
-  TrendingUp,
 } from "lucide-react";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import TutorBookingSidebar from "@/Components/Tutors/TutorBookingSidebar";
 import TutorTestimonialsSection from "@/Components/Tutors/TutorTestimonialsSection";
 import { TutorApiError, getTutorById } from "@/lib/tutor-api";
-import {
-  TutorCategory,
-  TutorDetailResponse,
-  TutorEducation,
-  TutorSubject,
-} from "@/types/tutor";
+import { TutorDetailResponse, TutorEducation } from "@/types/tutor";
 
 export const metadata = {
   title: "Tutor Profile | SkillBridge",
@@ -27,8 +22,6 @@ type TutorProfilePageProps = {
   params: Promise<{ id: string }>;
 };
 
-const masteryIcons = [Sigma, FlaskConical, TrendingUp];
-
 function formatHoursTaught(totalHoursTaught: number): string {
   if (totalHoursTaught >= 100) {
     return `${Math.round(totalHoursTaught)}+`;
@@ -39,43 +32,6 @@ function formatHoursTaught(totalHoursTaught: number): string {
   }
 
   return totalHoursTaught.toFixed(1);
-}
-
-function buildProfileSubjects(
-  categories: TutorCategory[],
-  subjects: TutorSubject[]
-): Array<{ id: string; name: string }> {
-  const uniqueItems = new Map<string, { id: string; name: string }>();
-
-  for (const item of [...categories, ...subjects]) {
-    const key = item.slug || item.name.toLowerCase();
-    if (!uniqueItems.has(key)) {
-      uniqueItems.set(key, { id: item.id, name: item.name });
-    }
-  }
-
-  return [...uniqueItems.values()];
-}
-
-function buildMasteryItems(
-  categories: TutorCategory[],
-  subjects: TutorSubject[]
-): Array<{ key: string; title: string; subtitle: string; iconIndex: number }> {
-  if (subjects.length > 0) {
-    return subjects.map((item, index) => ({
-      key: item.id,
-      title: item.name,
-      subtitle: item.categoryName || categories[index % Math.max(categories.length, 1)]?.name || "Specialized tutoring",
-      iconIndex: index,
-    }));
-  }
-
-  return categories.map((item, index) => ({
-    key: item.id,
-    title: item.name,
-    subtitle: "Guided tutoring support",
-    iconIndex: index,
-  }));
 }
 
 function formatAverageRating(value: number, totalReviews: number): string {
@@ -137,8 +93,6 @@ export default async function TutorProfilePage({
   }
 
   const tutor = tutorData.tutor;
-  const profileSubjects = buildProfileSubjects(tutor.categories, tutor.subjects);
-  const masteryItems = buildMasteryItems(tutor.categories, tutor.subjects);
   const testimonials = tutor.testimonials;
 
   return (
@@ -177,7 +131,7 @@ export default async function TutorProfilePage({
               </p>
 
               <div className="flex flex-wrap gap-2.5 pt-1">
-                {profileSubjects.slice(0, 3).map((tag) => (
+                {tutor.categories.map((tag) => (
                   <span
                     key={tag.id}
                     className="rounded-md bg-tertiary-fixed px-2.5 py-1 text-[10px] font-semibold text-on-tertiary-fixed-variant md:text-[11px]"
@@ -225,6 +179,50 @@ export default async function TutorProfilePage({
 
             <section>
               <h2 className="mb-8 flex items-center gap-3 font-headline text-2xl font-bold text-primary">
+                <FlaskConical className="h-5 w-5 text-secondary" />
+                Offered Tutoring Subjects
+              </h2>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {tutor.subjects.length > 0 ? (
+                  tutor.subjects.map((subject) => (
+                    <div
+                      key={subject.id}
+                      className="flex items-center gap-4 rounded-xl border border-outline-variant/10 bg-surface-container-lowest px-5 py-4 shadow-sm transition-transform hover:-translate-y-0.5"
+                    >
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-fixed text-primary">
+                        {subject.iconUrl ? (
+                          <Image
+                            src={subject.iconUrl}
+                            alt={`${subject.name} icon`}
+                            width={28}
+                            height={28}
+                            className="h-7 w-7 object-contain"
+                          />
+                        ) : (
+                          <BookOpen className="h-5 w-5" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="font-bold text-primary">{subject.name}</div>
+                        <div className="text-xs text-on-surface-variant">
+                          {subject.categoryName}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <article className="rounded-xl bg-surface-container-low p-8">
+                    <p className="text-sm text-on-surface-variant">
+                      Offered subjects will appear when the tutor adds them to the
+                      profile.
+                    </p>
+                  </article>
+                )}
+              </div>
+            </section>
+
+            <section>
+              <h2 className="mb-8 flex items-center gap-3 font-headline text-2xl font-bold text-primary">
                 <BookOpenCheck className="h-5 w-5 text-secondary" />
                 Academic Background
               </h2>
@@ -247,50 +245,18 @@ export default async function TutorProfilePage({
                 )}
               </div>
             </section>
-
-            <section>
-              <h2 className="mb-8 flex items-center gap-3 font-headline text-2xl font-bold text-primary">
-                <FlaskConical className="h-5 w-5 text-secondary" />
-                Offered Tutorings
-              </h2>
-              <div className="flex flex-wrap gap-4">
-                {masteryItems.length > 0 ? (
-                  masteryItems.map((item) => {
-                    const Icon = masteryIcons[item.iconIndex % masteryIcons.length];
-
-                    return (
-                      <div
-                        key={item.key}
-                        className="flex items-center gap-3 rounded-xl border border-outline-variant/10 bg-surface-container-lowest px-6 py-4 shadow-sm transition-transform hover:-translate-y-0.5"
-                      >
-                        <Icon className="h-5 w-5 text-primary" />
-                        <div>
-                          <div className="font-bold text-primary">{item.title}</div>
-                          <div className="text-xs text-on-surface-variant">
-                            {item.subtitle}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="rounded-xl bg-surface-container-low px-6 py-4 text-sm text-on-surface-variant">
-                    Offered tutorings will appear when categories or subjects are
-                    added.
-                  </div>
-                )}
-              </div>
-            </section>
-
-            <TutorTestimonialsSection
-              testimonials={testimonials}
-              totalReviews={tutor.totalReviews}
-            />
           </div>
 
           <TutorBookingSidebar
             tutorId={tutor.id}
             hourlyRate={tutor.hourlyRate}
+          />
+        </div>
+
+        <div className="mt-16">
+          <TutorTestimonialsSection
+            testimonials={testimonials}
+            totalReviews={tutor.totalReviews}
           />
         </div>
       </div>

@@ -1,6 +1,9 @@
+"use client";
+
 import { Sparkles, Search, ArrowRight, Star } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import heroImage from "@/assets/hero-image.png";
 
 type HeroProps = {
@@ -12,7 +15,22 @@ function formatStudentCount(value: number): string {
 }
 
 export default function Hero({ activeStudents }: HeroProps) {
+  const router = useRouter();
+  const [query, setQuery] = useState("");
   const studentLabel = activeStudents === 1 ? "Active Student" : "Active Students";
+
+  function handleSearch(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const normalizedQuery = query.trim();
+
+    if (!normalizedQuery) {
+      router.push("/tutors");
+      return;
+    }
+
+    router.push(`/tutors?q=${encodeURIComponent(normalizedQuery)}`);
+  }
 
   return (
     <section className="relative flex min-h-[780px] items-center overflow-hidden bg-surface">
@@ -63,7 +81,10 @@ export default function Hero({ activeStudents }: HeroProps) {
             the world&apos;s most intellectual architects. Precision learning for
             the digital age.
           </p>
-          <div className="flex max-w-2xl flex-col gap-4 sm:flex-row">
+          <form
+            className="flex max-w-2xl flex-col gap-4 sm:flex-row"
+            onSubmit={handleSearch}
+          >
             <div className="relative flex-grow">
               <Search
                 className="absolute left-4 top-1/2 -translate-y-1/2 text-outline"
@@ -73,16 +94,18 @@ export default function Hero({ activeStudents }: HeroProps) {
                 className="w-full rounded-md border-none bg-surface-container-highest py-4 pl-12 pr-4 text-on-surface focus:ring-2 focus:ring-surface-tint/40"
                 placeholder="Search by subject, skill, or tutor name..."
                 type="text"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
               />
             </div>
-            <Link
-              href="/tutors"
+            <button
+              type="submit"
               className="flex items-center justify-center gap-2 rounded-md bg-primary px-8 py-4 font-bold text-on-primary transition-all hover:shadow-lg"
             >
               Find My Tutor
               <ArrowRight size={20} />
-            </Link>
-          </div>
+            </button>
+          </form>
         </div>
       </div>
     </section>

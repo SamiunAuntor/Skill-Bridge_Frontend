@@ -56,7 +56,7 @@ export default function FeaturedTutorsSection({
             <p className="text-sm font-extrabold uppercase tracking-[0.22em] text-secondary">
               Featured tutors
             </p>
-            <h2 className="mt-3 font-headline text-[3.75rem] font-black tracking-tight leading-none text-primary">
+            <h2 className="mt-3 font-headline text-4xl font-extrabold tracking-tight text-primary md:text-5xl">
               Learn from the <span className="text-secondary">best minds</span>
             </h2>
             <p className="mt-4 text-base leading-7 text-on-surface-variant">

@@ -18,6 +18,7 @@ export interface TutorSubject {
   slug: string;
   categoryId: string;
   categoryName: string;
+  iconUrl?: string | null;
 }
 
 export interface TutorCard {

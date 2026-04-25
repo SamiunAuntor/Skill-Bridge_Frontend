@@ -113,6 +113,10 @@ export async function getLandingPageData(): Promise<LandingPageResponse> {
 }
 
 export type PublicSubjectsResponse = {
+  filters: {
+    q?: string;
+    sortBy: "most_tutors" | "alphabetical";
+  };
   subjects: Array<{
     id: string;
     name: string;
@@ -155,8 +159,26 @@ export type PublicSubjectDetailResponse = {
   }>;
 };
 
-export async function getPublicSubjects(): Promise<PublicSubjectsResponse> {
-  return fetchPublicApi<PublicSubjectsResponse>("/api/public/subjects", 300);
+export async function getPublicSubjects(filters?: {
+  q?: string;
+  sortBy?: "most_tutors" | "alphabetical";
+}): Promise<PublicSubjectsResponse> {
+  const searchParams = new URLSearchParams();
+
+  if (filters?.q) {
+    searchParams.set("q", filters.q);
+  }
+
+  if (filters?.sortBy) {
+    searchParams.set("sortBy", filters.sortBy);
+  }
+
+  const queryString = searchParams.toString();
+
+  return fetchPublicApi<PublicSubjectsResponse>(
+    `/api/public/subjects${queryString ? `?${queryString}` : ""}`,
+    300
+  );
 }
 
 export async function getPublicSubjectBySlug(
