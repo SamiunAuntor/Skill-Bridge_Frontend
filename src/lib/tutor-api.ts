@@ -1,4 +1,5 @@
 import {
+  TutorCategory,
   TutorDetailResponse,
   TutorListFilters,
   TutorListResponse,
@@ -30,6 +31,8 @@ interface BackendEnvelope<T> {
 function buildSearchParams(filters: Partial<TutorListFilters>): URLSearchParams {
   const searchParams = new URLSearchParams();
 
+  if (filters.q) searchParams.set("q", filters.q);
+  if (filters.category) searchParams.set("category", filters.category);
   if (filters.subject) searchParams.set("subject", filters.subject);
   if (typeof filters.minPrice === "number") {
     searchParams.set("minPrice", String(filters.minPrice));
@@ -98,6 +101,10 @@ export async function getTutorById(id: string): Promise<TutorDetailResponse> {
 
 export async function getTutorSubjectOptions(): Promise<TutorSubject[]> {
   return fetchTutorApi<TutorSubject[]>(`/api/tutors/subjects`, 300);
+}
+
+export async function getTutorCategoryOptions(): Promise<TutorCategory[]> {
+  return fetchTutorApi<TutorCategory[]>(`/api/tutors/categories`, 300);
 }
 
 export const tutorSortLabels: Record<TutorSortOption, string> = {

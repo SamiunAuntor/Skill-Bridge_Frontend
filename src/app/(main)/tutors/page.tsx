@@ -1,8 +1,13 @@
 import TutorCard from "@/Components/Tutors/TutorCard";
+import TutorDiscoveryToolbar from "@/Components/Tutors/TutorDiscoveryToolbar";
 import TutorFilters from "@/Components/Tutors/TutorFilters";
 import TutorPagination from "@/Components/Tutors/TutorPagination";
-import TutorSortSelect from "@/Components/Tutors/TutorSortSelect";
-import { TutorApiError, getTutorSubjectOptions, getTutors } from "@/lib/tutor-api";
+import {
+  TutorApiError,
+  getTutorCategoryOptions,
+  getTutorSubjectOptions,
+  getTutors,
+} from "@/lib/tutor-api";
 import { TutorListFilters, TutorSortOption } from "@/types/tutor";
 
 export const metadata = {
@@ -35,6 +40,8 @@ function parseSearchFilters(
   const minRating = getPositiveNumber(getStringValue(params.minRating));
 
   return {
+    q: getStringValue(params.q)?.trim() || undefined,
+    category: getStringValue(params.category)?.toLowerCase(),
     subject: getStringValue(params.subject)?.toLowerCase(),
     minPrice: getPositiveNumber(getStringValue(params.minPrice)),
     maxPrice: getPositiveNumber(getStringValue(params.maxPrice)),
@@ -58,6 +65,8 @@ function parseSearchFilters(
 
 function buildPaginationSearchParams(filters: TutorListFilters) {
   return {
+    ...(filters.q ? { q: filters.q } : {}),
+    ...(filters.category ? { category: filters.category } : {}),
     ...(filters.subject ? { subject: filters.subject } : {}),
     ...(typeof filters.minPrice === "number"
       ? { minPrice: String(filters.minPrice) }
@@ -78,24 +87,31 @@ export default async function TutorsPage({
 }: TutorsPageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const filters = parseSearchFilters(resolvedSearchParams);
-  const [listResult, subjectOptionsResult] = await Promise.all([
+  const [listResult, subjectOptionsResult, categoryOptionsResult] = await Promise.all([
     getTutors(filters)
       .then((data) => ({ data }))
       .catch((error: unknown) => ({ error })),
     getTutorSubjectOptions()
       .then((data) => ({ data }))
       .catch((error: unknown) => ({ error })),
+    getTutorCategoryOptions()
+      .then((data) => ({ data }))
+      .catch((error: unknown) => ({ error })),
   ]);
 
-  if ("error" in listResult || "error" in subjectOptionsResult) {
+  if ("error" in listResult || "error" in subjectOptionsResult || "error" in categoryOptionsResult) {
     const listError = "error" in listResult ? listResult.error : undefined;
     const subjectsError =
       "error" in subjectOptionsResult ? subjectOptionsResult.error : undefined;
+    const categoriesError =
+      "error" in categoryOptionsResult ? categoryOptionsResult.error : undefined;
     const message =
       listError instanceof TutorApiError
         ? listError.message
         : subjectsError instanceof TutorApiError
           ? subjectsError.message
+          : categoriesError instanceof TutorApiError
+            ? categoriesError.message
           : "Something went wrong while loading tutors.";
 
     return (
@@ -112,6 +128,10 @@ export default async function TutorsPage({
 
   const listData = listResult.data;
   const subjectOptions = subjectOptionsResult.data;
+  const categoryOptions = categoryOptionsResult.data;
+  const activeCategory = categoryOptions.find(
+    (category) => category.slug === listData.filters.category
+  );
   const activeSubject = subjectOptions.find(
     (subject) => subject.slug === listData.filters.subject
   );
@@ -119,16 +139,28 @@ export default async function TutorsPage({
   return (
     <section className="px-6 pb-20 pt-8 md:px-8">
       <div className="mx-auto flex max-w-[1440px] flex-col gap-8 lg:flex-row">
-        <TutorFilters filters={listData.filters} subjectOptions={subjectOptions} />
+        <TutorFilters
+          filters={listData.filters}
+          categoryOptions={categoryOptions}
+          subjectOptions={subjectOptions}
+        />
 
         <div className="min-w-0 flex-1">
-          <header className="mb-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <header className="mb-10 space-y-5">
             <div>
               <h1 className="font-headline text-4xl font-extrabold tracking-tight text-primary">
                 Available Tutors
               </h1>
               <p className="mt-1 text-on-surface-variant">
                 Showing {listData.pagination.totalItems} expert mentors
+                {activeCategory ? (
+                  <>
+                    {" "}for{" "}
+                    <span className="font-bold text-secondary">
+                      {activeCategory.name}
+                    </span>
+                  </>
+                ) : null}
                 {activeSubject ? (
                   <>
                     {" "}in{" "}
@@ -139,18 +171,14 @@ export default async function TutorsPage({
                 ) : null}
               </p>
             </div>
-            <TutorSortSelect value={listData.filters.sortBy} />
+            <TutorDiscoveryToolbar filters={listData.filters} />
           </header>
 
           {listData.tutors.length > 0 ? (
             <>
               <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-                {listData.tutors.map((tutor, index) => (
-                  <TutorCard
-                    key={tutor.id}
-                    tutor={tutor}
-                    featured={index % 5 === 0}
-                  />
+                {listData.tutors.map((tutor) => (
+                  <TutorCard key={tutor.id} tutor={tutor} />
                 ))}
               </div>
 

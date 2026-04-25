@@ -2,10 +2,11 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import type { TutorListFilters, TutorSubject } from "@/types/tutor";
+import type { TutorCategory, TutorListFilters, TutorSubject } from "@/types/tutor";
 
 type TutorFiltersProps = {
   filters: TutorListFilters;
+  categoryOptions: TutorCategory[];
   subjectOptions: TutorSubject[];
 };
 
@@ -46,6 +47,7 @@ function updateParams(
 
 export default function TutorFilters({
   filters,
+  categoryOptions,
   subjectOptions,
 }: TutorFiltersProps) {
   const router = useRouter();
@@ -60,7 +62,14 @@ export default function TutorFilters({
     [searchParams]
   );
 
+  const selectedCategory = filters.category;
+  const selectedCategoryId = categoryOptions.find(
+    (category) => category.slug === selectedCategory
+  )?.id;
   const selectedSubject = filters.subject;
+  const visibleSubjectOptions = selectedCategoryId
+    ? subjectOptions.filter((subject) => subject.categoryId === selectedCategoryId)
+    : subjectOptions;
 
   function apply(updates: Record<string, string | undefined>) {
     startTransition(() =>
@@ -94,12 +103,69 @@ export default function TutorFilters({
 
         <section className="space-y-4">
           <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-on-surface-variant">
+            Category
+          </h3>
+          <div className="space-y-3">
+            {categoryOptions.length > 0 ? (
+              <div className="max-h-56 space-y-2 overflow-y-auto pr-1">
+                {categoryOptions.map((category) => {
+                  const isActive = selectedCategory === category.slug;
+
+                  return (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onClick={() =>
+                        apply({
+                          category: isActive ? undefined : category.slug,
+                          subject:
+                            isActive ||
+                            !selectedSubject ||
+                            subjectOptions.some(
+                              (subject) =>
+                                subject.slug === selectedSubject &&
+                                subject.categoryId === category.id
+                            )
+                              ? selectedSubject
+                              : undefined,
+                        })
+                      }
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors hover:bg-surface-container-highest"
+                    >
+                      <span
+                        className={`flex h-5 w-5 items-center justify-center rounded-md border ${
+                          isActive
+                            ? "border-secondary bg-secondary text-on-secondary"
+                            : "border-outline-variant bg-surface-container-lowest text-transparent"
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-sm">
+                          check
+                        </span>
+                      </span>
+                      <span className="text-sm font-medium text-on-surface-variant">
+                        {category.name}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-on-surface-variant">
+                Category options will appear when tutors are available.
+              </p>
+            )}
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-on-surface-variant">
             Subject
           </h3>
           <div className="space-y-3">
-            {subjectOptions.length > 0 ? (
+            {visibleSubjectOptions.length > 0 ? (
               <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
-                {subjectOptions.map((subject) => {
+                {visibleSubjectOptions.map((subject) => {
                   const isActive = selectedSubject === subject.slug;
 
                   return (
@@ -133,7 +199,9 @@ export default function TutorFilters({
               </div>
             ) : (
               <p className="text-sm text-on-surface-variant">
-                Subject options will appear when tutors are available.
+                {selectedCategory
+                  ? "No subjects are available for the selected category yet."
+                  : "Subject options will appear when tutors are available."}
               </p>
             )}
           </div>

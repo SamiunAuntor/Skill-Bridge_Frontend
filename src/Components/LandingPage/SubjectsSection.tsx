@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Marquee from "react-fast-marquee";
-import Image from "next/image";
-import { ArrowRight, BookOpen } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import SubjectCard from "@/Components/Subjects/SubjectCard";
 
 type SubjectsSectionProps = {
   subjects: Array<{
@@ -45,37 +45,12 @@ export default function SubjectsSection({ subjects }: SubjectsSectionProps) {
       >
         {subjects.map((subject) => {
           return (
-            <Link
+            <div
               key={subject.id}
-              href={`/subjects/${subject.slug}`}
-              className="group mx-4 flex min-w-[260px] max-w-[260px] flex-col items-center rounded-2xl bg-surface-container-lowest px-8 py-8 text-center shadow-[0px_12px_32px_rgba(0,51,88,0.04)] transition-all hover:scale-[1.02] hover:bg-surface-bright"
+              className="mx-4"
             >
-              <div className="mb-4 flex h-10 w-10 items-center justify-center text-primary transition-transform group-hover:-translate-y-1">
-                {subject.iconUrl ? (
-                  <Image
-                    src={subject.iconUrl}
-                    alt={`${subject.name} icon`}
-                    width={40}
-                    height={40}
-                    className="h-10 w-10 object-contain"
-                  />
-                ) : (
-                  <BookOpen size={32} />
-                )}
-              </div>
-
-              <h4 className="font-headline text-lg font-bold text-primary">
-                {subject.name}
-              </h4>
-              <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-secondary">
-                {subject.categoryName}
-              </p>
-              {subject.description ? (
-                <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-on-surface-variant">
-                  {subject.description}
-                </p>
-              ) : null}
-            </Link>
+              <SubjectCard subject={subject} compact />
+            </div>
           );
         })}
       </Marquee>

@@ -39,6 +39,8 @@ export interface TutorCard {
 }
 
 export interface TutorListFilters {
+  q?: string;
+  category?: string;
   subject?: string;
   minPrice?: number;
   maxPrice?: number;

@@ -72,7 +72,19 @@ export type LandingPageResponse = {
     hourlyRate: number;
     averageRating: number;
     totalReviews: number;
-    primarySubject: string;
+    isTopRated: boolean;
+    categories: Array<{
+      id: string;
+      name: string;
+      slug: string;
+    }>;
+    subjects: Array<{
+      id: string;
+      name: string;
+      slug: string;
+      categoryId: string;
+      categoryName: string;
+    }>;
   }>;
   subjects: Array<{
     id: string;
@@ -97,7 +109,7 @@ export type LandingPageResponse = {
 };
 
 export async function getLandingPageData(): Promise<LandingPageResponse> {
-  return fetchPublicApi<LandingPageResponse>("/api/public/landing", 0);
+  return fetchPublicApi<LandingPageResponse>("/api/public/landing", 60);
 }
 
 export type PublicSubjectsResponse = {
