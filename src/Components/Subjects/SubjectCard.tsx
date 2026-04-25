@@ -40,7 +40,7 @@ export default function SubjectCard({
         href={`/subjects/${subject.slug}`}
         className="group flex h-[260px] min-w-[260px] max-w-[260px] flex-col items-center justify-center rounded-[1.6rem] border border-outline-variant/15 bg-surface-container-lowest p-6 text-center shadow-[0px_12px_32px_rgba(0,51,88,0.05)] transition-all hover:-translate-y-1 hover:bg-surface-bright"
       >
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-fixed text-primary transition-transform group-hover:-translate-y-1">
+        <div className="theme-primary-soft-icon flex h-16 w-16 items-center justify-center rounded-2xl transition-transform group-hover:-translate-y-1">
           {subject.iconUrl ? (
             <Image
               src={subject.iconUrl}
@@ -78,7 +78,7 @@ export default function SubjectCard({
       }`}
     >
       <div className="flex items-start justify-between gap-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-fixed text-primary">
+        <div className="theme-primary-soft-icon flex h-14 w-14 items-center justify-center rounded-2xl">
           {subject.iconUrl ? (
             <Image
               src={subject.iconUrl}
@@ -93,7 +93,7 @@ export default function SubjectCard({
         </div>
 
         {typeof subject.tutorCount === "number" ? (
-          <span className="rounded-full bg-secondary-container px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-on-secondary-container">
+          <span className="rounded-full bg-secondary-container px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-on-secondary-container dark:bg-secondary/16 dark:text-secondary-fixed">
             {subject.tutorCount} tutor{subject.tutorCount === 1 ? "" : "s"}
           </span>
         ) : null}

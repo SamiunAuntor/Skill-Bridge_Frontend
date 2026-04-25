@@ -96,7 +96,7 @@ export default function RegisterForm() {
                 value="student"
                 {...register("role")}
               />
-              <div className="flex items-center justify-center gap-2 rounded-lg border-2 border-transparent bg-surface-container-highest p-4 transition-all peer-checked:border-primary peer-checked:bg-primary-fixed dark:peer-checked:bg-primary/20">
+              <div className="flex items-center justify-center gap-2 rounded-lg border-2 border-transparent bg-surface-container-highest p-4 transition-all peer-checked:border-primary peer-checked:bg-primary-fixed-dim dark:peer-checked:bg-primary/20">
                 <span className="material-symbols-outlined text-primary dark:peer-checked:text-primary-fixed">
                   school
                 </span>
@@ -112,7 +112,7 @@ export default function RegisterForm() {
                 value="tutor"
                 {...register("role")}
               />
-              <div className="flex items-center justify-center gap-2 rounded-lg border-2 border-transparent bg-surface-container-highest p-4 transition-all peer-checked:border-primary peer-checked:bg-primary-fixed dark:peer-checked:bg-primary/20">
+              <div className="flex items-center justify-center gap-2 rounded-lg border-2 border-transparent bg-surface-container-highest p-4 transition-all peer-checked:border-primary peer-checked:bg-primary-fixed-dim dark:peer-checked:bg-primary/20">
                 <span className="material-symbols-outlined text-primary dark:peer-checked:text-primary-fixed">
                   architecture
                 </span>

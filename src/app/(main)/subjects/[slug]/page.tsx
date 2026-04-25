@@ -50,7 +50,7 @@ export default async function SubjectDetailPage({
         <header className="rounded-[2rem] border border-outline-variant/10 bg-surface-container-lowest px-8 py-10 shadow-[0px_18px_48px_rgba(0,51,88,0.05)] md:px-10">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0 max-w-4xl">
-              <div className="inline-flex items-center gap-2 rounded-full bg-secondary-container px-3 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-on-secondary-container">
+              <div className="theme-secondary-soft inline-flex items-center gap-2 rounded-full px-3 py-2 text-[11px] font-bold uppercase tracking-[0.18em]">
                 {subject.iconUrl ? (
                   <Image
                     src={subject.iconUrl}
@@ -125,7 +125,7 @@ export default async function SubjectDetailPage({
                     )}
                     <div>
                       {tutor.isTopRated ? (
-                        <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-secondary-container px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.18em] text-on-secondary-container">
+                        <div className="theme-secondary-soft mb-2 inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.18em]">
                           <BadgeCheck className="h-3 w-3" />
                           Top Rated Expert
                         </div>

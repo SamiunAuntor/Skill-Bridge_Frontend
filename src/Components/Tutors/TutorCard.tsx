@@ -101,7 +101,7 @@ export default function TutorCard({ tutor, className = "" }: TutorCardProps) {
               {tutor.displayName}
             </h3>
             {tutor.isTopRated ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-secondary-container px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-on-secondary-container">
+              <span className="theme-secondary-soft inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em]">
                 <BadgeCheck className="h-3.5 w-3.5" />
                 Top Rated
               </span>

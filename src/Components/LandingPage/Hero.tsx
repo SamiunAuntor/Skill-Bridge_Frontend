@@ -3,7 +3,7 @@
 import { Sparkles, Search, ArrowRight, Star } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import heroImage from "@/assets/hero-image.png";
 
 type HeroProps = {
@@ -17,7 +17,21 @@ function formatStudentCount(value: number): string {
 export default function Hero({ activeStudents }: HeroProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
+  const [isDark, setIsDark] = useState(false);
   const studentLabel = activeStudents === 1 ? "Active Student" : "Active Students";
+
+  useEffect(() => {
+    const updateTheme = () => {
+      setIsDark(document.documentElement.classList.contains("dark"));
+    };
+
+    updateTheme();
+    window.addEventListener("themechange", updateTheme);
+
+    return () => {
+      window.removeEventListener("themechange", updateTheme);
+    };
+  }, []);
 
   function handleSearch(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -68,8 +82,16 @@ export default function Hero({ activeStudents }: HeroProps) {
         </div>
 
         <div className="space-y-8 lg:order-first lg:col-span-7">
-          <div className="inline-flex items-center gap-2 rounded-full bg-secondary-container/30 px-3 py-2 text-xs font-bold uppercase tracking-wider text-on-secondary-container">
-            <Sparkles size={14} fill="currentColor" />
+          <div
+            className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold uppercase tracking-wider"
+            style={{
+              backgroundColor: isDark
+                ? "rgba(104,250,221,0.16)"
+                : "rgba(0,107,92,0.12)",
+              color: isDark ? "#68fadd" : "#006b5c",
+            }}
+          >
+            <Sparkles size={14} fill="currentColor" color={isDark ? "#68fadd" : "#006b5c"} />
             <h3>Excellence in Learning</h3>
           </div>
           <h1 className="text-[2.75rem] font-extrabold leading-[1.1] tracking-tight text-primary md:text-[4.25rem]">

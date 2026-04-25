@@ -71,7 +71,7 @@ export default function BookingConfirmationModal({
           </div>
         </div>
 
-        <div className="mt-5 rounded-2xl bg-primary-fixed/55 p-4 text-sm text-on-primary-fixed-variant">
+        <div className="theme-primary-soft-surface mt-5 rounded-2xl p-4 text-sm">
           <div className="flex items-start gap-3">
             <WalletCards className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
             <p>

@@ -203,3 +203,152 @@ h6 {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+.dashboard-nav-active {
+  background: var(--primary) !important;
+  color: var(--on-primary) !important;
+  box-shadow: 0 8px 20px rgba(0, 51, 88, 0.16);
+  transition:
+    background-color 220ms ease,
+    color 220ms ease,
+    box-shadow 220ms ease,
+    transform 220ms ease;
+}
+
+html.dark .dashboard-nav-active {
+  background: rgba(156, 202, 255, 0.22) !important;
+  color: var(--primary-fixed) !important;
+  box-shadow: none;
+}
+
+.theme-primary-soft-icon {
+  background: rgba(0, 74, 124, 0.1);
+  color: var(--primary);
+}
+
+.theme-primary-soft-surface {
+  background: rgba(0, 74, 124, 0.12);
+  color: var(--on-primary-fixed-variant);
+}
+
+.theme-secondary-soft {
+  background: rgba(0, 107, 92, 0.12);
+  color: var(--secondary);
+}
+
+html.dark .theme-primary-soft-icon {
+  background: rgba(156, 202, 255, 0.18);
+  color: var(--primary-fixed);
+}
+
+html.dark .theme-primary-soft-surface {
+  background: rgba(156, 202, 255, 0.18);
+  color: var(--primary-fixed);
+}
+
+html.dark .theme-secondary-soft {
+  background: rgba(104, 250, 221, 0.16);
+  color: var(--secondary-fixed);
+}
+
+.swal2-popup {
+  border: 1px solid rgba(193, 199, 208, 0.22) !important;
+  background: var(--surface-container-lowest) !important;
+  color: var(--on-surface) !important;
+}
+
+.swal2-title {
+  color: var(--primary) !important;
+}
+
+.swal2-html-container,
+.swal2-content,
+.swal2-validation-message {
+  color: var(--on-surface-variant) !important;
+}
+
+.swal2-actions .swal2-confirm {
+  background: var(--primary) !important;
+  color: var(--on-primary) !important;
+}
+
+.swal2-actions .swal2-deny {
+  background: var(--error) !important;
+  color: var(--on-error) !important;
+}
+
+.swal2-actions .swal2-cancel {
+  border: 1px solid rgba(114, 119, 128, 0.24) !important;
+  background: var(--surface-container-low) !important;
+  color: var(--on-surface) !important;
+}
+
+.swal2-toast {
+  background: var(--surface-container-high) !important;
+  color: var(--on-surface) !important;
+}
+
+.swal2-toast .swal2-title,
+.swal2-toast .swal2-html-container {
+  color: var(--on-surface) !important;
+}
+
+.swal2-timer-progress-bar {
+  background: color-mix(in srgb, var(--secondary) 65%, transparent) !important;
+}
+
+.swal2-input,
+.swal2-select,
+.swal2-textarea {
+  border: 1px solid rgba(114, 119, 128, 0.18) !important;
+  background: var(--surface-container-low) !important;
+  color: var(--on-surface) !important;
+}
+
+.swal2-input::placeholder,
+.swal2-textarea::placeholder {
+  color: var(--on-surface-variant) !important;
+}
+
+html.dark .swal2-popup {
+  border-color: rgba(147, 161, 173, 0.18) !important;
+  background: var(--surface-container) !important;
+}
+
+html.dark .swal2-title {
+  color: var(--on-surface) !important;
+}
+
+html.dark .swal2-html-container,
+html.dark .swal2-content,
+html.dark .swal2-validation-message {
+  color: var(--on-surface-variant) !important;
+}
+
+html.dark .swal2-actions .swal2-confirm {
+  background: var(--primary) !important;
+  color: var(--on-primary) !important;
+}
+
+html.dark .swal2-actions .swal2-cancel {
+  border-color: rgba(147, 161, 173, 0.16) !important;
+  background: var(--surface-container-high) !important;
+  color: var(--on-surface) !important;
+}
+
+html.dark .swal2-toast {
+  border: 1px solid rgba(147, 161, 173, 0.14) !important;
+  background: var(--surface-container-high) !important;
+}
+
+html.dark .swal2-timer-progress-bar {
+  background: color-mix(in srgb, var(--secondary-fixed) 60%, transparent) !important;
+}
+
+html.dark .swal2-input,
+html.dark .swal2-select,
+html.dark .swal2-textarea {
+  border-color: rgba(147, 161, 173, 0.15) !important;
+  background: var(--surface-container-high) !important;
+  color: var(--on-surface) !important;
+}

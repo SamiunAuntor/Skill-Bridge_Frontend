@@ -382,7 +382,7 @@ export default function TutorBookingSidebar({
                       }}
                       className={`rounded-md border px-2 py-2 text-center transition-colors ${
                         isActive
-                          ? "border-secondary bg-secondary-container text-on-secondary-container ring-2 ring-secondary/30"
+                          ? "border-secondary theme-secondary-soft ring-2 ring-secondary/20"
                           : "border-outline-variant/20 bg-surface text-primary hover:bg-surface-container-low"
                       }`}
                     >

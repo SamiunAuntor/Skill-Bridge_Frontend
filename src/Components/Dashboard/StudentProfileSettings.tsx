@@ -258,7 +258,7 @@ export default function StudentProfileSettings() {
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <div className="flex h-40 w-40 items-center justify-center rounded-full bg-primary-fixed text-primary shadow-[0px_12px_28px_rgba(0,51,88,0.12)]">
+                  <div className="theme-primary-soft-icon flex h-40 w-40 items-center justify-center rounded-full shadow-[0px_12px_28px_rgba(0,51,88,0.12)]">
                     <UserRound className="h-16 w-16" />
                   </div>
                 )}

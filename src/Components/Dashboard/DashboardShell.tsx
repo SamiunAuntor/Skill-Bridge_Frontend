@@ -91,7 +91,7 @@ export default function DashboardShell({ children }: DashboardShellProps) {
                   href={item.href}
                   className={`flex items-center rounded-r-full px-4 py-3 font-headline text-[0.85rem] font-semibold transition-all duration-300 ${
                     isActive
-                      ? "bg-primary-fixed text-primary"
+                      ? "dashboard-nav-active"
                       : "text-on-surface-variant hover:bg-surface-container-low hover:text-primary"
                   }`}
                 >

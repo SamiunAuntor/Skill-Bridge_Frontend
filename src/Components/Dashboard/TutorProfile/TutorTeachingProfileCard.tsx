@@ -97,7 +97,7 @@ export default function TutorTeachingProfileCard({
               selectedSubjectNames.map((name) => (
                 <span
                   key={name}
-                  className="rounded-full bg-primary-fixed px-3 py-1 text-[12px] font-semibold text-primary"
+                  className="theme-primary-soft-surface rounded-full px-3 py-1 text-[12px] font-semibold"
                 >
                   {name}
                 </span>

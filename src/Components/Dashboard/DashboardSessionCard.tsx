@@ -51,9 +51,9 @@ function getInitials(name: string): string {
 function getStatusClasses(status: DashboardSessionItem["sessionStatus"]): string {
   switch (status) {
     case "scheduled":
-      return "bg-primary-fixed text-on-primary-fixed-variant";
+      return "theme-primary-soft-surface";
     case "ongoing":
-      return "bg-secondary-container text-on-secondary-container";
+      return "theme-secondary-soft";
     case "completed":
       return "bg-[#d8f6e6] text-[#1f6a43] dark:bg-[#153828] dark:text-[#9ee2ba]";
     case "cancelled":
@@ -239,7 +239,7 @@ export default function DashboardSessionCard({
                   type="button"
                   onClick={() => onReviewAction(item)}
                   disabled={isPending}
-                  className="inline-flex items-center justify-center gap-2 rounded-[1.1rem] bg-secondary-container px-5 py-3 text-[13px] font-semibold text-on-secondary-container transition-colors hover:bg-secondary-container/85 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="theme-secondary-soft inline-flex items-center justify-center gap-2 rounded-[1.1rem] px-5 py-3 text-[13px] font-semibold transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Star className="h-4 w-4 fill-current" />
                   {reviewActionLabel}

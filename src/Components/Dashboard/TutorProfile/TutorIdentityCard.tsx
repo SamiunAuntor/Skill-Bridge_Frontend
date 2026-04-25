@@ -104,7 +104,7 @@ export default function TutorIdentityCard({
             </div>
           </div>
 
-          <div className="mt-5 rounded-2xl bg-primary-fixed/40 p-4">
+          <div className="theme-primary-soft-surface mt-5 rounded-2xl p-4">
             <div className="flex items-center justify-between text-[12px] font-semibold text-primary">
               <span>
                 Completion {completionCompleted}/{completionTotal}

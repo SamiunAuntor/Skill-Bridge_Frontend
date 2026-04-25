@@ -116,7 +116,7 @@ export default async function TutorProfilePage({
 
             <div className="flex-1 space-y-3">
               {tutor.isTopRated ? (
-                <div className="inline-flex items-center gap-2 rounded-full bg-secondary-container px-3 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-on-secondary-container md:text-[10px]">
+                <div className="theme-secondary-soft inline-flex items-center gap-2 rounded-full px-3 py-1 text-[9px] font-bold uppercase tracking-[0.2em] md:text-[10px]">
                   <BadgeCheck className="h-3 w-3" />
                   Top Rated Expert
                 </div>
@@ -189,7 +189,7 @@ export default async function TutorProfilePage({
                       key={subject.id}
                       className="flex items-center gap-4 rounded-xl border border-outline-variant/10 bg-surface-container-lowest px-5 py-4 shadow-sm transition-transform hover:-translate-y-0.5"
                     >
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-fixed text-primary">
+                      <div className="theme-primary-soft-icon flex h-12 w-12 shrink-0 items-center justify-center rounded-xl">
                         {subject.iconUrl ? (
                           <Image
                             src={subject.iconUrl}

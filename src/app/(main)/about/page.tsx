@@ -141,7 +141,7 @@ export default function AboutPage() {
                 key={pillar.title}
                 className="rounded-[1.75rem] border border-outline-variant/15 bg-surface-container-lowest p-7 shadow-[0px_12px_32px_rgba(0,51,88,0.05)]"
               >
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-fixed text-primary">
+                <div className="theme-primary-soft-icon flex h-14 w-14 items-center justify-center rounded-2xl">
                   <Icon className="h-6 w-6" />
                 </div>
                 <h2 className="mt-6 font-headline text-2xl font-extrabold text-primary">
@@ -186,7 +186,7 @@ export default function AboutPage() {
                   className="group rounded-[1.5rem] border border-outline-variant/15 bg-surface-container-lowest p-6 transition-all hover:-translate-y-1 hover:bg-surface-bright"
                 >
                   <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-secondary-container text-on-secondary-container">
+                    <div className="theme-secondary-soft flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl">
                       <Icon className="h-7 w-7" />
                     </div>
                     <div>

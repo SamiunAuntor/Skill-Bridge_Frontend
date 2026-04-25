@@ -162,7 +162,7 @@ export default function PaymentResultClient({
     return (
       <div className="rounded-[1.7rem] border border-outline-variant/15 bg-surface-container-lowest p-8 shadow-[0px_18px_50px_rgba(0,51,88,0.08)]">
         <div className="mx-auto max-w-2xl text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-secondary-container text-on-secondary-container">
+          <div className="theme-secondary-soft mx-auto flex h-16 w-16 items-center justify-center rounded-full">
             <BadgeCheck className="h-8 w-8" />
           </div>
           <h1 className="mt-5 font-headline text-[2.2rem] font-extrabold tracking-tight text-primary">
@@ -198,7 +198,7 @@ export default function PaymentResultClient({
   return (
     <div className="rounded-[1.7rem] border border-outline-variant/15 bg-surface-container-lowest p-8 shadow-[0px_18px_50px_rgba(0,51,88,0.08)]">
       <div className="mx-auto max-w-2xl text-center">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-secondary-container text-on-secondary-container">
+        <div className="theme-secondary-soft mx-auto flex h-16 w-16 items-center justify-center rounded-full">
           <BadgeCheck className="h-8 w-8" />
         </div>
         <h1 className="mt-5 font-headline text-[2.4rem] font-extrabold tracking-tight text-primary">
