@@ -2,20 +2,19 @@ import {
   BadgeCheck,
   BookOpenCheck,
   FlaskConical,
-  MessageSquareQuote,
   Sigma,
   Star,
   TrendingUp,
 } from "lucide-react";
 import { notFound } from "next/navigation";
 import TutorBookingSidebar from "@/Components/Tutors/TutorBookingSidebar";
+import TutorTestimonialsSection from "@/Components/Tutors/TutorTestimonialsSection";
 import { TutorApiError, getTutorById } from "@/lib/tutor-api";
 import {
   TutorCategory,
   TutorDetailResponse,
   TutorEducation,
   TutorSubject,
-  TutorTestimonial,
 } from "@/types/tutor";
 
 export const metadata = {
@@ -40,29 +39,6 @@ function formatHoursTaught(totalHoursTaught: number): string {
   }
 
   return totalHoursTaught.toFixed(1);
-}
-
-function formatRelativeDate(isoDate: string): string {
-  const createdAt = new Date(isoDate);
-  const differenceInDays = Math.max(
-    0,
-    Math.round((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24))
-  );
-
-  if (differenceInDays === 0) {
-    return "Today";
-  }
-
-  if (differenceInDays === 1) {
-    return "1 day ago";
-  }
-
-  if (differenceInDays < 30) {
-    return `${differenceInDays} days ago`;
-  }
-
-  const weeks = Math.round(differenceInDays / 7);
-  return `${weeks} week${weeks === 1 ? "" : "s"} ago`;
 }
 
 function buildProfileSubjects(
@@ -108,40 +84,6 @@ function formatAverageRating(value: number, totalReviews: number): string {
   }
 
   return value.toFixed(2);
-}
-
-function TestimonialCard({ testimonial }: { testimonial: TutorTestimonial }) {
-  return (
-    <article className="rounded-xl bg-surface-container-lowest p-8 shadow-[0px_4px_20px_rgba(0,51,88,0.04)]">
-      <div className="mb-4 flex items-center gap-4">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          alt={testimonial.student.name}
-          className="h-12 w-12 rounded-full object-cover"
-          src={
-            testimonial.student.avatarUrl ??
-            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80"
-          }
-          referrerPolicy="no-referrer"
-        />
-        <div>
-          <h4 className="font-bold text-primary">{testimonial.student.name}</h4>
-          <div className="flex gap-1 text-amber-500">
-            {Array.from({ length: testimonial.rating }).map((_, index) => (
-              <Star key={index} className="h-3.5 w-3.5 fill-current" />
-            ))}
-          </div>
-        </div>
-        <time className="ml-auto text-xs font-medium text-on-surface-variant">
-          {formatRelativeDate(testimonial.createdAt)}
-        </time>
-      </div>
-      <p className="italic leading-relaxed text-on-surface-variant">
-        &quot;{testimonial.comment || "A highly recommended tutoring experience."}
-        &quot;
-      </p>
-    </article>
-  );
 }
 
 function EducationCard({
@@ -340,31 +282,10 @@ export default async function TutorProfilePage({
               </div>
             </section>
 
-            <section>
-              <div className="mb-8 flex items-center justify-between gap-4">
-                <h2 className="flex items-center gap-3 font-headline text-2xl font-bold text-primary">
-                  <MessageSquareQuote className="h-5 w-5 text-secondary" />
-                  Student Testimonials
-                </h2>
-                <button className="text-sm font-bold text-secondary hover:underline">
-                  View all {tutor.totalReviews} reviews
-                </button>
-              </div>
-
-              <div className="space-y-8">
-                {testimonials.length > 0 ? (
-                  testimonials.map((testimonial) => (
-                    <TestimonialCard key={testimonial.id} testimonial={testimonial} />
-                  ))
-                ) : (
-                  <article className="rounded-xl bg-surface-container-lowest p-8 shadow-[0px_4px_20px_rgba(0,51,88,0.04)]">
-                    <p className="text-sm text-on-surface-variant">
-                      Students will see testimonials here as soon as reviews are added.
-                    </p>
-                  </article>
-                )}
-              </div>
-            </section>
+            <TutorTestimonialsSection
+              testimonials={testimonials}
+              totalReviews={tutor.totalReviews}
+            />
           </div>
 
           <TutorBookingSidebar

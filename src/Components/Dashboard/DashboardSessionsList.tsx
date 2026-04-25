@@ -11,14 +11,18 @@ import {
   cancelBooking,
   createReview,
   getMySessions,
+  getReviewById,
   joinSession,
+  updateReview,
 } from "@/lib/booking-api";
 import {
   DashboardSessionItem,
   DashboardSessionSortOption,
+  SessionReview,
 } from "@/types/tutor";
 import { UserRole } from "@/types/auth";
 import DashboardSessionCard from "@/Components/Dashboard/DashboardSessionCard";
+import SessionReviewModal from "@/Components/Reviews/SessionReviewModal";
 
 const sessionSortOptions: DashboardSessionSortOption[] = [
   "time_asc",
@@ -50,10 +54,24 @@ export default function DashboardSessionsList() {
   const [sessions, setSessions] = useState<DashboardSessionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
+  const [isReviewSubmitting, startReviewTransition] = useTransition();
   const [stats, setStats] = useState({
     upcoming: 0,
     completed: 0,
     cancelled: 0,
+  });
+  const [reviewModalState, setReviewModalState] = useState<{
+    isOpen: boolean;
+    mode: "create" | "edit" | "view";
+    sessionItem: DashboardSessionItem | null;
+    review: SessionReview | null;
+    errorMessage: string | null;
+  }>({
+    isOpen: false,
+    mode: "create",
+    sessionItem: null,
+    review: null,
+    errorMessage: null,
   });
 
   const role = ((session?.user.role as UserRole | undefined) ?? "student") as UserRole;
@@ -222,80 +240,122 @@ export default function DashboardSessionsList() {
     });
   }
 
-  async function handleLeaveReview(item: DashboardSessionItem) {
-    const counterpart = role === "tutor" ? item.student.name : item.tutor.name;
-
-    const result = await Swal.fire({
-      title: "Leave a review",
-      html: `
-        <div style="display:flex;flex-direction:column;gap:12px;text-align:left;">
-          <label style="font-size:13px;font-weight:600;color:#1d3b66;">Rating</label>
-          <select id="review-rating" class="swal2-select" style="margin:0;width:100%;">
-            <option value="5" selected>5 - Excellent</option>
-            <option value="4">4 - Very good</option>
-            <option value="3">3 - Good</option>
-            <option value="2">2 - Fair</option>
-            <option value="1">1 - Poor</option>
-          </select>
-          <label style="font-size:13px;font-weight:600;color:#1d3b66;">Comment (optional, max 1000 characters)</label>
-          <textarea id="review-comment" class="swal2-textarea" maxlength="1000" placeholder="Share a few words about your learning experience with ${counterpart}." style="margin:0;width:100%;min-height:120px;"></textarea>
-        </div>
-      `,
-      showCancelButton: true,
-      confirmButtonText: "Submit Review",
-      cancelButtonText: "Cancel",
-      confirmButtonColor: "#1d3b66",
-      cancelButtonColor: "#7b8794",
-      focusConfirm: false,
-      preConfirm: async () => {
-        const ratingValue = (document.getElementById("review-rating") as HTMLSelectElement | null)?.value;
-        const commentValue = (document.getElementById("review-comment") as HTMLTextAreaElement | null)?.value ?? "";
-        const rating = Number(ratingValue);
-
-        if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-          Swal.showValidationMessage("Please select a rating between 1 and 5.");
-          return null;
-        }
-
-        if (commentValue.trim().length > 1000) {
-          Swal.showValidationMessage("Review comment must be 1000 characters or fewer.");
-          return null;
-        }
-
-        try {
-          return await createReview({
-            bookingId: item.bookingId,
-            rating,
-            comment: commentValue.trim() || undefined,
-          });
-        } catch (error) {
-          Swal.showValidationMessage(toFriendlyError(error));
-          return null;
-        }
-      },
+  function closeReviewModal() {
+    setReviewModalState({
+      isOpen: false,
+      mode: "create",
+      sessionItem: null,
+      review: null,
+      errorMessage: null,
     });
+  }
 
-    if (!result.isConfirmed || !result.value) {
+  async function openCreateReview(item: DashboardSessionItem) {
+    setReviewModalState({
+      isOpen: true,
+      mode: "create",
+      sessionItem: item,
+      review: null,
+      errorMessage: null,
+    });
+  }
+
+  async function openExistingReview(
+    item: DashboardSessionItem,
+    mode: "edit" | "view"
+  ) {
+    if (!item.reviewId) {
       return;
     }
 
-    setSessions((current) =>
-      current.map((sessionItem) =>
-        sessionItem.bookingId === item.bookingId
-          ? {
-              ...sessionItem,
-              reviewId: result.value.review.id,
-              canLeaveReview: false,
-            }
-          : sessionItem
-      )
-    );
+    try {
+      const result = await getReviewById(item.reviewId);
+      setReviewModalState({
+        isOpen: true,
+        mode,
+        sessionItem: item,
+        review: result.review,
+        errorMessage: null,
+      });
+    } catch (error) {
+      await Swal.fire({
+        icon: "error",
+        title: mode === "view" ? "Unable to load review" : "Unable to edit review",
+        text: toFriendlyError(error),
+        confirmButtonColor: "#1d3b66",
+      });
+    }
+  }
 
-    await Swal.fire({
-      icon: "success",
-      title: "Review submitted",
-      text: "Thanks for sharing your feedback.",
-      confirmButtonColor: "#1d3b66",
+  function handleReviewSubmit(payload: { rating: number; comment: string }) {
+    const currentSessionItem = reviewModalState.sessionItem;
+    const currentMode = reviewModalState.mode;
+    const currentReview = reviewModalState.review;
+
+    if (!currentSessionItem) {
+      return;
+    }
+
+    startReviewTransition(() => {
+      void (async () => {
+        try {
+          if (currentMode === "edit" && currentReview) {
+            const result = await updateReview(currentReview.id, payload);
+
+            setReviewModalState((current) => ({
+              ...current,
+              review: result.review,
+              errorMessage: null,
+            }));
+
+            await Swal.fire({
+              icon: "success",
+              title: "Review updated",
+              text: "Your feedback has been updated successfully.",
+              confirmButtonColor: "#1d3b66",
+            });
+          } else {
+            const result = await createReview({
+              bookingId: currentSessionItem.bookingId,
+              rating: payload.rating,
+              comment: payload.comment,
+            });
+
+            setSessions((current) =>
+              current.map((sessionItem) =>
+                sessionItem.bookingId === currentSessionItem.bookingId
+                  ? {
+                      ...sessionItem,
+                      reviewId: result.review.id,
+                      canLeaveReview: false,
+                    }
+                  : sessionItem
+              )
+            );
+
+            setReviewModalState((current) => ({
+              ...current,
+              review: result.review,
+              mode: "edit",
+              errorMessage: null,
+            }));
+
+            await Swal.fire({
+              icon: "success",
+              title: "Review submitted",
+              text: "Thanks for sharing your feedback.",
+              confirmButtonColor: "#1d3b66",
+            });
+          }
+
+          closeReviewModal();
+        } catch (error) {
+          setReviewModalState((current) => ({
+            ...current,
+            errorMessage: toFriendlyError(error),
+          }));
+        }
+      })();
     });
   }
 
@@ -382,7 +442,26 @@ export default function DashboardSessionsList() {
                 isPending={isPending}
                 onJoin={handleJoin}
                 onCancel={(bookingId) => void handleCancel(bookingId)}
-                onLeaveReview={(sessionItem) => void handleLeaveReview(sessionItem)}
+                reviewActionLabel={
+                  role === "student"
+                    ? item.reviewId
+                      ? "Edit Review"
+                      : item.canLeaveReview
+                      ? "Leave Review"
+                      : undefined
+                    : item.reviewId
+                    ? "View Review"
+                    : undefined
+                }
+                onReviewAction={(sessionItem) =>
+                  void (
+                    role === "student"
+                      ? sessionItem.reviewId
+                        ? openExistingReview(sessionItem, "edit")
+                        : openCreateReview(sessionItem)
+                      : openExistingReview(sessionItem, "view")
+                  )
+                }
               />
             ))}
           </div>
@@ -393,6 +472,24 @@ export default function DashboardSessionsList() {
           </div>
         )}
       </section>
+
+      <SessionReviewModal
+        key={`${reviewModalState.mode}-${reviewModalState.review?.id ?? reviewModalState.sessionItem?.bookingId ?? "empty"}`}
+        isOpen={reviewModalState.isOpen}
+        mode={reviewModalState.mode}
+        review={reviewModalState.review}
+        counterpartName={
+          reviewModalState.sessionItem
+            ? role === "student"
+              ? reviewModalState.sessionItem.tutor.name
+              : reviewModalState.sessionItem.student.name
+            : "this session"
+        }
+        isSubmitting={isReviewSubmitting}
+        errorMessage={reviewModalState.errorMessage}
+        onClose={closeReviewModal}
+        onSubmit={handleReviewSubmit}
+      />
     </div>
   );
 }

@@ -20,7 +20,8 @@ type DashboardSessionCardProps = {
   isPending?: boolean;
   onJoin?: (item: DashboardSessionItem) => void;
   onCancel?: (bookingId: string) => void;
-  onLeaveReview?: (item: DashboardSessionItem) => void;
+  reviewActionLabel?: string;
+  onReviewAction?: (item: DashboardSessionItem) => void;
 };
 
 function getCounterparty(role: UserRole, item: DashboardSessionItem) {
@@ -104,12 +105,13 @@ export default function DashboardSessionCard({
   isPending = false,
   onJoin,
   onCancel,
-  onLeaveReview,
+  reviewActionLabel,
+  onReviewAction,
 }: DashboardSessionCardProps) {
   const counterpart = getCounterparty(role, item);
   const isCompact = variant === "compact";
   const showActions =
-    item.canJoin || item.canCancel || (role === "student" && item.canLeaveReview);
+    item.canJoin || item.canCancel || Boolean(reviewActionLabel && onReviewAction);
   const tutorProfileHref = role === "student" ? `/tutors/${item.tutor.id}` : null;
 
   return (
@@ -220,15 +222,15 @@ export default function DashboardSessionCard({
                 </button>
               ) : null}
 
-              {role === "student" && item.canLeaveReview ? (
+              {reviewActionLabel && onReviewAction ? (
                 <button
                   type="button"
-                  onClick={() => onLeaveReview?.(item)}
+                  onClick={() => onReviewAction(item)}
                   disabled={isPending}
                   className="inline-flex items-center justify-center gap-2 rounded-[1.1rem] bg-secondary-container px-5 py-3 text-[13px] font-semibold text-on-secondary-container transition-colors hover:bg-secondary-container/85 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Star className="h-4 w-4 fill-current" />
-                  Leave Review
+                  {reviewActionLabel}
                 </button>
               ) : null}
             </div>

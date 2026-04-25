@@ -1,7 +1,9 @@
 import {
   DashboardSessionSortOption,
   DashboardSessionListResponse,
+  SessionReview,
   TutorDashboardSummaryResponse,
+  TutorReviewsResponse,
 } from "@/types/tutor";
 
 const apiBaseUrl =
@@ -132,17 +134,9 @@ export async function joinSession(bookingId: string): Promise<{
 export async function createReview(payload: {
   bookingId: string;
   rating: number;
-  comment?: string;
+  comment: string;
 }): Promise<{
-  review: {
-    id: string;
-    bookingId: string;
-    studentId: string;
-    tutorId: string;
-    rating: number;
-    comment: string | null;
-    createdAt: string;
-  };
+  review: SessionReview;
 }> {
   const response = await fetch(`${apiBaseUrl}/api/reviews`, {
     method: "POST",
@@ -153,15 +147,44 @@ export async function createReview(payload: {
     body: JSON.stringify(payload),
   });
 
-  return parseApiResponse<{
-    review: {
-      id: string;
-      bookingId: string;
-      studentId: string;
-      tutorId: string;
-      rating: number;
-      comment: string | null;
-      createdAt: string;
-    };
-  }>(response);
+  return parseApiResponse<{ review: SessionReview }>(response);
+}
+
+export async function updateReview(
+  reviewId: string,
+  payload: {
+    rating: number;
+    comment: string;
+  }
+): Promise<{ review: SessionReview }> {
+  const response = await fetch(`${apiBaseUrl}/api/reviews/${reviewId}`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  return parseApiResponse<{ review: SessionReview }>(response);
+}
+
+export async function getReviewById(reviewId: string): Promise<{ review: SessionReview }> {
+  const response = await fetch(`${apiBaseUrl}/api/reviews/${reviewId}`, {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  return parseApiResponse<{ review: SessionReview }>(response);
+}
+
+export async function getMyTutorReviews(): Promise<TutorReviewsResponse> {
+  const response = await fetch(`${apiBaseUrl}/api/reviews/me/tutor`, {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  return parseApiResponse<TutorReviewsResponse>(response);
 }

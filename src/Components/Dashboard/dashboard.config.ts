@@ -18,6 +18,7 @@ export const dashboardNavByRole: Record<UserRole, DashboardNavItem[]> = {
       icon: "event_available",
     },
     { href: getRoleDashboardPath("tutor", "finances"), label: "Finances", icon: "payments" },
+    { href: getRoleDashboardPath("tutor", "reviews"), label: "Reviews", icon: "rate_review" },
   ],
   student: [
     { href: getRoleDashboardPath("student"), label: "Dashboard", icon: "dashboard" },

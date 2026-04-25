@@ -186,17 +186,26 @@ export interface TutorDashboardSummaryResponse {
     totalReviews: number;
   };
   upcomingSessions: DashboardSessionItem[];
-  recentFeedback: Array<{
+}
+
+export interface SessionReview {
+  id: string;
+  bookingId: string;
+  studentId: string;
+  tutorId: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  updatedAt: string;
+  student: {
     id: string;
-    rating: number;
-    comment: string | null;
-    createdAt: string;
-    student: {
-      id: string;
-      name: string;
-      avatarUrl: string | null;
-    };
-  }>;
+    name: string;
+    avatarUrl: string | null;
+  };
+}
+
+export interface TutorReviewsResponse {
+  reviews: SessionReview[];
 }
 
 export interface TutorEditableDegreeOption {
