@@ -184,7 +184,7 @@ export default function TutorDashboardFinancesPage() {
         </div>
 
         {completedSessions.length > 0 ? (
-          <div className="overflow-hidden rounded-2xl border border-outline-variant/20">
+          <div className="w-full overflow-x-auto overscroll-x-contain rounded-2xl border border-outline-variant/20 pb-2">
             <table className="w-full min-w-[720px] border-collapse text-left text-sm">
               <thead className="bg-surface-container-low">
                 <tr className="text-xs font-bold uppercase tracking-[0.16em] text-on-surface-variant">

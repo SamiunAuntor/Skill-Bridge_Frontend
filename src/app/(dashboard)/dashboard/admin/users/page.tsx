@@ -254,7 +254,7 @@ export default function AdminUsersPage() {
       <AdminPageHeader title="Manage students and tutors" />
 
       <AdminCard title="Filters">
-        <div className="grid gap-4 lg:grid-cols-[1.3fr_repeat(4,minmax(0,1fr))]">
+        <div className="grid gap-4 xl:grid-cols-[1.3fr_repeat(4,minmax(0,1fr))]">
           <form onSubmit={handleSearchSubmit} className="relative">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant" />
             <input
@@ -329,8 +329,8 @@ export default function AdminUsersPage() {
           <AdminLoadingMessage label="Loading users..." />
         ) : data && data.users.length > 0 ? (
           <AdminCard title="User directory">
-            <div className="overflow-x-auto">
-              <table className="min-w-full border border-outline-variant/20 text-left">
+            <div className="w-full overflow-x-auto overscroll-x-contain pb-2">
+              <table className="min-w-[980px] border border-outline-variant/20 text-left">
                 <thead>
                   <tr className="text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
                     <th className="border border-outline-variant/20 px-4 py-4">User</th>

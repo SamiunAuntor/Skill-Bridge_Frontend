@@ -91,8 +91,8 @@ export default function StudentDashboardHome() {
   const recentSessions = stats.upcoming.slice(0, 3);
 
   return (
-    <div className="space-y-8">
-      <section className="grid grid-cols-1 gap-5 xl:grid-cols-3">
+    <div className="space-y-6 lg:space-y-8">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-5">
         <article className="rounded-[1.5rem] bg-primary px-6 py-6 text-on-primary">
           <p className="text-[13px] font-medium text-on-primary/80">Upcoming Sessions</p>
           <h2 className="mt-2 font-headline text-[2.4rem] font-extrabold">
@@ -107,7 +107,7 @@ export default function StudentDashboardHome() {
           </h3>
         </article>
 
-        <article className="rounded-[1.5rem] bg-surface-container-lowest p-6 shadow-[0px_12px_32px_rgba(0,51,88,0.06)]">
+        <article className="rounded-[1.5rem] bg-surface-container-lowest p-6 shadow-[0px_12px_32px_rgba(0,51,88,0.06)] sm:col-span-2 xl:col-span-1">
           <p className="text-[13px] font-medium text-on-surface-variant">Total Session Value</p>
           <h3 className="mt-2 font-headline text-[2rem] font-bold text-primary">
             {`$${stats.totalSpent.toFixed(2)}`}
@@ -115,8 +115,8 @@ export default function StudentDashboardHome() {
         </article>
       </section>
 
-      <section className="rounded-[1.5rem] bg-surface-container-lowest p-6 shadow-[0px_12px_32px_rgba(0,51,88,0.06)]">
-        <div className="flex items-center justify-between gap-4">
+      <section className="rounded-[1.5rem] bg-surface-container-lowest p-5 shadow-[0px_12px_32px_rgba(0,51,88,0.06)] sm:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="font-headline text-2xl font-bold text-primary">
               Upcoming Sessions
@@ -133,7 +133,7 @@ export default function StudentDashboardHome() {
           </Link>
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
           {recentSessions.length > 0 ? (
             recentSessions.map((item) => (
               <DashboardSessionCard
@@ -144,7 +144,7 @@ export default function StudentDashboardHome() {
               />
             ))
           ) : (
-            <div className="rounded-2xl bg-surface-container-low p-5 text-sm text-on-surface-variant xl:col-span-3">
+            <div className="rounded-2xl bg-surface-container-low p-5 text-sm text-on-surface-variant lg:col-span-3">
               No upcoming sessions . Find a tutor, choose an available slot, and complete bookings.
             </div>
           )}

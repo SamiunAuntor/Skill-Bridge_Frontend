@@ -32,7 +32,7 @@ export default async function SubjectsPage({
 
   return (
     <section className="pb-20 pt-8">
-      <div className="mx-auto w-11/12 max-w-7xl">
+      <div className="mx-auto w-11/12 max-w-[1440px]">
         <header className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-sm font-bold uppercase tracking-[0.2em] text-secondary">

@@ -365,7 +365,7 @@ export default function DashboardSessionsList() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {[
           { label: "Upcoming Sessions", count: stats.upcoming },
           { label: "Completed Sessions", count: stats.completed },
@@ -432,7 +432,7 @@ export default function DashboardSessionsList() {
         </div>
 
         {sessions.length > 0 ? (
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             {sessions.map((item) => (
               <DashboardSessionCard
                 key={item.sessionId}

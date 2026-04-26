@@ -47,8 +47,8 @@ export default function TutorDiscoveryToolbar({
   }
 
   return (
-    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-      <form className="flex w-full max-w-2xl gap-3" onSubmit={handleSubmit}>
+    <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+      <form className="flex w-full max-w-3xl flex-col gap-3 sm:flex-row" onSubmit={handleSubmit}>
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant" />
           <input
@@ -62,13 +62,13 @@ export default function TutorDiscoveryToolbar({
         <button
           type="submit"
           disabled={isPending}
-          className="rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-on-primary transition-transform hover:translate-y-[-1px] disabled:opacity-60"
+          className="rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-on-primary transition-transform hover:translate-y-[-1px] disabled:opacity-60 sm:min-w-[140px]"
         >
           Search
         </button>
       </form>
 
-      <label className="flex items-center justify-between gap-3 text-sm text-on-surface-variant lg:min-w-[220px] lg:justify-end">
+      <label className="flex w-full items-center justify-between gap-3 text-sm text-on-surface-variant sm:w-auto xl:min-w-[220px] xl:justify-end">
         <span>Sort by:</span>
         <select
           value={filters.sortBy}
@@ -78,7 +78,7 @@ export default function TutorDiscoveryToolbar({
               sortBy: event.target.value as TutorSortOption,
             })
           }
-          className="rounded-xl border border-outline-variant/15 bg-surface-container-lowest px-4 py-3 font-bold text-primary focus:ring-2 focus:ring-surface-tint/30"
+          className="min-w-0 flex-1 rounded-xl border border-outline-variant/15 bg-surface-container-lowest px-4 py-3 font-bold text-primary focus:ring-2 focus:ring-surface-tint/30 sm:flex-none"
         >
           {Object.entries(tutorSortLabels).map(([optionValue, label]) => (
             <option key={optionValue} value={optionValue}>

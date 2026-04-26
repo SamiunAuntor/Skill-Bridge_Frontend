@@ -505,8 +505,8 @@ export default function TutorAvailabilitySettings() {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-[1.75rem] border border-outline-variant/20 bg-surface-container-lowest p-8 shadow-[0px_16px_40px_rgba(0,51,88,0.08)]">
-        <div className="mb-6 flex items-start justify-between gap-4">
+      <section className="rounded-[1.75rem] border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-[0px_16px_40px_rgba(0,51,88,0.08)] sm:p-6 lg:p-8">
+        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <h1 className="font-headline text-3xl font-extrabold tracking-tight text-primary">
               Set Your Availability
@@ -515,7 +515,7 @@ export default function TutorAvailabilitySettings() {
               Add future slots that students can see on your public tutor profile.
             </p>
           </div>
-          <div className="flex min-w-[140px] flex-col items-center justify-center rounded-2xl bg-primary-fixed px-4 py-3 text-center">
+          <div className="flex w-full flex-col items-center justify-center rounded-2xl bg-primary-fixed px-4 py-3 text-center sm:w-auto sm:min-w-[140px]">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-on-primary-fixed-variant">
               Upcoming Slots
             </p>
@@ -527,7 +527,7 @@ export default function TutorAvailabilitySettings() {
 
         <form
           onSubmit={handleCreateSlot}
-          className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_1fr_1fr_auto]"
+          className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_1fr_1fr_auto]"
         >
           <label className="space-y-2">
             <span className="text-sm font-semibold text-primary">Date</span>
@@ -573,7 +573,7 @@ export default function TutorAvailabilitySettings() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="inline-flex h-[54px] items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-sm font-bold text-on-primary transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-[54px] w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-sm font-bold text-on-primary transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 xl:w-auto"
             >
               <Plus className="h-4 w-4" />
               {isSubmitting ? "Adding..." : "Add Slot"}
@@ -633,7 +633,7 @@ export default function TutorAvailabilitySettings() {
             </div>
 
             <form onSubmit={handleSaveEditedSlot} className="space-y-5">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
                 <label className="space-y-2">
                   <span className="text-sm font-semibold text-primary">Date</span>
                   <div className="flex items-center gap-3 rounded-2xl border border-outline-variant/20 bg-surface px-4 py-3">
@@ -729,7 +729,7 @@ function AvailabilitySection({
   theme: "light" | "dark";
 }) {
   return (
-    <section className="rounded-[1.75rem] border border-outline-variant/20 bg-surface-container-lowest p-8 shadow-[0px_16px_40px_rgba(0,51,88,0.08)]">
+    <section className="rounded-[1.75rem] border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-[0px_16px_40px_rgba(0,51,88,0.08)] sm:p-6 lg:p-8">
       <div className="mb-6">
         <h2 className="font-headline text-2xl font-bold text-primary">{sectionTitle}</h2>
         <p className="mt-2 text-sm text-on-surface-variant">{subtitle}</p>

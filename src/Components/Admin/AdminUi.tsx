@@ -32,7 +32,7 @@ export function AdminPageHeader({
           </p>
         ) : null}
       </div>
-      {action ? <div>{action}</div> : null}
+      {action ? <div className="w-full md:w-auto">{action}</div> : null}
     </header>
   );
 }
@@ -71,7 +71,7 @@ export function AdminCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-[1.5rem] bg-surface-container-low p-6 shadow-[0px_12px_32px_rgba(0,51,88,0.05)]">
+    <section className="rounded-[1.5rem] bg-surface-container-low p-5 shadow-[0px_12px_32px_rgba(0,51,88,0.05)] sm:p-6">
       {title ? (
         <h2 className="mb-5 font-headline text-xl font-bold text-primary">{title}</h2>
       ) : null}
@@ -119,16 +119,16 @@ export function AdminPaginationControls({
   onChange: (page: number) => void;
 }) {
   return (
-    <div className="mt-6 flex items-center justify-between gap-4">
+    <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-sm text-on-surface-variant">
         Page {page} of {totalPages}
       </p>
-      <div className="flex items-center gap-3">
+      <div className="flex w-full items-center gap-3 sm:w-auto">
         <button
           type="button"
           disabled={page <= 1}
           onClick={() => onChange(page - 1)}
-          className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-2 text-sm font-semibold text-primary disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex-1 rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-2 text-sm font-semibold text-primary disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
         >
           Previous
         </button>
@@ -136,7 +136,7 @@ export function AdminPaginationControls({
           type="button"
           disabled={page >= totalPages}
           onClick={() => onChange(page + 1)}
-          className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-on-primary disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex-1 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-on-primary disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
         >
           Next
         </button>

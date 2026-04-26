@@ -29,7 +29,7 @@ export function DegreeFilters({
 }) {
   return (
     <AdminCard title="Filters">
-      <div className="grid gap-4 lg:grid-cols-[1.5fr_repeat(3,minmax(0,1fr))]">
+      <div className="grid gap-4 xl:grid-cols-[1.5fr_repeat(3,minmax(0,1fr))]">
         <form onSubmit={onSearchSubmit} className="relative">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant" />
           <input

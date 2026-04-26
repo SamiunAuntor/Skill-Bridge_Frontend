@@ -32,8 +32,8 @@ export function CategoryTable({
 }) {
   return (
     <AdminCard title="Category directory">
-      <div className="overflow-x-auto">
-        <table className="min-w-full border border-outline-variant/20 text-left">
+      <div className="w-full overflow-x-auto overscroll-x-contain pb-2">
+        <table className="min-w-[760px] border border-outline-variant/20 text-left">
           <thead>
             <tr className="text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
               <th className="border border-outline-variant/20 px-4 py-4">Category</th>

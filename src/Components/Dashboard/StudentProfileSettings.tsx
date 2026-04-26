@@ -245,8 +245,8 @@ export default function StudentProfileSettings() {
       </div>
 
       <form id="student-profile-form" onSubmit={handleSave} className="space-y-6">
-        <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
-          <div className="flex flex-col items-center justify-center text-center lg:min-h-full">
+        <div className="grid gap-6 xl:grid-cols-[280px_1fr] xl:items-center">
+          <div className="flex flex-col items-center justify-center text-center xl:min-h-full">
             <div className="flex flex-col items-center text-center">
               <div className="flex items-center gap-4">
                 {profileImageUrl ? (
