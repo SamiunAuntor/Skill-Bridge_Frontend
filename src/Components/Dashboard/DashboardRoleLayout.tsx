@@ -1,7 +1,10 @@
-import { ReactNode } from "react";
-import { redirect } from "next/navigation";
-import { getServerAuthSession } from "@/lib/auth/server-session";
+"use client";
+
+import { ReactNode, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAppAuthSession } from "@/lib/auth";
 import { getRoleDashboardRoot } from "@/lib/dashboard-routes";
+import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
 import type { UserRole } from "@/types/auth";
 
 type DashboardRoleLayoutProps = {
@@ -9,19 +12,36 @@ type DashboardRoleLayoutProps = {
   children: ReactNode;
 };
 
-export default async function DashboardRoleLayout({
+export default function DashboardRoleLayout({
   role,
   children,
 }: DashboardRoleLayoutProps) {
-  const session = await getServerAuthSession();
-  const actualRole = session?.user?.role;
+  const router = useRouter();
+  const { data: session, isPending } = useAppAuthSession();
 
-  if (!actualRole) {
-    redirect("/login?next=/dashboard");
+  useEffect(() => {
+    if (isPending) return;
+
+    const actualRole = session?.user?.role;
+
+    if (!actualRole) {
+      router.replace("/login?next=/dashboard");
+      return;
+    }
+
+    if (actualRole !== role) {
+      router.replace(getRoleDashboardRoot(actualRole));
+    }
+  }, [isPending, session, role, router]);
+
+  if (isPending) {
+    return <DashboardPageLoader label="Verifying dashboard access..." />;
   }
 
-  if (actualRole !== role) {
-    redirect(getRoleDashboardRoot(actualRole));
+  const actualRole = session?.user?.role;
+
+  if (!actualRole || actualRole !== role) {
+    return <DashboardPageLoader label="Redirecting..." />;
   }
 
   return <>{children}</>;

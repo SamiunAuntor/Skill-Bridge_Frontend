@@ -1,13 +1,24 @@
-import { redirect } from "next/navigation";
-import { getServerAuthSession } from "@/lib/auth/server-session";
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAppAuthSession } from "@/lib/auth";
 import { getRoleDashboardRoot } from "@/lib/dashboard-routes";
 
-export default async function DashboardPage() {
-  const session = await getServerAuthSession();
+export default function DashboardPage() {
+  const router = useRouter();
+  const { data: session, isPending } = useAppAuthSession();
 
-  if (!session?.user) {
-    redirect("/login?next=/dashboard");
-  }
+  useEffect(() => {
+    if (isPending) return;
 
-  redirect(getRoleDashboardRoot(session.user.role));
+    if (!session?.user) {
+      router.replace("/login?next=/dashboard");
+      return;
+    }
+
+    router.replace(getRoleDashboardRoot(session.user.role));
+  }, [isPending, session, router]);
+
+  return null;
 }
