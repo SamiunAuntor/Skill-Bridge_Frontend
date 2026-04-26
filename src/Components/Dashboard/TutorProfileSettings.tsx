@@ -37,6 +37,8 @@ export default function TutorProfileSettings() {
   );
   const [formState, setFormState] = useState<ProfileFormState | null>(null);
   const [initialFormState, setInitialFormState] = useState<ProfileFormState | null>(null);
+  const [draftFormState, setDraftFormState] = useState<ProfileFormState | null>(null);
+  const [draftBaseState, setDraftBaseState] = useState<ProfileFormState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -128,12 +130,15 @@ export default function TutorProfileSettings() {
   }, [formState]);
 
   const hasChanges = useMemo(() => {
-    if (!formState || !initialFormState) {
+    const currentState = activeModal ? draftFormState : formState;
+    const baseState = activeModal ? draftBaseState : initialFormState;
+
+    if (!currentState || !baseState) {
       return false;
     }
 
-    return serializeFormState(formState) !== serializeFormState(initialFormState);
-  }, [formState, initialFormState]);
+    return serializeFormState(currentState) !== serializeFormState(baseState);
+  }, [activeModal, draftBaseState, draftFormState, formState, initialFormState]);
 
   if (session?.user?.role && session.user.role !== "tutor") {
     return null;
@@ -142,6 +147,11 @@ export default function TutorProfileSettings() {
   const isEditing = activeModal !== null;
 
   function updateFormState(updater: (current: ProfileFormState) => ProfileFormState) {
+    if (activeModal) {
+      setDraftFormState((current) => (current ? updater(current) : current));
+      return;
+    }
+
     setFormState((current) => (current ? updater(current) : current));
   }
 
@@ -165,6 +175,8 @@ export default function TutorProfileSettings() {
 
   function handleOpenModal(modal: TutorModalType) {
     setErrorMessage(null);
+    setDraftFormState(formState);
+    setDraftBaseState(formState);
     setActiveModal(modal);
   }
 
@@ -188,9 +200,8 @@ export default function TutorProfileSettings() {
 
     await rollbackPendingUploadedImage();
 
-    if (initialFormState) {
-      setFormState(initialFormState);
-    }
+    setDraftFormState(null);
+    setDraftBaseState(null);
 
     setActiveModal(null);
     setErrorMessage(null);
@@ -228,7 +239,7 @@ export default function TutorProfileSettings() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!formState || !isEditing || !profileData) {
+    if (!draftFormState || !isEditing || !profileData) {
       return;
     }
 
@@ -236,7 +247,7 @@ export default function TutorProfileSettings() {
       return;
     }
 
-    const validationMessage = getTutorProfileValidationMessage(formState);
+    const validationMessage = getTutorProfileValidationMessage(draftFormState);
 
     if (validationMessage) {
       await Swal.fire({
@@ -253,14 +264,14 @@ export default function TutorProfileSettings() {
 
     try {
       const normalizedPayload: TutorProfileUpdateInput = {
-        profileImageUrl: formState.profileImageUrl,
-        professionalTitle: normalizeText(formState.professionalTitle),
-        bio: normalizeText(formState.bio),
-        hourlyRate: Number(formState.hourlyRate) || 0,
-        experienceYears: Number(formState.experienceYears) || 0,
-        categoryIds: formState.categoryIds,
-        subjectIds: formState.subjectIds,
-        education: formState.education
+        profileImageUrl: draftFormState.profileImageUrl,
+        professionalTitle: normalizeText(draftFormState.professionalTitle),
+        bio: normalizeText(draftFormState.bio),
+        hourlyRate: Number(draftFormState.hourlyRate) || 0,
+        experienceYears: Number(draftFormState.experienceYears) || 0,
+        categoryIds: draftFormState.categoryIds,
+        subjectIds: draftFormState.subjectIds,
+        education: draftFormState.education
           .map((item) => ({
             ...(item.id ? { id: item.id } : {}),
             degreeId: item.degreeId,
@@ -279,6 +290,8 @@ export default function TutorProfileSettings() {
       setFormState(mappedState);
       setInitialFormState(mappedState);
       setPendingUploadedImage(null);
+      setDraftFormState(null);
+      setDraftBaseState(null);
       setActiveModal(null);
 
       await Swal.fire({
@@ -387,7 +400,7 @@ export default function TutorProfileSettings() {
         availableDegrees={availableDegrees}
         availableSubjects={availableSubjects}
         errorMessage={errorMessage}
-        formState={formState}
+        formState={draftFormState ?? formState}
         hasChanges={hasChanges}
         isSaving={isSaving}
         isUploadingImage={isUploadingImage}
