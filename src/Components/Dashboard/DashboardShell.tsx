@@ -13,6 +13,7 @@ import ThemeToggle from "@/Components/Theme/ThemeToggle";
 import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
 import { getRoleDashboardPath } from "@/lib/dashboard-routes";
 import BrandLogo from "@/Components/Layout/BrandLogo";
+import NotificationBell from "@/Components/Notifications/NotificationBell";
 
 type DashboardShellProps = {
   children: ReactNode;
@@ -57,6 +58,7 @@ export default function DashboardShell({ children }: DashboardShellProps) {
 
   const user = session.user;
   const role = (user.role as UserRole | undefined) ?? "student";
+  const isAdminDashboard = pathname.startsWith("/dashboard/admin");
   const navItems = dashboardNavByRole[role];
   const roleDashboardHome = getRoleDashboardPath(role);
   const displayName = getDisplayName(user);
@@ -182,14 +184,9 @@ export default function DashboardShell({ children }: DashboardShellProps) {
               </div>
 
               <div className="flex shrink-0 items-center gap-3">
-                <button
-                  type="button"
-                  className="relative text-on-surface-variant transition-colors hover:text-primary"
-                  aria-label="Notifications"
-                >
-                  <span className="material-symbols-outlined text-[22px]">notifications</span>
-                  <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-error" />
-                </button>
+                {!isAdminDashboard && role !== "admin" ? (
+                  <NotificationBell role={role} />
+                ) : null}
 
                 <div className="flex min-w-0 items-center gap-3 rounded-full bg-surface-container-low px-3 py-2">
                   {avatarSrc ? (

@@ -7,6 +7,7 @@ export type DashboardSection =
   | "availability"
   | "finances"
   | "reviews"
+  | "notifications"
   | "users"
   | "bookings"
   | "categories"
