@@ -20,4 +20,4 @@ export const inputClass =
 export const textAreaClass = `${inputClass} min-h-32 resize-y`;
 
 export const modalPanelClass =
-  "w-full max-w-3xl rounded-[1.6rem] border border-outline-variant/20 bg-surface-container-lowest p-6 shadow-[0px_24px_60px_rgba(0,0,0,0.24)]";
+  "w-full max-w-3xl max-h-[84vh] rounded-[1.6rem] border border-outline-variant/20 bg-surface-container-lowest p-6 shadow-[0px_24px_60px_rgba(0,0,0,0.24)]";

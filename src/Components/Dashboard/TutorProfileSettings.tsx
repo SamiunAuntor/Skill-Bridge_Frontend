@@ -46,6 +46,7 @@ export default function TutorProfileSettings() {
   const [activeModal, setActiveModal] = useState<TutorModalType | null>(null);
   const [pendingUploadedImage, setPendingUploadedImage] =
     useState<UploadedImageResult | null>(null);
+  const editingFormState = draftFormState ?? formState;
 
   useEffect(() => {
     let isMounted = true;
@@ -90,13 +91,13 @@ export default function TutorProfileSettings() {
 
   const availableSubjects = useMemo(
     () =>
-      profileData && formState
+      profileData && editingFormState
         ? getAvailableSubjectsForSelection(
-            formState.categoryIds,
+            editingFormState.categoryIds,
             profileData.availableSubjects
           )
         : [],
-    [profileData, formState]
+    [editingFormState, profileData]
   );
 
   const availableDegrees = useMemo(

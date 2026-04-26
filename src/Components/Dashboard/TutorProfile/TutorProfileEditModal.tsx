@@ -111,7 +111,7 @@ export default function TutorProfileEditModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 px-4 py-8">
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 px-4 py-5">
       <div className={modalPanelClass}>
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
@@ -159,7 +159,7 @@ export default function TutorProfileEditModal({
           })}
         </div>
 
-        <div className="max-h-[70vh] overflow-hidden">
+        <div className="max-h-[62vh] overflow-hidden">
           <div
             className="flex w-full transition-transform duration-300"
             style={{ transform: `translateX(-${stepIndex * 100}%)` }}
