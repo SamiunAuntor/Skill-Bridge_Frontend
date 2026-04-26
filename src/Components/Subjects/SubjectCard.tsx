@@ -54,9 +54,9 @@ export default function SubjectCard({
           )}
         </div>
 
-        <p className="mt-6 text-[11px] font-bold uppercase tracking-[0.18em] text-secondary">
+        <span className="mt-6 inline-flex items-center rounded-full bg-[rgba(0,107,92,0.12)] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[#006b5c] dark:bg-[rgba(104,250,221,0.16)] dark:text-[#68fadd]">
           {subject.categoryName}
-        </p>
+        </span>
         <h3 className="mt-3 font-headline text-2xl font-medium text-primary">
           {subject.name}
         </h3>
@@ -100,10 +100,10 @@ export default function SubjectCard({
       </div>
 
       <div className="mt-6 flex-1">
-        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-secondary">
+        <span className="inline-flex items-center rounded-full bg-[rgba(0,107,92,0.12)] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[#006b5c] dark:bg-[rgba(104,250,221,0.16)] dark:text-[#68fadd]">
           {subject.categoryName}
-        </p>
-        <h3 className="mt-2 font-headline text-2xl font-extrabold text-primary">
+        </span>
+        <h3 className="mt-3 font-headline text-2xl font-extrabold text-primary">
           {subject.name}
         </h3>
         <div className="mt-4 min-h-[90px]">

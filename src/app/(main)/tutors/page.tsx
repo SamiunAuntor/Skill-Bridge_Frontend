@@ -115,8 +115,8 @@ export default async function TutorsPage({
           : "Something went wrong while loading tutors.";
 
     return (
-      <section className="px-4 pb-20 pt-8 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-[1440px] rounded-[1.75rem] bg-error-container p-10 text-center text-on-error-container">
+      <section className="pb-20 pt-8">
+        <div className="mx-auto w-11/12 max-w-[1440px] rounded-[1.75rem] bg-error-container p-10 text-center text-on-error-container">
           <h1 className="font-headline text-2xl font-bold">
             Tutors could not be loaded
           </h1>
@@ -137,7 +137,7 @@ export default async function TutorsPage({
   );
 
   return (
-    <section className="px-4 pb-20 pt-8 sm:px-6 lg:px-8">
+    <section className="pb-20 pt-8">
       <div className="mx-auto flex w-11/12 max-w-[1440px] flex-col gap-6 lg:flex-row lg:gap-8">
         <TutorFilters
           filters={listData.filters}
