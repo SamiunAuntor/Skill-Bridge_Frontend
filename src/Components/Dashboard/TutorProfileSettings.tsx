@@ -13,7 +13,7 @@ import {
   createBlankEducation,
   getAvailableSubjectsForSelection,
   getCompletionRatio,
-  getTutorProfileValidationMessage,
+  getTutorProfileValidationMessageForModal,
   mapProfileToFormState,
   serializeFormState,
   toFriendlyTutorProfileError,
@@ -247,7 +247,9 @@ export default function TutorProfileSettings() {
       return;
     }
 
-    const validationMessage = getTutorProfileValidationMessage(draftFormState);
+    const validationMessage = activeModal
+      ? getTutorProfileValidationMessageForModal(draftFormState, activeModal)
+      : null;
 
     if (validationMessage) {
       await Swal.fire({

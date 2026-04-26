@@ -209,3 +209,73 @@ export function getTutorProfileValidationMessage(
 
   return null;
 }
+
+export function getTutorProfileValidationMessageForModal(
+  state: ProfileFormState,
+  modal: "basic" | "teaching" | "education"
+): string | null {
+  if (modal === "basic") {
+    if (!normalizeText(state.professionalTitle)) {
+      return "Add a professional title so students immediately understand your teaching identity.";
+    }
+
+    if (normalizeText(state.bio).length < 20) {
+      return "Write a bio of at least 20 characters so students get a meaningful introduction.";
+    }
+
+    return null;
+  }
+
+  if (modal === "teaching") {
+    if (!Number.isFinite(Number(state.hourlyRate)) || Number(state.hourlyRate) <= 0) {
+      return "Set an hourly rate greater than 0.";
+    }
+
+    if (!Number.isFinite(Number(state.experienceYears)) || Number(state.experienceYears) < 0) {
+      return "Experience years cannot be negative.";
+    }
+
+    if (state.categoryIds.length === 0) {
+      return "Choose at least one teaching category.";
+    }
+
+    if (state.subjectIds.length === 0) {
+      return "Select at least one subject under your chosen categories.";
+    }
+
+    return null;
+  }
+
+  const invalidEducation = state.education.find((item) => {
+    const hasAnyValue =
+      normalizeText(item.categoryId) ||
+      normalizeText(item.degreeId) ||
+      normalizeText(item.institution) ||
+      normalizeText(item.description);
+
+    if (!hasAnyValue) {
+      return false;
+    }
+
+    return (
+      !normalizeText(item.categoryId) ||
+      !normalizeText(item.degreeId) ||
+      !normalizeText(item.institution) ||
+      !Number.isFinite(Number(item.startYear))
+    );
+  });
+
+  if (invalidEducation) {
+    return "Complete category, degree, institution, and start year for each education entry you keep.";
+  }
+
+  const invalidYearRange = state.education.find(
+    (item) => item.endYear !== null && Number(item.startYear) > Number(item.endYear)
+  );
+
+  if (invalidYearRange) {
+    return "Education start year cannot be later than end year.";
+  }
+
+  return null;
+}
