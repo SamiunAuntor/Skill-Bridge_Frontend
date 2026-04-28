@@ -1,12 +1,10 @@
+import { getApiBaseUrl } from "@/lib/api-url";
 import {
   TutorEditableProfileResponse,
   TutorProfileUpdateInput,
 } from "@/types/tutor";
 
-const apiBaseUrl =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ||
-  process.env.NEXT_PUBLIC_BETTER_AUTH_URL?.replace(/\/$/, "") ||
-  "http://localhost:5000";
+const apiBaseUrl = getApiBaseUrl();
 
 export class TutorProfileApiError extends Error {
   statusCode: number;

@@ -1,3 +1,4 @@
+import { getApiBaseUrl } from "@/lib/api-url";
 import {
   DashboardSessionSortOption,
   DashboardSessionListResponse,
@@ -6,10 +7,7 @@ import {
   TutorReviewsResponse,
 } from "@/types/tutor";
 
-const apiBaseUrl =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ||
-  process.env.NEXT_PUBLIC_BETTER_AUTH_URL?.replace(/\/$/, "") ||
-  "http://localhost:5000";
+const apiBaseUrl = getApiBaseUrl();
 
 export class BookingApiError extends Error {
   statusCode: number;

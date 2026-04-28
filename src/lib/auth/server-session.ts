@@ -1,9 +1,9 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 import type { AppAuthSession } from "./session.types";
+import { getApiBaseUrl } from "@/lib/api-url";
 
-const apiBaseUrl =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ??
-  "http://localhost:5000";
+const apiBaseUrl = getApiBaseUrl();
 
 async function getCookieHeader(): Promise<string> {
   const cookieStore = await cookies();
@@ -20,7 +20,7 @@ type AuthJsonResponse<T> = {
   data: T;
 };
 
-export async function getServerAuthSession(): Promise<AppAuthSession> {
+export const getServerAuthSession = cache(async (): Promise<AppAuthSession> => {
   const cookieHeader = await getCookieHeader();
 
   if (!cookieHeader) {
@@ -44,4 +44,4 @@ export async function getServerAuthSession(): Promise<AppAuthSession> {
     | null;
 
   return payload?.data ?? null;
-}
+});

@@ -1,6 +1,6 @@
-const apiBaseUrl =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ||
-  "http://localhost:5000";
+import { getApiBaseUrl } from "@/lib/api-url";
+
+const apiBaseUrl = getApiBaseUrl();
 
 type BackendEnvelope<T> = {
   success: boolean;

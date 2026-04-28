@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { logoutWithAppAuth, useAppAuthSession } from "@/lib/auth";
 import { showAuthErrorToast, showAuthSuccessToast } from "@/lib/auth/auth-alerts";
@@ -40,6 +40,12 @@ export default function DashboardShell({ children }: DashboardShellProps) {
   const { data: session, isPending } = useAppAuthSession();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
+  useEffect(() => {
+    if (!isPending && !session?.user) {
+      router.replace(`/login?next=${encodeURIComponent(pathname || "/dashboard")}`);
+    }
+  }, [isPending, pathname, router, session]);
+
   if (isPending) {
     return (
       <div className="min-h-screen bg-surface">
@@ -51,7 +57,7 @@ export default function DashboardShell({ children }: DashboardShellProps) {
   if (!session?.user) {
     return (
       <div className="min-h-screen bg-surface">
-        <DashboardPageLoader label="Verifying dashboard access..." />
+        <DashboardPageLoader label="Redirecting to sign in..." />
       </div>
     );
   }

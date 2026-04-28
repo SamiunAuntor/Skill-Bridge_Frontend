@@ -1,12 +1,10 @@
+import { getApiBaseUrl } from "@/lib/api-url";
 import type {
   NotificationFeedResponse,
   NotificationUnreadCountResponse,
 } from "@/types/notification";
 
-const apiBaseUrl =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ||
-  process.env.NEXT_PUBLIC_BETTER_AUTH_URL?.replace(/\/$/, "") ||
-  "http://localhost:5000";
+const apiBaseUrl = getApiBaseUrl();
 
 export class NotificationApiError extends Error {
   statusCode: number;

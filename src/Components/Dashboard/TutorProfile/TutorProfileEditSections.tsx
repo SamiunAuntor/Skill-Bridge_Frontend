@@ -321,13 +321,25 @@ export function TeachingDetailsForm({
                             }
                             className={`rounded-2xl border px-4 py-3 text-left transition ${
                               isSelected
-                                ? "border-primary bg-primary-fixed text-primary dark:bg-primary/18 dark:text-primary-fixed"
+                                ? "theme-primary-soft-surface border-primary text-primary dark:text-primary-fixed"
                                 : "border-outline-variant/20 bg-white text-on-surface-variant hover:border-primary/30 hover:text-primary dark:bg-surface-container-low dark:text-on-surface dark:hover:text-primary-fixed"
                             }`}
                           >
-                            <div className="text-sm font-bold">{subject.name}</div>
+                            <div
+                              className={`text-sm font-bold ${
+                                isSelected ? "text-primary dark:text-primary-fixed" : "text-primary"
+                              }`}
+                            >
+                              {subject.name}
+                            </div>
                             {subject.description ? (
-                              <div className="mt-1 text-[11px] leading-relaxed">
+                              <div
+                                className={`mt-1 text-[11px] leading-relaxed ${
+                                  isSelected
+                                    ? "text-on-surface-variant dark:text-on-surface"
+                                    : ""
+                                }`}
+                              >
                                 {subject.description}
                               </div>
                             ) : null}

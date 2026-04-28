@@ -1,3 +1,4 @@
+import { getApiBaseUrl } from "@/lib/api-url";
 import type {
   AdminBookingsQuery,
   AdminBookingsResponse,
@@ -18,9 +19,7 @@ import type {
   AdminUsersResponse,
 } from "@/types/admin";
 
-const apiBaseUrl =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ||
-  "http://localhost:5000";
+const apiBaseUrl = getApiBaseUrl();
 
 export class AdminApiError extends Error {
   statusCode: number;

@@ -1,9 +1,11 @@
-import DashboardRoleLayout from "@/Components/Dashboard/DashboardRoleLayout";
+import { requireDashboardRole } from "@/lib/auth/dashboard-session";
 
-export default function AdminDashboardLayout({
+export default async function AdminDashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <DashboardRoleLayout role="admin">{children}</DashboardRoleLayout>;
+  await requireDashboardRole("admin");
+
+  return <>{children}</>;
 }

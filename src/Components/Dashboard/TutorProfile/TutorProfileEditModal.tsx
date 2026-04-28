@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { UploadedImageResult } from "@/lib/upload-image";
 import type { TutorEditableProfileResponse } from "@/types/tutor";
@@ -55,10 +55,6 @@ export default function TutorProfileEditModal({
   setPendingUploadedImage,
   updateFormState,
 }: TutorProfileEditModalProps) {
-  if (!activeModal) {
-    return null;
-  }
-
   const steps = useMemo(
     () =>
       [
@@ -86,12 +82,14 @@ export default function TutorProfileEditModal({
     []
   );
 
+  const isOpen = Boolean(activeModal);
   const initialStepIndex = Math.max(
     0,
-    steps.findIndex((step) => step.key === activeModal)
+    steps.findIndex((step) => step.key === (activeModal ?? "basic"))
   );
   const [stepIndex, setStepIndex] = useState(initialStepIndex);
   const [stepError, setStepError] = useState<string | null>(null);
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setStepIndex(initialStepIndex);
@@ -102,6 +100,13 @@ export default function TutorProfileEditModal({
   const isLastStep = stepIndex === steps.length - 1;
   const isFirstStep = stepIndex === 0;
 
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const width = el.clientWidth || 0;
+    el.scrollTo({ left: width * stepIndex, behavior: "smooth" });
+  }, [stepIndex]);
+
   function validateStep(index: number): boolean {
     const step = steps[index];
     if (!step) return true;
@@ -110,10 +115,14 @@ export default function TutorProfileEditModal({
     return !message;
   }
 
+  if (!isOpen) {
+    return null;
+  }
+
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 px-4 py-5">
-      <div className={modalPanelClass}>
-        <div className="mb-5 flex items-start justify-between gap-4">
+      <div className={`${modalPanelClass} flex flex-col`}>
+        <div className="mb-5 shrink-0 flex items-start justify-between gap-4">
           <div>
             <h3 className="font-headline text-2xl font-bold text-primary">
               Complete your profile ({stepIndex + 1}/{steps.length})
@@ -132,7 +141,7 @@ export default function TutorProfileEditModal({
           </button>
         </div>
 
-        <div className="mb-5 flex flex-wrap gap-2">
+        <div className="mb-5 shrink-0 flex flex-wrap gap-2">
           {steps.map((step, index) => {
             const isActive = index === stepIndex;
             return (
@@ -159,12 +168,22 @@ export default function TutorProfileEditModal({
           })}
         </div>
 
-        <div className="max-h-[62vh] overflow-hidden">
+        <div className="min-h-0 flex-1 overflow-hidden">
           <div
-            className="flex w-full transition-transform duration-300"
-            style={{ transform: `translateX(-${stepIndex * 100}%)` }}
+            ref={scrollerRef}
+            className="flex h-full w-full snap-x snap-mandatory overflow-x-auto scroll-smooth"
+            onScroll={(event) => {
+              const el = event.currentTarget;
+              const width = el.clientWidth || 0;
+              if (!width) return;
+              const nextIndex = Math.round(el.scrollLeft / width);
+              if (nextIndex !== stepIndex) {
+                setStepError(null);
+                setStepIndex(Math.max(0, Math.min(steps.length - 1, nextIndex)));
+              }
+            }}
           >
-            <div className="w-full shrink-0 space-y-5 overflow-y-auto pr-1">
+            <div className="h-full w-full shrink-0 snap-start space-y-5 overflow-y-auto pr-1 pb-3">
               <BasicProfileForm
                 formState={formState}
                 isSaving={isSaving}
@@ -175,7 +194,7 @@ export default function TutorProfileEditModal({
                 updateFormState={updateFormState}
               />
             </div>
-            <div className="w-full shrink-0 space-y-5 overflow-y-auto pr-1">
+            <div className="h-full w-full shrink-0 snap-start space-y-5 overflow-y-auto pr-1 pb-3">
               <TeachingDetailsForm
                 availableSubjects={availableSubjects}
                 formState={formState}
@@ -184,7 +203,7 @@ export default function TutorProfileEditModal({
                 updateFormState={updateFormState}
               />
             </div>
-            <div className="w-full shrink-0 space-y-5 overflow-y-auto pr-1">
+            <div className="h-full w-full shrink-0 snap-start space-y-5 overflow-y-auto pr-1 pb-3">
               <EducationForm
                 availableDegrees={availableDegrees}
                 formState={formState}
@@ -199,18 +218,18 @@ export default function TutorProfileEditModal({
         </div>
 
         {stepError ? (
-          <div className="mt-5 rounded-xl bg-error-container px-4 py-3 text-[13px] text-on-error-container">
+          <div className="mt-4 shrink-0 rounded-xl bg-error-container px-4 py-3 text-[13px] text-on-error-container">
             {stepError}
           </div>
         ) : null}
 
         {errorMessage ? (
-          <div className="mt-5 rounded-xl bg-error-container px-4 py-3 text-[13px] text-on-error-container">
+          <div className="mt-4 shrink-0 rounded-xl bg-error-container px-4 py-3 text-[13px] text-on-error-container">
             {errorMessage}
           </div>
         ) : null}
 
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="mt-5 shrink-0 flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant/20 pt-4">
           <button
             type="button"
             onClick={() => void onCancel()}
