@@ -68,17 +68,19 @@ export default function PaymentCheckoutClient({
 
         const storedCheckoutSession = readPaymentCheckoutSession(bookingId);
 
-        if (
-          storedCheckoutSession?.paymentIntentId === paymentIntentId &&
-          storedCheckoutSession.clientSecret
-        ) {
-          setClientSecret(storedCheckoutSession.clientSecret);
+        const resolvedClientSecret =
+          storedCheckoutSession?.paymentIntentId === paymentIntentId
+            ? storedCheckoutSession.clientSecret || response.clientSecret
+            : response.clientSecret;
+
+        if (resolvedClientSecret) {
+          setClientSecret(resolvedClientSecret);
         } else if (
           response.status !== "succeeded" &&
           response.paymentStatus !== "paid"
         ) {
           setErrorMessage(
-            "This checkout session is no longer available in this tab. Please return to the tutor page and start payment again."
+            "This checkout session can no longer be resumed. Please return to the tutor page and start payment again."
           );
         }
 

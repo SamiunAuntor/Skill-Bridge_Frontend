@@ -19,6 +19,8 @@ import {
   uploadImage,
 } from "@/lib/upload-image";
 import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
+import StateCard from "@/Components/Shared/StateCard";
+import { studentProfileUpdateSchema } from "@/lib/validation/app-schemas";
 
 export default function StudentProfileSettings() {
   const { data: session, isPending } = useAppAuthSession();
@@ -56,7 +58,12 @@ export default function StudentProfileSettings() {
   }, [displayName, initialDisplayName, initialProfileImageUrl, profileImageUrl]);
 
   if (session?.user?.role && session.user.role !== "student") {
-    return null;
+    return (
+      <StateCard
+        title="Student profile unavailable"
+        description="This section is only available for student accounts."
+      />
+    );
   }
 
   if (isPending || !hasInitialized) {
@@ -123,23 +130,18 @@ export default function StudentProfileSettings() {
   async function handleSave(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const trimmedName = displayName.trim();
+    const parsedPayload = studentProfileUpdateSchema.safeParse({
+      fullName: displayName,
+      profileImageUrl,
+    });
 
-    if (!trimmedName) {
+    if (!parsedPayload.success) {
       await Swal.fire({
         icon: "warning",
-        title: "Name is required",
-        text: "Please enter your name before saving.",
-        confirmButtonColor: "#1d3b66",
-      });
-      return;
-    }
-
-    if (trimmedName.length > 80) {
-      await Swal.fire({
-        icon: "warning",
-        title: "Name is too long",
-        text: "Please keep your display name within 80 characters.",
+        title: "Profile details need attention",
+        text:
+          parsedPayload.error.issues[0]?.message ||
+          "Please check your profile details and try again.",
         confirmButtonColor: "#1d3b66",
       });
       return;
@@ -153,12 +155,12 @@ export default function StudentProfileSettings() {
 
     try {
       await updateMyStudentProfile({
-        fullName: trimmedName,
-        profileImageUrl: profileImageUrl ?? null,
+        fullName: parsedPayload.data.fullName,
+        profileImageUrl: parsedPayload.data.profileImageUrl,
       });
 
-      setInitialDisplayName(trimmedName);
-      setInitialProfileImageUrl(profileImageUrl ?? null);
+      setInitialDisplayName(parsedPayload.data.fullName);
+      setInitialProfileImageUrl(parsedPayload.data.profileImageUrl);
       setPendingUploadedImage(null);
       setIsEditing(false);
       notifyAuthChanged();

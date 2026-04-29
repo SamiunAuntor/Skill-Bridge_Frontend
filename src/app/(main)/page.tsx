@@ -5,11 +5,14 @@ import StatsSection from "@/Components/LandingPage/StatsSection";
 import SubjectsSection from "@/Components/LandingPage/SubjectsSection";
 import TrustSection from "@/Components/LandingPage/TrustSection";
 import { getLandingPageData } from "@/lib/public-api";
+import { getLandingPageFallbackData } from "@/lib/public-page-fallbacks";
 
 export const revalidate = 60;
 
 export default async function Home() {
-  const landingData = await getLandingPageData();
+  const landingData = await getLandingPageData().catch(() =>
+    getLandingPageFallbackData()
+  );
 
   return (
     <>

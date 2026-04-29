@@ -10,6 +10,7 @@ import {
   PlatformReviewApiError,
   submitPlatformReview,
 } from "@/lib/platform-review-api";
+import { platformReviewInputSchema } from "@/lib/validation/app-schemas";
 
 const footerColumns = [
   {
@@ -65,10 +66,23 @@ export default function Footer() {
     setIsSubmitting(true);
 
     try {
-      const result = await submitPlatformReview({
+      const parsedPayload = platformReviewInputSchema.safeParse({
         rating,
-        title: title.trim() || undefined,
+        title,
         message,
+      });
+
+      if (!parsedPayload.success) {
+        throw new Error(
+          parsedPayload.error.issues[0]?.message ||
+            "Please check your review and try again."
+        );
+      }
+
+      const result = await submitPlatformReview({
+        rating: parsedPayload.data.rating,
+        title: parsedPayload.data.title,
+        message: parsedPayload.data.message,
       });
       setRating(5);
       setTitle("");
@@ -90,6 +104,8 @@ export default function Footer() {
         text:
           error instanceof PlatformReviewApiError
             ? error.message
+            : error instanceof Error
+              ? error.message
             : "We couldn't submit your review right now.",
         confirmButtonColor: "#1d3b66",
       });

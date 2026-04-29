@@ -91,11 +91,6 @@ export default function TutorProfileEditModal({
   const [stepError, setStepError] = useState<string | null>(null);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    setStepIndex(initialStepIndex);
-    setStepError(null);
-  }, [initialStepIndex]);
-
   const currentStep = steps[stepIndex] ?? steps[0];
   const isLastStep = stepIndex === steps.length - 1;
   const isFirstStep = stepIndex === 0;

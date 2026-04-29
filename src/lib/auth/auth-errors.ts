@@ -17,6 +17,16 @@ export function isAuthClientError(value: unknown): value is AuthClientError {
 }
 
 export function formatAuthError(error: unknown): string {
+  if (
+    error &&
+    typeof error === "object" &&
+    "statusCode" in error &&
+    typeof (error as { statusCode: unknown }).statusCode === "number" &&
+    "message" in error &&
+    typeof (error as { message: unknown }).message === "string"
+  ) {
+    return (error as { message: string }).message;
+  }
   if (error instanceof TypeError && error.message === "Failed to fetch") {
     return API_HINT;
   }

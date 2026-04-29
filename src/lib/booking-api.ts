@@ -1,4 +1,4 @@
-import { getApiBaseUrl } from "@/lib/api-url";
+import { AppApiError, requestJson } from "@/lib/api-client";
 import {
   DashboardSessionSortOption,
   DashboardSessionListResponse,
@@ -6,8 +6,6 @@ import {
   TutorDashboardSummaryResponse,
   TutorReviewsResponse,
 } from "@/types/tutor";
-
-const apiBaseUrl = getApiBaseUrl();
 
 export class BookingApiError extends Error {
   statusCode: number;
@@ -19,35 +17,16 @@ export class BookingApiError extends Error {
   }
 }
 
-interface BackendEnvelope<T> {
-  success: boolean;
-  message: string;
-  data: T;
-}
-
-async function parseApiResponse<T>(response: Response): Promise<T> {
-  const payload = (await response.json().catch(() => null)) as
-    | BackendEnvelope<T>
-    | { message?: string }
-    | null;
-
-  if (!response.ok) {
-    const fallbackMessage =
-      response.status >= 500
-        ? "Something went wrong while handling your booking. Please try again."
-        : "Unable to complete booking request.";
-
-    throw new BookingApiError(
-      response.status,
-      payload?.message || fallbackMessage
-    );
+function toBookingApiError(error: unknown): BookingApiError {
+  if (error instanceof BookingApiError) {
+    return error;
   }
 
-  if (!payload || !("data" in payload)) {
-    throw new BookingApiError(500, "Unexpected booking API response.");
+  if (error instanceof AppApiError) {
+    return new BookingApiError(error.statusCode, error.message);
   }
 
-  return payload.data;
+  return new BookingApiError(500, "Unexpected booking API response.");
 }
 
 export async function getMySessions(params?: {
@@ -65,26 +44,41 @@ export async function getMySessions(params?: {
   }
 
   const queryString = searchParams.toString();
-  const response = await fetch(
-    `${apiBaseUrl}/api/bookings/me/sessions${queryString ? `?${queryString}` : ""}`,
-    {
-    method: "GET",
-    credentials: "include",
-    cache: "no-store",
-    }
-  );
-
-  return parseApiResponse<DashboardSessionListResponse>(response);
+  try {
+    return await requestJson<DashboardSessionListResponse>(
+      `/api/bookings/me/sessions${queryString ? `?${queryString}` : ""}`,
+      {
+        init: {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+        },
+        fallbackMessage: "Unable to complete booking request.",
+        onUnauthorized: "notify",
+      }
+    );
+  } catch (error) {
+    throw toBookingApiError(error);
+  }
 }
 
 export async function getTutorDashboardSummary(): Promise<TutorDashboardSummaryResponse> {
-  const response = await fetch(`${apiBaseUrl}/api/bookings/me/tutor-dashboard`, {
-    method: "GET",
-    credentials: "include",
-    cache: "no-store",
-  });
-
-  return parseApiResponse<TutorDashboardSummaryResponse>(response);
+  try {
+    return await requestJson<TutorDashboardSummaryResponse>(
+      "/api/bookings/me/tutor-dashboard",
+      {
+        init: {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+        },
+        fallbackMessage: "Unable to complete booking request.",
+        onUnauthorized: "notify",
+      }
+    );
+  } catch (error) {
+    throw toBookingApiError(error);
+  }
 }
 
 export async function cancelBooking(
@@ -96,18 +90,24 @@ export async function cancelBooking(
   sessionStatus: "cancelled" | null;
   slotReleased: boolean;
 }> {
-  const response = await fetch(`${apiBaseUrl}/api/bookings/${bookingId}/cancel`, {
-    method: "PATCH",
-    credentials: "include",
-  });
-
-  return parseApiResponse<{
-    bookingId: string;
-    sessionId: string | null;
-    status: "cancelled";
-    sessionStatus: "cancelled" | null;
-    slotReleased: boolean;
-  }>(response);
+  try {
+    return await requestJson<{
+      bookingId: string;
+      sessionId: string | null;
+      status: "cancelled";
+      sessionStatus: "cancelled" | null;
+      slotReleased: boolean;
+    }>(`/api/bookings/${bookingId}/cancel`, {
+      init: {
+        method: "PATCH",
+        credentials: "include",
+      },
+      fallbackMessage: "Unable to complete booking request.",
+      onUnauthorized: "notify",
+    });
+  } catch (error) {
+    throw toBookingApiError(error);
+  }
 }
 
 export async function joinSession(bookingId: string): Promise<{
@@ -116,17 +116,23 @@ export async function joinSession(bookingId: string): Promise<{
   sessionStatus: "ongoing" | "completed";
   meetingJoinUrl: string;
 }> {
-  const response = await fetch(`${apiBaseUrl}/api/bookings/${bookingId}/join`, {
-    method: "POST",
-    credentials: "include",
-  });
-
-  return parseApiResponse<{
-    bookingId: string;
-    sessionId: string;
-    sessionStatus: "ongoing" | "completed";
-    meetingJoinUrl: string;
-  }>(response);
+  try {
+    return await requestJson<{
+      bookingId: string;
+      sessionId: string;
+      sessionStatus: "ongoing" | "completed";
+      meetingJoinUrl: string;
+    }>(`/api/bookings/${bookingId}/join`, {
+      init: {
+        method: "POST",
+        credentials: "include",
+      },
+      fallbackMessage: "Unable to complete booking request.",
+      onUnauthorized: "notify",
+    });
+  } catch (error) {
+    throw toBookingApiError(error);
+  }
 }
 
 export async function createReview(payload: {
@@ -136,16 +142,22 @@ export async function createReview(payload: {
 }): Promise<{
   review: SessionReview;
 }> {
-  const response = await fetch(`${apiBaseUrl}/api/reviews`, {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  return parseApiResponse<{ review: SessionReview }>(response);
+  try {
+    return await requestJson<{ review: SessionReview }>("/api/reviews", {
+      init: {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      },
+      fallbackMessage: "Unable to complete booking request.",
+      onUnauthorized: "notify",
+    });
+  } catch (error) {
+    throw toBookingApiError(error);
+  }
 }
 
 export async function updateReview(
@@ -155,34 +167,58 @@ export async function updateReview(
     comment: string;
   }
 ): Promise<{ review: SessionReview }> {
-  const response = await fetch(`${apiBaseUrl}/api/reviews/${reviewId}`, {
-    method: "PATCH",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  return parseApiResponse<{ review: SessionReview }>(response);
+  try {
+    return await requestJson<{ review: SessionReview }>(
+      `/api/reviews/${reviewId}`,
+      {
+        init: {
+          method: "PATCH",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        },
+        fallbackMessage: "Unable to complete booking request.",
+        onUnauthorized: "notify",
+      }
+    );
+  } catch (error) {
+    throw toBookingApiError(error);
+  }
 }
 
 export async function getReviewById(reviewId: string): Promise<{ review: SessionReview }> {
-  const response = await fetch(`${apiBaseUrl}/api/reviews/${reviewId}`, {
-    method: "GET",
-    credentials: "include",
-    cache: "no-store",
-  });
-
-  return parseApiResponse<{ review: SessionReview }>(response);
+  try {
+    return await requestJson<{ review: SessionReview }>(
+      `/api/reviews/${reviewId}`,
+      {
+        init: {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+        },
+        fallbackMessage: "Unable to complete booking request.",
+        onUnauthorized: "notify",
+      }
+    );
+  } catch (error) {
+    throw toBookingApiError(error);
+  }
 }
 
 export async function getMyTutorReviews(): Promise<TutorReviewsResponse> {
-  const response = await fetch(`${apiBaseUrl}/api/reviews/me/tutor`, {
-    method: "GET",
-    credentials: "include",
-    cache: "no-store",
-  });
-
-  return parseApiResponse<TutorReviewsResponse>(response);
+  try {
+    return await requestJson<TutorReviewsResponse>("/api/reviews/me/tutor", {
+      init: {
+        method: "GET",
+        credentials: "include",
+        cache: "no-store",
+      },
+      fallbackMessage: "Unable to complete booking request.",
+      onUnauthorized: "notify",
+    });
+  } catch (error) {
+    throw toBookingApiError(error);
+  }
 }

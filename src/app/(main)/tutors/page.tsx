@@ -2,13 +2,17 @@ import TutorCard from "@/Components/Tutors/TutorCard";
 import TutorDiscoveryToolbar from "@/Components/Tutors/TutorDiscoveryToolbar";
 import TutorFilters from "@/Components/Tutors/TutorFilters";
 import TutorPagination from "@/Components/Tutors/TutorPagination";
+import StateCard from "@/Components/Shared/StateCard";
 import {
   TutorApiError,
   getTutorCategoryOptions,
   getTutorSubjectOptions,
   getTutors,
 } from "@/lib/tutor-api";
+import { tutorSearchParamsSchema } from "@/lib/validation/app-schemas";
 import { TutorListFilters, TutorSortOption } from "@/types/tutor";
+
+export const revalidate = 60;
 
 export const metadata = {
   title: "Find Tutors | SkillBridge",
@@ -24,27 +28,31 @@ function getStringValue(value: string | string[] | undefined): string | undefine
   return typeof value === "string" ? value : undefined;
 }
 
-function getPositiveNumber(value: string | undefined): number | undefined {
-  if (!value) {
-    return undefined;
-  }
-
-  const parsedValue = Number(value);
-  return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : undefined;
-}
-
 function parseSearchFilters(
   params: Record<string, string | string[] | undefined>
 ): TutorListFilters {
-  const sortBy = getStringValue(params.sortBy) as TutorSortOption | undefined;
-  const minRating = getPositiveNumber(getStringValue(params.minRating));
+  const parsed = tutorSearchParamsSchema.safeParse({
+    q: getStringValue(params.q),
+    category: getStringValue(params.category),
+    subject: getStringValue(params.subject),
+    minPrice: getStringValue(params.minPrice),
+    maxPrice: getStringValue(params.maxPrice),
+    minRating: getStringValue(params.minRating),
+    sortBy: getStringValue(params.sortBy),
+    page: getStringValue(params.page),
+    limit: getStringValue(params.limit),
+  });
+
+  const value = parsed.success ? parsed.data : tutorSearchParamsSchema.parse({});
+  const sortBy = value.sortBy as TutorSortOption | undefined;
+  const minRating = value.minRating;
 
   return {
-    q: getStringValue(params.q)?.trim() || undefined,
-    category: getStringValue(params.category)?.toLowerCase(),
-    subject: getStringValue(params.subject)?.toLowerCase(),
-    minPrice: getPositiveNumber(getStringValue(params.minPrice)),
-    maxPrice: getPositiveNumber(getStringValue(params.maxPrice)),
+    q: value.q,
+    category: value.category,
+    subject: value.subject,
+    minPrice: value.minPrice,
+    maxPrice: value.maxPrice,
     minRating: minRating && minRating <= 5 ? minRating : undefined,
     sortBy:
       sortBy &&
@@ -58,8 +66,8 @@ function parseSearchFilters(
       ].includes(sortBy)
         ? sortBy
         : "recommended",
-    page: getPositiveNumber(getStringValue(params.page)) ?? 1,
-    limit: getPositiveNumber(getStringValue(params.limit)) ?? 10,
+    page: value.page ?? 1,
+    limit: value.limit ?? 10,
   };
 }
 
@@ -116,11 +124,12 @@ export default async function TutorsPage({
 
     return (
       <section className="pb-20 pt-8">
-        <div className="mx-auto w-11/12 max-w-[1440px] rounded-[1.75rem] bg-error-container p-10 text-center text-on-error-container">
-          <h1 className="font-headline text-2xl font-bold">
-            Tutors could not be loaded
-          </h1>
-          <p className="mt-3">{message}</p>
+        <div className="mx-auto w-11/12 max-w-[1440px]">
+          <StateCard
+            title="Tutors could not be loaded"
+            description={message}
+            tone="error"
+          />
         </div>
       </section>
     );

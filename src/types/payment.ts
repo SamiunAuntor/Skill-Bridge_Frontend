@@ -47,4 +47,5 @@ export interface PaymentStatusResponse {
   confirmedAt: string | null;
   failedAt: string | null;
   holdExpiresAt: string | null;
+  clientSecret: string | null;
 }

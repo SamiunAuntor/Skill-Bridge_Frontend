@@ -29,6 +29,7 @@ import type {
   TutorEditableProfileResponse,
   TutorProfileUpdateInput,
 } from "@/types/tutor";
+import StateCard from "@/Components/Shared/StateCard";
 
 export default function TutorProfileSettings() {
   const { data: session } = useAppAuthSession();
@@ -142,7 +143,12 @@ export default function TutorProfileSettings() {
   }, [activeModal, draftBaseState, draftFormState, formState, initialFormState]);
 
   if (session?.user?.role && session.user.role !== "tutor") {
-    return null;
+    return (
+      <StateCard
+        title="Tutor profile unavailable"
+        description="This section is only available for tutor accounts."
+      />
+    );
   }
 
   const isEditing = activeModal !== null;
@@ -407,6 +413,7 @@ export default function TutorProfileSettings() {
         hasChanges={hasChanges}
         isSaving={isSaving}
         isUploadingImage={isUploadingImage}
+        key={activeModal ?? "closed"}
         onAddEducation={handleAddEducation}
         onCancel={handleCancelEditing}
         onRemoveEducation={handleRemoveEducation}

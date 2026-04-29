@@ -1,10 +1,8 @@
-import { getApiBaseUrl } from "@/lib/api-url";
+import { AppApiError, requestJson } from "@/lib/api-client";
 import type {
   NotificationFeedResponse,
   NotificationUnreadCountResponse,
 } from "@/types/notification";
-
-const apiBaseUrl = getApiBaseUrl();
 
 export class NotificationApiError extends Error {
   statusCode: number;
@@ -16,30 +14,16 @@ export class NotificationApiError extends Error {
   }
 }
 
-interface BackendEnvelope<T> {
-  success: boolean;
-  message: string;
-  data: T;
-}
-
-async function parseApiResponse<T>(response: Response): Promise<T> {
-  const payload = (await response.json().catch(() => null)) as
-    | BackendEnvelope<T>
-    | { message?: string }
-    | null;
-
-  if (!response.ok) {
-    throw new NotificationApiError(
-      response.status,
-      payload?.message || "Unable to load notifications right now."
-    );
+function toNotificationApiError(error: unknown): NotificationApiError {
+  if (error instanceof NotificationApiError) {
+    return error;
   }
 
-  if (!payload || !("data" in payload)) {
-    throw new NotificationApiError(500, "Unexpected notification API response.");
+  if (error instanceof AppApiError) {
+    return new NotificationApiError(error.statusCode, error.message);
   }
 
-  return payload.data;
+  return new NotificationApiError(500, "Unexpected notification API response.");
 }
 
 export async function getMyNotifications(params?: {
@@ -62,42 +46,75 @@ export async function getMyNotifications(params?: {
   }
 
   const queryString = searchParams.toString();
-  const response = await fetch(
-    `${apiBaseUrl}/api/notifications/me${queryString ? `?${queryString}` : ""}`,
-    {
-      method: "GET",
-      credentials: "include",
-      cache: "no-store",
-    }
-  );
-
-  return parseApiResponse<NotificationFeedResponse>(response);
+  try {
+    return await requestJson<NotificationFeedResponse>(
+      `/api/notifications/me${queryString ? `?${queryString}` : ""}`,
+      {
+        init: {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+        },
+        fallbackMessage: "Unable to load notifications right now.",
+        onUnauthorized: "notify",
+      }
+    );
+  } catch (error) {
+    throw toNotificationApiError(error);
+  }
 }
 
 export async function getUnreadNotificationCount(): Promise<NotificationUnreadCountResponse> {
-  const response = await fetch(`${apiBaseUrl}/api/notifications/me/unread-count`, {
-    method: "GET",
-    credentials: "include",
-    cache: "no-store",
-  });
-
-  return parseApiResponse<NotificationUnreadCountResponse>(response);
+  try {
+    return await requestJson<NotificationUnreadCountResponse>(
+      "/api/notifications/me/unread-count",
+      {
+        init: {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+        },
+        fallbackMessage: "Unable to load notifications right now.",
+        onUnauthorized: "notify",
+      }
+    );
+  } catch (error) {
+    throw toNotificationApiError(error);
+  }
 }
 
 export async function markNotificationAsRead(notificationId: string): Promise<void> {
-  const response = await fetch(`${apiBaseUrl}/api/notifications/${notificationId}/read`, {
-    method: "PATCH",
-    credentials: "include",
-  });
-
-  await parseApiResponse<{ notification: unknown }>(response);
+  try {
+    await requestJson<{ notification: unknown }>(
+      `/api/notifications/${notificationId}/read`,
+      {
+        init: {
+          method: "PATCH",
+          credentials: "include",
+        },
+        fallbackMessage: "Unable to load notifications right now.",
+        onUnauthorized: "notify",
+      }
+    );
+  } catch (error) {
+    throw toNotificationApiError(error);
+  }
 }
 
 export async function markAllNotificationsAsRead(): Promise<{ updatedCount: number }> {
-  const response = await fetch(`${apiBaseUrl}/api/notifications/me/read-all`, {
-    method: "PATCH",
-    credentials: "include",
-  });
-
-  return parseApiResponse<{ updatedCount: number }>(response);
+  try {
+    return await requestJson<{ updatedCount: number }>(
+      "/api/notifications/me/read-all",
+      {
+        init: {
+          method: "PATCH",
+          credentials: "include",
+        },
+        fallbackMessage: "Unable to load notifications right now.",
+        onUnauthorized: "notify",
+      }
+    );
+  } catch (error) {
+    throw toNotificationApiError(error);
+  }
 }

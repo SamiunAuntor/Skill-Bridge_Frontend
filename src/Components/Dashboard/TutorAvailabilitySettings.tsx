@@ -10,6 +10,7 @@ import {
 import Swal from "sweetalert2";
 import { CalendarDays, Clock3, Pencil, Plus, Trash2, X } from "lucide-react";
 import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
+import StateCard from "@/Components/Shared/StateCard";
 import {
   AvailabilityApiError,
   createAvailabilitySlot,
@@ -18,10 +19,8 @@ import {
   updateAvailabilitySlot,
 } from "@/lib/availability-api";
 import { formatTimeRange } from "@/lib/format/date";
+import { availabilitySlotInputSchema } from "@/lib/validation/app-schemas";
 import type { AvailabilitySlotItem } from "@/types/tutor";
-
-const MIN_SLOT_DURATION_MINUTES = 5;
-const MAX_SLOT_DURATION_MINUTES = 180;
 
 type GroupedAvailability = {
   dateKey: string;
@@ -171,59 +170,25 @@ async function validateSlotRange(
   startTime: string,
   endTime: string
 ): Promise<{ startAt: Date; endAt: Date } | null> {
-  if (!date || !startTime || !endTime) {
+  const parsed = availabilitySlotInputSchema.safeParse({
+    date,
+    startTime,
+    endTime,
+  });
+
+  if (!parsed.success) {
     await Swal.fire({
       icon: "warning",
-      title: "Missing slot details",
-      text: "Choose a date, start time, and end time first.",
+      title: "Slot details need attention",
+      text:
+        parsed.error.issues[0]?.message ||
+        "Choose a valid date and time range first.",
       confirmButtonColor: "#1d3b66",
     });
     return null;
   }
 
   const { startAt, endAt } = buildSlotDates(date, startTime, endTime);
-
-  if (Number.isNaN(startAt.getTime()) || Number.isNaN(endAt.getTime())) {
-    await Swal.fire({
-      icon: "error",
-      title: "Invalid time selection",
-      text: "Please choose a valid date and time range.",
-      confirmButtonColor: "#1d3b66",
-    });
-    return null;
-  }
-
-  if (startAt >= endAt) {
-    await Swal.fire({
-      icon: "warning",
-      title: "Invalid slot range",
-      text: "End time must be later than the start time.",
-      confirmButtonColor: "#1d3b66",
-    });
-    return null;
-  }
-
-  const durationMinutes = (endAt.getTime() - startAt.getTime()) / (1000 * 60);
-
-  if (durationMinutes < MIN_SLOT_DURATION_MINUTES) {
-    await Swal.fire({
-      icon: "warning",
-      title: "Slot is too short",
-      text: `Availability must be at least ${MIN_SLOT_DURATION_MINUTES} minutes long.`,
-      confirmButtonColor: "#1d3b66",
-    });
-    return null;
-  }
-
-  if (durationMinutes > MAX_SLOT_DURATION_MINUTES) {
-    await Swal.fire({
-      icon: "warning",
-      title: "Slot is too long",
-      text: "Availability cannot be longer than 3 hours.",
-      confirmButtonColor: "#1d3b66",
-    });
-    return null;
-  }
 
   return { startAt, endAt };
 }
@@ -236,6 +201,7 @@ export default function TutorAvailabilitySettings() {
   );
   const [allSlots, setAllSlots] = useState<AvailabilitySlotItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedStartTime, setSelectedStartTime] = useState("");
   const [selectedEndTime, setSelectedEndTime] = useState("");
@@ -290,6 +256,7 @@ export default function TutorAvailabilitySettings() {
 
     async function loadAvailability(showAlert = false) {
       try {
+        setLoadError(null);
         const response = await getMyAvailability();
         if (!isMounted) {
           return;
@@ -297,6 +264,10 @@ export default function TutorAvailabilitySettings() {
 
         setAllSlots([...response.upcomingSlots, ...response.expiredSlots]);
       } catch (error) {
+        if (isMounted) {
+          setLoadError(toApiErrorMessage(error));
+        }
+
         if (isMounted && showAlert) {
           void Swal.fire({
             icon: "error",
@@ -333,6 +304,16 @@ export default function TutorAvailabilitySettings() {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
+
+  if (!isLoading && loadError && allSlots.length === 0) {
+    return (
+      <StateCard
+        title="Availability unavailable"
+        description={loadError}
+        tone="error"
+      />
+    );
+  }
 
   function resetAddForm() {
     setSelectedDate("");

@@ -1,4 +1,5 @@
 import type { CreatePaymentIntentResponse } from "@/types/payment";
+import { storedPaymentCheckoutSessionSchema } from "@/lib/validation/app-schemas";
 
 const paymentCheckoutStorageKeyPrefix = "skillbridge:payment-checkout:";
 
@@ -52,7 +53,9 @@ export function readPaymentCheckoutSession(
   }
 
   try {
-    return JSON.parse(rawValue) as StoredPaymentCheckoutSession;
+    const parsed = JSON.parse(rawValue) as unknown;
+    const result = storedPaymentCheckoutSessionSchema.safeParse(parsed);
+    return result.success ? result.data : null;
   } catch {
     return null;
   }

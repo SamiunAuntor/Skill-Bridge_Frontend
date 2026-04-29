@@ -14,6 +14,21 @@ import {
 import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
 import { DashboardSessionItem } from "@/types/tutor";
 import DashboardSessionCard from "@/Components/Dashboard/DashboardSessionCard";
+import StateCard from "@/Components/Shared/StateCard";
+
+type TutorDashboardSummaryState = {
+  stats: {
+    totalEarnings: number;
+    totalHours: number;
+    averageRating: number | null;
+    totalReviews: number;
+  };
+  upcomingSessions: DashboardSessionItem[];
+};
+
+type TutorDashboardHomeProps = {
+  initialSummary?: TutorDashboardSummaryState | null;
+};
 
 function toFriendlyError(error: unknown): string {
   if (error instanceof BookingApiError) {
@@ -27,19 +42,13 @@ function toFriendlyError(error: unknown): string {
   return "Unable to load the tutor dashboard right now.";
 }
 
-export default function TutorDashboardHome() {
+export default function TutorDashboardHome({
+  initialSummary = null,
+}: TutorDashboardHomeProps) {
   const { data: session, isPending: isSessionPending } = useAppAuthSession();
   const role = session?.user?.role;
-  const [summary, setSummary] = useState<{
-    stats: {
-      totalEarnings: number;
-      totalHours: number;
-      averageRating: number | null;
-      totalReviews: number;
-    };
-    upcomingSessions: DashboardSessionItem[];
-  } | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [summary, setSummary] = useState<TutorDashboardSummaryState | null>(initialSummary);
+  const [loading, setLoading] = useState(initialSummary === null);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -79,14 +88,19 @@ export default function TutorDashboardHome() {
     return () => {
       cancelled = true;
     };
-  }, [role]);
+  }, [initialSummary, role]);
 
   if (isSessionPending || !role) {
     return <DashboardPageLoader label="Loading tutor dashboard..." />;
   }
 
   if (role !== "tutor") {
-    return null;
+    return (
+      <StateCard
+        title="Tutor dashboard unavailable"
+        description="This page is only available to tutor accounts."
+      />
+    );
   }
 
   if (loading) {

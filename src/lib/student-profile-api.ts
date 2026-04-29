@@ -1,6 +1,4 @@
-import { getApiBaseUrl } from "@/lib/api-url";
-
-const apiBaseUrl = getApiBaseUrl();
+import { AppApiError, requestJson } from "@/lib/api-client";
 
 export class StudentProfileApiError extends Error {
   statusCode: number;
@@ -12,38 +10,19 @@ export class StudentProfileApiError extends Error {
   }
 }
 
-interface BackendEnvelope<T> {
-  success: boolean;
-  message: string;
-  data: T;
-}
-
-async function parseApiResponse<T>(response: Response): Promise<T> {
-  const payload = (await response.json().catch(() => null)) as
-    | BackendEnvelope<T>
-    | { message?: string }
-    | null;
-
-  if (!response.ok) {
-    const fallbackMessage =
-      response.status >= 500
-        ? "Unable to update your profile right now. Please try again."
-        : "Unable to save your profile changes.";
-
-    throw new StudentProfileApiError(
-      response.status,
-      payload?.message || fallbackMessage
-    );
+function toStudentProfileApiError(error: unknown): StudentProfileApiError {
+  if (error instanceof StudentProfileApiError) {
+    return error;
   }
 
-  if (!payload || !("data" in payload)) {
-    throw new StudentProfileApiError(
-      500,
-      "Unexpected student profile API response."
-    );
+  if (error instanceof AppApiError) {
+    return new StudentProfileApiError(error.statusCode, error.message);
   }
 
-  return payload.data;
+  return new StudentProfileApiError(
+    500,
+    "Unexpected student profile API response."
+  );
 }
 
 export async function updateMyStudentProfile(payload: {
@@ -59,14 +38,20 @@ export async function updateMyStudentProfile(payload: {
     image: string | null;
   };
 }> {
-  const response = await fetch(`${apiBaseUrl}/api/students/me/profile`, {
-    method: "PATCH",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  return parseApiResponse(response);
+  try {
+    return await requestJson(`/api/students/me/profile`, {
+      init: {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      },
+      fallbackMessage: "Unable to save your profile changes.",
+      onUnauthorized: "notify",
+    });
+  } catch (error) {
+    throw toStudentProfileApiError(error);
+  }
 }

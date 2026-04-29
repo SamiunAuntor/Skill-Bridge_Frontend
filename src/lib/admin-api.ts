@@ -1,4 +1,4 @@
-import { getApiBaseUrl } from "@/lib/api-url";
+import { AppApiError, requestJson } from "@/lib/api-client";
 import type {
   AdminBookingsQuery,
   AdminBookingsResponse,
@@ -19,8 +19,6 @@ import type {
   AdminUsersResponse,
 } from "@/types/admin";
 
-const apiBaseUrl = getApiBaseUrl();
-
 export class AdminApiError extends Error {
   statusCode: number;
 
@@ -30,12 +28,6 @@ export class AdminApiError extends Error {
     this.statusCode = statusCode;
   }
 }
-
-type BackendEnvelope<T> = {
-  success: boolean;
-  message: string;
-  data: T;
-};
 
 function toSearchParams(
   input: Record<string, string | number | boolean | undefined>
@@ -53,34 +45,32 @@ function toSearchParams(
   return params;
 }
 
-async function parseAdminResponse<T>(response: Response): Promise<T> {
-  const payload = (await response.json().catch(() => null)) as
-    | BackendEnvelope<T>
-    | { message?: string }
-    | null;
-
-  if (!response.ok) {
-    throw new AdminApiError(
-      response.status,
-      payload?.message || "Unable to complete admin request."
-    );
+function toAdminApiError(error: unknown): AdminApiError {
+  if (error instanceof AdminApiError) {
+    return error;
   }
 
-  if (!payload || !("data" in payload)) {
-    throw new AdminApiError(500, "Unexpected admin API response.");
+  if (error instanceof AppApiError) {
+    return new AdminApiError(error.statusCode, error.message);
   }
 
-  return payload.data;
+  return new AdminApiError(500, "Unexpected admin API response.");
 }
 
 async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
-    credentials: "include",
-    cache: "no-store",
-    ...init,
-  });
-
-  return parseAdminResponse<T>(response);
+  try {
+    return await requestJson<T>(path, {
+      init: {
+        credentials: "include",
+        cache: "no-store",
+        ...init,
+      },
+      fallbackMessage: "Unable to complete admin request.",
+      onUnauthorized: "notify",
+    });
+  } catch (error) {
+    throw toAdminApiError(error);
+  }
 }
 
 export async function getAdminDashboardData(): Promise<AdminDashboardResponse> {

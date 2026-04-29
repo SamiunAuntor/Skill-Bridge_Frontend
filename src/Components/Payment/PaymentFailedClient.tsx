@@ -5,7 +5,6 @@ import Link from "next/link";
 import { ArrowLeft, RotateCcw, TriangleAlert } from "lucide-react";
 import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
 import { PaymentApiError, getPaymentStatus } from "@/lib/payment-api";
-import { readPaymentCheckoutSession } from "@/lib/payment-checkout";
 import type { PaymentStatusResponse } from "@/types/payment";
 
 type PaymentFailedClientProps = {
@@ -71,16 +70,12 @@ export default function PaymentFailedClient({
   }, [paymentIntentId]);
 
   const canRetry = useMemo(() => {
-    const storedCheckout = bookingId
-      ? readPaymentCheckoutSession(bookingId)
-      : null;
-
     return (
       Boolean(bookingId) &&
       Boolean(paymentIntentId) &&
-      storedCheckout?.paymentIntentId === paymentIntentId &&
       isHoldActive(payment) &&
-      payment?.bookingStatus === "pending_payment"
+      payment?.bookingStatus === "pending_payment" &&
+      Boolean(payment?.clientSecret)
     );
   }, [bookingId, payment, paymentIntentId]);
 

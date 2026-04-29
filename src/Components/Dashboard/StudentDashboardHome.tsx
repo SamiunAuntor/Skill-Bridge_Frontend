@@ -9,6 +9,7 @@ import { getRoleDashboardPath } from "@/lib/dashboard-routes";
 import { DashboardSessionItem } from "@/types/tutor";
 import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
 import DashboardSessionCard from "@/Components/Dashboard/DashboardSessionCard";
+import StateCard from "@/Components/Shared/StateCard";
 
 function toFriendlyError(error: unknown): string {
   if (error instanceof BookingApiError) {
@@ -22,10 +23,16 @@ function toFriendlyError(error: unknown): string {
   return "Unable to load your dashboard right now.";
 }
 
-export default function StudentDashboardHome() {
+type StudentDashboardHomeProps = {
+  initialSessions?: DashboardSessionItem[];
+};
+
+export default function StudentDashboardHome({
+  initialSessions = [],
+}: StudentDashboardHomeProps) {
   const { data: session, isPending } = useAppAuthSession();
-  const [sessions, setSessions] = useState<DashboardSessionItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [sessions, setSessions] = useState<DashboardSessionItem[]>(initialSessions);
+  const [loading, setLoading] = useState(initialSessions.length === 0);
   const role = session?.user?.role;
 
   useEffect(() => {
@@ -61,7 +68,7 @@ export default function StudentDashboardHome() {
     return () => {
       cancelled = true;
     };
-  }, [role]);
+  }, [initialSessions.length, role]);
 
   const stats = useMemo(() => {
     const upcoming = sessions.filter(
@@ -81,7 +88,12 @@ export default function StudentDashboardHome() {
   }, [sessions]);
 
   if (role && role !== "student") {
-    return null;
+    return (
+      <StateCard
+        title="Student dashboard unavailable"
+        description="This page is only available to student accounts."
+      />
+    );
   }
 
   if (isPending || loading) {

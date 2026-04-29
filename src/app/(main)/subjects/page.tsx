@@ -1,6 +1,11 @@
 import SubjectsDiscoveryToolbar from "@/Components/Subjects/SubjectsDiscoveryToolbar";
 import SubjectCard from "@/Components/Subjects/SubjectCard";
 import { getPublicSubjects } from "@/lib/public-api";
+import StateCard from "@/Components/Shared/StateCard";
+import { getPublicPageErrorMessage } from "@/lib/public-page-fallbacks";
+import { subjectsSearchParamsSchema } from "@/lib/validation/app-schemas";
+
+export const revalidate = 300;
 
 export const metadata = {
   title: "Subjects | SkillBridge",
@@ -20,15 +25,37 @@ export default async function SubjectsPage({
   searchParams,
 }: SubjectsPageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : {};
-  const q = getStringValue(resolvedSearchParams.q)?.trim() || undefined;
-  const sortBy =
-    getStringValue(resolvedSearchParams.sortBy) === "alphabetical"
-      ? "alphabetical"
-      : "most_tutors";
-  const data = await getPublicSubjects({
+  const parsedSearchParams = subjectsSearchParamsSchema.safeParse({
+    q: getStringValue(resolvedSearchParams.q),
+    sortBy: getStringValue(resolvedSearchParams.sortBy),
+  });
+  const q = parsedSearchParams.success ? parsedSearchParams.data.q : undefined;
+  const sortBy = parsedSearchParams.success
+    ? parsedSearchParams.data.sortBy ?? "most_tutors"
+    : "most_tutors";
+
+  const result = await getPublicSubjects({
     ...(q ? { q } : {}),
     sortBy,
-  });
+  })
+    .then((data) => ({ data }))
+    .catch((error: unknown) => ({ error }));
+
+  if ("error" in result) {
+    return (
+      <section className="pb-20 pt-8">
+        <div className="mx-auto w-11/12 max-w-[1440px]">
+          <StateCard
+            title="Subjects are temporarily unavailable"
+            description={getPublicPageErrorMessage(result.error)}
+            tone="error"
+          />
+        </div>
+      </section>
+    );
+  }
+
+  const data = result.data;
 
   return (
     <section className="pb-20 pt-8">

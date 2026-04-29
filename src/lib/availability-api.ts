@@ -1,7 +1,5 @@
-import { getApiBaseUrl } from "@/lib/api-url";
+import { AppApiError, requestJson } from "@/lib/api-client";
 import { AvailabilityListResponse, AvailabilitySlotItem } from "@/types/tutor";
-
-const apiBaseUrl = getApiBaseUrl();
 
 export class AvailabilityApiError extends Error {
   statusCode: number;
@@ -13,70 +11,69 @@ export class AvailabilityApiError extends Error {
   }
 }
 
-interface BackendEnvelope<T> {
-  success: boolean;
-  message: string;
-  data: T;
-}
-
-async function parseApiResponse<T>(response: Response): Promise<T> {
-  const payload = (await response.json().catch(() => null)) as
-    | BackendEnvelope<T>
-    | { message?: string }
-    | null;
-
-  if (!response.ok) {
-    const fallbackMessage =
-      response.status >= 500
-        ? "Something went wrong while updating availability. Please try again."
-        : "Unable to complete availability request.";
-
-    throw new AvailabilityApiError(
-      response.status,
-      payload?.message || fallbackMessage
-    );
+function toAvailabilityApiError(error: unknown): AvailabilityApiError {
+  if (error instanceof AvailabilityApiError) {
+    return error;
   }
 
-  if (!payload || !("data" in payload)) {
-    throw new AvailabilityApiError(500, "Unexpected availability API response.");
+  if (error instanceof AppApiError) {
+    return new AvailabilityApiError(error.statusCode, error.message);
   }
 
-  return payload.data;
+  return new AvailabilityApiError(500, "Unexpected availability API response.");
 }
 
 export async function getMyAvailability(): Promise<AvailabilityListResponse> {
-  const response = await fetch(`${apiBaseUrl}/api/availability/me`, {
-    method: "GET",
-    credentials: "include",
-    cache: "no-store",
-  });
-
-  return parseApiResponse<AvailabilityListResponse>(response);
+  try {
+    return await requestJson<AvailabilityListResponse>("/api/availability/me", {
+      init: {
+        method: "GET",
+        credentials: "include",
+        cache: "no-store",
+      },
+      fallbackMessage: "Unable to complete availability request.",
+      onUnauthorized: "notify",
+    });
+  } catch (error) {
+    throw toAvailabilityApiError(error);
+  }
 }
 
 export async function createAvailabilitySlot(payload: {
   startAt: string;
   endAt: string;
 }): Promise<AvailabilitySlotItem> {
-  const response = await fetch(`${apiBaseUrl}/api/availability/me`, {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  return parseApiResponse<AvailabilitySlotItem>(response);
+  try {
+    return await requestJson<AvailabilitySlotItem>("/api/availability/me", {
+      init: {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      },
+      fallbackMessage: "Unable to complete availability request.",
+      onUnauthorized: "notify",
+    });
+  } catch (error) {
+    throw toAvailabilityApiError(error);
+  }
 }
 
 export async function deleteAvailabilitySlot(slotId: string): Promise<void> {
-  const response = await fetch(`${apiBaseUrl}/api/availability/me/${slotId}`, {
-    method: "DELETE",
-    credentials: "include",
-  });
-
-  await parseApiResponse<null>(response);
+  try {
+    await requestJson<null>(`/api/availability/me/${slotId}`, {
+      init: {
+        method: "DELETE",
+        credentials: "include",
+      },
+      fallbackMessage: "Unable to complete availability request.",
+      onUnauthorized: "notify",
+    });
+  } catch (error) {
+    throw toAvailabilityApiError(error);
+  }
 }
 
 export async function updateAvailabilitySlot(
@@ -86,24 +83,41 @@ export async function updateAvailabilitySlot(
     endAt: string;
   }
 ): Promise<AvailabilitySlotItem> {
-  const response = await fetch(`${apiBaseUrl}/api/availability/me/${slotId}`, {
-    method: "PUT",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  return parseApiResponse<AvailabilitySlotItem>(response);
+  try {
+    return await requestJson<AvailabilitySlotItem>(
+      `/api/availability/me/${slotId}`,
+      {
+        init: {
+          method: "PUT",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        },
+        fallbackMessage: "Unable to complete availability request.",
+        onUnauthorized: "notify",
+      }
+    );
+  } catch (error) {
+    throw toAvailabilityApiError(error);
+  }
 }
 
 export async function getTutorAvailability(
   tutorId: string
 ): Promise<AvailabilityListResponse> {
-  const response = await fetch(`${apiBaseUrl}/api/availability/tutor/${tutorId}`, {
-    cache: "no-store",
-  });
-
-  return parseApiResponse<AvailabilityListResponse>(response);
+  try {
+    return await requestJson<AvailabilityListResponse>(
+      `/api/availability/tutor/${tutorId}`,
+      {
+        init: {
+          cache: "no-store",
+        },
+        fallbackMessage: "Unable to complete availability request.",
+      }
+    );
+  } catch (error) {
+    throw toAvailabilityApiError(error);
+  }
 }

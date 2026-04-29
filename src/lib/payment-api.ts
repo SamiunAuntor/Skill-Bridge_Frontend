@@ -1,11 +1,9 @@
-import { getApiBaseUrl } from "@/lib/api-url";
+import { AppApiError, requestJson } from "@/lib/api-client";
 import {
   CreatePaymentIntentInput,
   CreatePaymentIntentResponse,
   PaymentStatusResponse,
 } from "@/types/payment";
-
-const apiBaseUrl = getApiBaseUrl();
 
 export class PaymentApiError extends Error {
   statusCode: number;
@@ -17,63 +15,59 @@ export class PaymentApiError extends Error {
   }
 }
 
-interface BackendEnvelope<T> {
-  success: boolean;
-  message: string;
-  data: T;
-}
-
-async function parseApiResponse<T>(response: Response): Promise<T> {
-  const payload = (await response.json().catch(() => null)) as
-    | BackendEnvelope<T>
-    | { message?: string }
-    | null;
-
-  if (!response.ok) {
-    const fallbackMessage =
-      response.status >= 500
-        ? "Something went wrong while preparing your payment. Please try again."
-        : "Unable to complete this payment request.";
-
-    throw new PaymentApiError(
-      response.status,
-      payload?.message || fallbackMessage
-    );
+function toPaymentApiError(error: unknown): PaymentApiError {
+  if (error instanceof PaymentApiError) {
+    return error;
   }
 
-  if (!payload || !("data" in payload)) {
-    throw new PaymentApiError(500, "Unexpected payment API response.");
+  if (error instanceof AppApiError) {
+    return new PaymentApiError(error.statusCode, error.message);
   }
 
-  return payload.data;
+  return new PaymentApiError(500, "Unexpected payment API response.");
 }
 
 export async function createPaymentIntent(
   payload: CreatePaymentIntentInput
 ): Promise<CreatePaymentIntentResponse> {
-  const response = await fetch(`${apiBaseUrl}/api/payments/create-intent`, {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  return parseApiResponse<CreatePaymentIntentResponse>(response);
+  try {
+    return await requestJson<CreatePaymentIntentResponse>(
+      "/api/payments/create-intent",
+      {
+        init: {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        },
+        fallbackMessage: "Unable to complete this payment request.",
+        onUnauthorized: "notify",
+      }
+    );
+  } catch (error) {
+    throw toPaymentApiError(error);
+  }
 }
 
 export async function getPaymentStatus(
   paymentIntentId: string
 ): Promise<PaymentStatusResponse> {
-  const response = await fetch(
-    `${apiBaseUrl}/api/payments/${paymentIntentId}/status`,
-    {
-      method: "GET",
-      credentials: "include",
-      cache: "no-store",
-    }
-  );
-
-  return parseApiResponse<PaymentStatusResponse>(response);
+  try {
+    return await requestJson<PaymentStatusResponse>(
+      `/api/payments/${paymentIntentId}/status`,
+      {
+        init: {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+        },
+        fallbackMessage: "Unable to complete this payment request.",
+        onUnauthorized: "notify",
+      }
+    );
+  } catch (error) {
+    throw toPaymentApiError(error);
+  }
 }

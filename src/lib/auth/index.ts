@@ -8,13 +8,12 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { authChangedEvent, notifyAuthChanged } from "@/lib/auth/events";
 import type { UserRole } from "@/types/auth";
 import type { AppAuthSession, AppAuthUser } from "./session.types";
 import { getApiBaseUrl } from "@/lib/api-url";
 
 const apiBaseUrl = getApiBaseUrl();
-
-const authChangedEvent = "skillbridge-auth-changed";
 
 type AuthJsonResponse<T> = {
   success: boolean;
@@ -23,6 +22,7 @@ type AuthJsonResponse<T> = {
 };
 
 export type { AppAuthSession, AppAuthUser } from "./session.types";
+export { notifyAuthChanged } from "@/lib/auth/events";
 
 type AppAuthSessionState = {
   data: AppAuthSession;
@@ -59,12 +59,6 @@ async function authRequest<T>(
   });
 
   return readJson<T>(response);
-}
-
-export function notifyAuthChanged(): void {
-  if (typeof window !== "undefined") {
-    window.dispatchEvent(new Event(authChangedEvent));
-  }
 }
 
 export async function loginWithAppAuth(input: {
