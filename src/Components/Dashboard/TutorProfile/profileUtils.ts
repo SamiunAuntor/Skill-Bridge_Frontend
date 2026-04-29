@@ -82,8 +82,6 @@ export function createBlankEducation(
 export function mapProfileToFormState(
   data: TutorEditableProfileResponse
 ): ProfileFormState {
-  const defaultDegree = data.availableDegrees[0];
-
   return {
     profileImageUrl: data.profile.profileImageUrl,
     professionalTitle: data.profile.professionalTitle ?? "",
@@ -103,7 +101,7 @@ export function mapProfileToFormState(
             endYear: item.endYear,
             description: item.description ?? "",
           }))
-        : [createBlankEducation(defaultDegree)],
+        : [],
   };
 }
 
@@ -210,11 +208,11 @@ export function getTutorProfileValidationMessage(
   return null;
 }
 
-export function getTutorProfileValidationMessageForModal(
+export function getTutorProfileValidationMessageForStep(
   state: ProfileFormState,
-  modal: "basic" | "teaching" | "education"
+  step: "basic" | "teaching" | "education" | "review"
 ): string | null {
-  if (modal === "basic") {
+  if (step === "basic") {
     if (!normalizeText(state.professionalTitle)) {
       return "Add a professional title so students immediately understand your teaching identity.";
     }
@@ -226,7 +224,7 @@ export function getTutorProfileValidationMessageForModal(
     return null;
   }
 
-  if (modal === "teaching") {
+  if (step === "teaching") {
     if (!Number.isFinite(Number(state.hourlyRate)) || Number(state.hourlyRate) <= 0) {
       return "Set an hourly rate greater than 0.";
     }
@@ -244,6 +242,10 @@ export function getTutorProfileValidationMessageForModal(
     }
 
     return null;
+  }
+
+  if (step === "review") {
+    return getTutorProfileValidationMessage(state);
   }
 
   const invalidEducation = state.education.find((item) => {

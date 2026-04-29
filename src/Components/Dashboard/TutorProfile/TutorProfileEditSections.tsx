@@ -19,6 +19,33 @@ export type UpdateFormState = (
   updater: (current: ProfileFormState) => ProfileFormState
 ) => void;
 
+function FieldLabel({
+  children,
+  required = false,
+  optional = false,
+  htmlFor,
+}: {
+  children: React.ReactNode;
+  required?: boolean;
+  optional?: boolean;
+  htmlFor?: string;
+}) {
+  return (
+    <label
+      className="flex items-center gap-2 text-[13px] font-semibold text-on-surface"
+      htmlFor={htmlFor}
+    >
+      <span>{children}</span>
+      {required ? <span className="text-error">*</span> : null}
+      {optional ? (
+        <span className="rounded-full bg-surface-container-high px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-on-surface-variant">
+          Optional
+        </span>
+      ) : null}
+    </label>
+  );
+}
+
 export function BasicProfileForm({
   formState,
   isSaving,
@@ -120,12 +147,9 @@ export function BasicProfileForm({
       </div>
 
       <div className="space-y-2">
-        <label
-          className="block text-[13px] font-semibold text-on-surface"
-          htmlFor="professionalTitle"
-        >
+        <FieldLabel htmlFor="professionalTitle" required>
           Professional Title
-        </label>
+        </FieldLabel>
         <input
           id="professionalTitle"
           className={inputClass}
@@ -143,9 +167,9 @@ export function BasicProfileForm({
       </div>
 
       <div className="space-y-2">
-        <label className="block text-[13px] font-semibold text-on-surface" htmlFor="bio">
+        <FieldLabel htmlFor="bio" required>
           Bio
-        </label>
+        </FieldLabel>
         <textarea
           id="bio"
           className={textAreaClass}
@@ -182,9 +206,9 @@ export function TeachingDetailsForm({
     <>
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <label className="block text-[13px] font-semibold text-on-surface" htmlFor="rate">
+          <FieldLabel htmlFor="rate" required>
             Hourly Rate ($)
-          </label>
+          </FieldLabel>
           <input
             id="rate"
             min={1}
@@ -192,20 +216,21 @@ export function TeachingDetailsForm({
             type="number"
             className={inputClass}
             disabled={isSaving}
-            value={formState.hourlyRate}
+            value={Number(formState.hourlyRate) > 0 ? formState.hourlyRate : ""}
             onChange={(event) =>
               updateFormState((current) => ({
                 ...current,
-                hourlyRate: Number(event.target.value),
+                hourlyRate: event.target.value === "" ? 0 : Number(event.target.value),
               }))
             }
+            placeholder="50"
           />
         </div>
 
         <div className="space-y-2">
-          <label className="block text-[13px] font-semibold text-on-surface" htmlFor="experience">
+          <FieldLabel htmlFor="experience" required>
             Experience Years
-          </label>
+          </FieldLabel>
           <input
             id="experience"
             min={0}
@@ -213,19 +238,20 @@ export function TeachingDetailsForm({
             type="number"
             className={inputClass}
             disabled={isSaving}
-            value={formState.experienceYears}
+            value={formState.experienceYears > 0 ? formState.experienceYears : ""}
             onChange={(event) =>
               updateFormState((current) => ({
                 ...current,
-                experienceYears: Number(event.target.value),
+                experienceYears: event.target.value === "" ? 0 : Number(event.target.value),
               }))
             }
+            placeholder="3"
           />
         </div>
       </div>
 
       <div className="space-y-3">
-        <label className="block text-[13px] font-semibold text-on-surface">Categories</label>
+        <FieldLabel required>Categories</FieldLabel>
         <div className="flex flex-wrap gap-3">
           {profileData.availableCategories.map((category) => {
             const isSelected = formState.categoryIds.includes(category.id);
@@ -267,7 +293,7 @@ export function TeachingDetailsForm({
 
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-4">
-          <label className="block text-[13px] font-semibold text-on-surface">Subjects</label>
+          <FieldLabel required>Subjects</FieldLabel>
           <p className="text-[11px] text-on-surface-variant">
             Select subjects under your chosen categories.
           </p>
@@ -321,25 +347,13 @@ export function TeachingDetailsForm({
                             }
                             className={`rounded-2xl border px-4 py-3 text-left transition ${
                               isSelected
-                                ? "theme-primary-soft-surface border-primary text-primary dark:text-primary-fixed"
-                                : "border-outline-variant/20 bg-white text-on-surface-variant hover:border-primary/30 hover:text-primary dark:bg-surface-container-low dark:text-on-surface dark:hover:text-primary-fixed"
+                                ? "border-primary bg-surface text-on-surface shadow-sm"
+                                : "border-outline-variant/20 bg-white text-on-surface dark:bg-surface-container-low dark:text-on-surface"
                             }`}
                           >
-                            <div
-                              className={`text-sm font-bold ${
-                                isSelected ? "text-primary dark:text-primary-fixed" : "text-primary"
-                              }`}
-                            >
-                              {subject.name}
-                            </div>
+                            <div className="text-sm font-bold text-primary">{subject.name}</div>
                             {subject.description ? (
-                              <div
-                                className={`mt-1 text-[11px] leading-relaxed ${
-                                  isSelected
-                                    ? "text-on-surface-variant dark:text-on-surface"
-                                    : ""
-                                }`}
-                              >
+                              <div className="mt-1 text-[11px] leading-relaxed text-on-surface-variant">
                                 {subject.description}
                               </div>
                             ) : null}
@@ -376,7 +390,7 @@ export function EducationForm({
 }) {
   return (
     <>
-      <div className="flex justify-end">
+      <div className="mb-5 flex justify-end">
         <button
           type="button"
           disabled={isSaving}
@@ -399,9 +413,7 @@ export function EducationForm({
 
             <div className="mt-4 space-y-4">
               <div className="space-y-2">
-                <label className="block text-[13px] font-semibold text-on-surface">
-                  Education Category
-                </label>
+                <FieldLabel required>Education Category</FieldLabel>
                 <select
                   className={inputClass}
                   disabled={isSaving}
@@ -431,9 +443,7 @@ export function EducationForm({
               </div>
 
               <div className="space-y-2">
-                <label className="block text-[13px] font-semibold text-on-surface">
-                  Degree
-                </label>
+                <FieldLabel required>Degree</FieldLabel>
                 <select
                   className={inputClass}
                   disabled={isSaving}
@@ -467,9 +477,7 @@ export function EducationForm({
               </div>
 
               <div className="space-y-2">
-                <label className="block text-[13px] font-semibold text-on-surface">
-                  Institution
-                </label>
+                <FieldLabel required>Institution</FieldLabel>
                 <input
                   className={inputClass}
                   disabled={isSaving}
@@ -489,9 +497,7 @@ export function EducationForm({
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="block text-[13px] font-semibold text-on-surface">
-                    Start Year
-                  </label>
+                  <FieldLabel required>Start Year</FieldLabel>
                   <input
                     min={1900}
                     max={3000}
@@ -516,9 +522,7 @@ export function EducationForm({
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-[13px] font-semibold text-on-surface">
-                    End Year
-                  </label>
+                  <FieldLabel optional>End Year</FieldLabel>
                   <input
                     min={1900}
                     max={3000}
@@ -544,9 +548,7 @@ export function EducationForm({
               </div>
 
               <div className="space-y-2">
-                <label className="block text-[13px] font-semibold text-on-surface">
-                  Description
-                </label>
+                <FieldLabel optional>Description</FieldLabel>
                 <textarea
                   className={`${inputClass} min-h-24 resize-y`}
                   disabled={isSaving}
