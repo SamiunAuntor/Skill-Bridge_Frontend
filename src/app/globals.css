@@ -236,6 +236,11 @@ html.dark .dashboard-nav-active {
   color: var(--secondary);
 }
 
+.theme-hero-capsule {
+  background: rgba(0, 107, 92, 0.12);
+  color: #006b5c;
+}
+
 html.dark .theme-primary-soft-icon {
   background: rgba(156, 202, 255, 0.18);
   color: var(--primary-fixed);
@@ -250,6 +255,7 @@ html.dark .theme-secondary-soft {
   background: rgba(104, 250, 221, 0.16);
   color: var(--secondary-fixed);
 }
+
 
 .swal2-popup {
   border: 1px solid rgba(193, 199, 208, 0.22) !important;

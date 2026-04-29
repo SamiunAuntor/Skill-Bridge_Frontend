@@ -1,6 +1,9 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { BookOpen } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export type SubjectCardData = {
   id: string;
@@ -34,6 +37,28 @@ export default function SubjectCard({
   subject,
   compact = false,
 }: SubjectCardProps) {
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const updateTheme = () => {
+      setIsDark(document.documentElement.classList.contains("dark"));
+    };
+
+    updateTheme();
+    window.addEventListener("themechange", updateTheme);
+
+    return () => {
+      window.removeEventListener("themechange", updateTheme);
+    };
+  }, []);
+
+  const capsuleStyle = {
+    backgroundColor: isDark
+      ? "rgba(104,250,221,0.16)"
+      : "rgba(0,107,92,0.12)",
+    color: isDark ? "#68fadd" : "#006b5c",
+  } as const;
+
   if (compact) {
     return (
       <Link
@@ -54,7 +79,10 @@ export default function SubjectCard({
           )}
         </div>
 
-        <span className="mt-6 inline-flex items-center rounded-full bg-[rgba(0,107,92,0.12)] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[#006b5c] dark:bg-[rgba(104,250,221,0.16)] dark:text-[#68fadd]">
+        <span
+          className="mt-6 inline-flex items-center rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em]"
+          style={capsuleStyle}
+        >
           {subject.categoryName}
         </span>
         <h3 className="mt-3 font-headline text-2xl font-medium text-primary">
@@ -93,14 +121,20 @@ export default function SubjectCard({
         </div>
 
         {typeof subject.tutorCount === "number" ? (
-          <span className="rounded-full bg-secondary-container px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-on-secondary-container dark:bg-secondary/16 dark:text-secondary-fixed">
+          <span
+            className="rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em]"
+            style={capsuleStyle}
+          >
             {subject.tutorCount} tutor{subject.tutorCount === 1 ? "" : "s"}
           </span>
         ) : null}
       </div>
 
       <div className="mt-6 flex-1">
-        <span className="inline-flex items-center rounded-full bg-[rgba(0,107,92,0.12)] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[#006b5c] dark:bg-[rgba(104,250,221,0.16)] dark:text-[#68fadd]">
+        <span
+          className="inline-flex items-center rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em]"
+          style={capsuleStyle}
+        >
           {subject.categoryName}
         </span>
         <h3 className="mt-3 font-headline text-2xl font-extrabold text-primary">

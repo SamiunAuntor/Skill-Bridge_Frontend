@@ -25,27 +25,27 @@ export default function Navbar() {
           <BrandLogo className="text-2xl tracking-tighter" />
         </Link>
 
-        <div className="hidden items-center space-x-8 lg:flex">
-          {navLinks.map((link) => {
-            const isActive = pathname === link.href;
+        <div className="hidden items-center gap-6 lg:flex">
+          <div className="flex items-center space-x-8">
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href;
 
-            return (
-              <Link
-                key={link.label}
-                href={link.href}
-                className={`font-headline text-sm font-semibold tracking-tight transition-colors hover:text-secondary ${isActive
-                    ? "border-b-2 border-secondary pb-1 text-primary"
-                    : "text-on-surface-variant"
+              return (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className={`font-headline text-sm font-semibold tracking-tight transition-colors hover:text-secondary ${
+                    isActive
+                      ? "border-b-2 border-secondary pb-1 text-primary"
+                      : "text-on-surface-variant"
                   }`}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
-        </div>
-
-        <div className="hidden items-center gap-3 lg:flex">
-          <ThemeToggle />
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </div>
+          <ThemeToggle iconOnly />
           <NavbarSession variant="desktop" />
         </div>
 

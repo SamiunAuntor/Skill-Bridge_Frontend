@@ -5,6 +5,7 @@ import { useSyncExternalStore } from "react";
 type Theme = "light" | "dark";
 type ThemeToggleProps = {
   fullWidth?: boolean;
+  iconOnly?: boolean;
 };
 
 function applyTheme(theme: Theme) {
@@ -31,7 +32,10 @@ function getSnapshot(): Theme {
   return document.documentElement.classList.contains("dark") ? "dark" : "light";
 }
 
-export default function ThemeToggle({ fullWidth = false }: ThemeToggleProps) {
+export default function ThemeToggle({
+  fullWidth = false,
+  iconOnly = false,
+}: ThemeToggleProps) {
   const theme = useSyncExternalStore(subscribe, getSnapshot, () => "light");
   const isDark = theme === "dark";
 
@@ -43,16 +47,18 @@ export default function ThemeToggle({ fullWidth = false }: ThemeToggleProps) {
     <button
       type="button"
       onClick={handleToggle}
-      className={`inline-flex items-center justify-center gap-2 rounded-full border border-outline-variant/60 bg-surface-container-low px-4 py-3 text-[11px] font-semibold text-primary transition-colors hover:bg-surface-container ${
+      className={`inline-flex items-center justify-center rounded-full border border-outline-variant/60 bg-surface-container-low text-[11px] font-semibold text-primary transition-colors hover:bg-surface-container ${
+        iconOnly ? "h-9 w-9 p-0" : "gap-2 px-4 py-3"
+      } ${
         fullWidth ? "w-full" : ""
       }`}
       aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
       title={`Switch to ${isDark ? "light" : "dark"} mode`}
     >
-      <span className="material-symbols-outlined text-[16px]">
+      <span className={`material-symbols-outlined ${iconOnly ? "text-[14px]" : "text-[16px]"}`}>
         {isDark ? "light_mode" : "dark_mode"}
       </span>
-      <span>{isDark ? "Light" : "Dark"}</span>
+      {iconOnly ? null : <span>{isDark ? "Light" : "Dark"}</span>}
     </button>
   );
 }
