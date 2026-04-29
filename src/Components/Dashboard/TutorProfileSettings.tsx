@@ -2,7 +2,7 @@
 
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Swal from "sweetalert2";
-import { GraduationCap, PencilLine, Save, Sparkles, UserRound, Wallet, X } from "lucide-react";
+import { GraduationCap, PencilLine, Save, Sparkles, Wallet, X } from "lucide-react";
 import DashboardPageLoader from "@/Components/Dashboard/DashboardPageLoader";
 import {
   BasicProfileForm,
@@ -64,13 +64,7 @@ function DetailList({
   );
 }
 
-function InfoBlock({
-  label,
-  value,
-}: {
-  label: string;
-  value: React.ReactNode;
-}) {
+function InfoBlock({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="space-y-2">
       <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-secondary">
@@ -466,10 +460,10 @@ export default function TutorProfileSettings() {
           </div>
         </section>
 
-        <section className="rounded-[1.6rem] border border-outline-variant/20 bg-surface-container-lowest p-6 shadow-[0px_18px_40px_rgba(0,51,88,0.08)]">
-          <div className="flex flex-col gap-6 border-b border-outline-variant/15 pb-6 lg:flex-row lg:items-start lg:justify-between">
-            <div className="flex items-start gap-4">
-              <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-[1.5rem] bg-surface-container-highest shadow-sm">
+        <section className="rounded-[1.6rem] border border-outline-variant/20 bg-surface-container-lowest p-4 shadow-[0px_18px_40px_rgba(0,51,88,0.08)] sm:p-6">
+          <div className="flex flex-col gap-5 border-b border-outline-variant/15 pb-6 lg:flex-row lg:items-start lg:justify-between">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+              <div className="mx-auto flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-[1.25rem] bg-surface-container-highest shadow-sm sm:mx-0 sm:h-24 sm:w-24 sm:rounded-[1.5rem]">
                 {profile.profileImageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -484,9 +478,9 @@ export default function TutorProfileSettings() {
                 )}
               </div>
 
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="font-headline text-[1.75rem] font-bold text-primary">
+              <div className="min-w-0 space-y-2 text-center sm:text-left">
+                <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                  <h2 className="font-headline text-[1.95rem] font-bold leading-none text-primary sm:text-[1.75rem]">
                     {profile.displayName}
                   </h2>
                   {!isProfileComplete ? (
@@ -495,7 +489,7 @@ export default function TutorProfileSettings() {
                     </span>
                   ) : null}
                 </div>
-                <p className="text-base font-semibold text-on-surface">
+                <p className="text-lg font-semibold text-on-surface sm:text-base">
                   {profile.professionalTitle || "Add your professional title"}
                 </p>
                 <p className="max-w-3xl text-sm leading-relaxed text-on-surface-variant">
@@ -507,88 +501,59 @@ export default function TutorProfileSettings() {
             <button
               type="button"
               onClick={openEditor}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-[13px] font-bold text-on-primary transition hover:opacity-90"
+              className="inline-flex w-full items-center justify-center gap-2 self-stretch rounded-xl bg-primary px-5 py-3 text-[13px] font-bold text-on-primary transition hover:opacity-90 sm:w-auto sm:self-start"
             >
               <PencilLine className="h-4 w-4" />
               {editButtonLabel}
             </button>
           </div>
 
-          <div className="mt-6 grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
-            <div className="space-y-5">
-              <div className={sectionCardClass}>
-                <div className="flex items-center gap-2 text-secondary">
-                  <UserRound className="h-4 w-4" />
-                  <p className="text-[11px] font-bold uppercase tracking-[0.18em]">
-                    Basic Info
-                  </p>
-                </div>
-                <div className="mt-5 grid gap-5">
-                  <InfoBlock
-                    label="Professional Title"
-                    value={
-                      <p className="text-sm font-semibold text-primary">
-                        {profile.professionalTitle || "Not added yet"}
-                      </p>
-                    }
-                  />
-                  <InfoBlock
-                    label="Bio"
-                    value={
-                      <p className="text-sm leading-relaxed text-on-surface-variant">
-                        {profile.bio || "No bio added yet."}
-                      </p>
-                    }
-                  />
-                </div>
+          <div className="mt-6 grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+            <div className={sectionCardClass}>
+              <div className="flex items-center gap-2 text-secondary">
+                <Wallet className="h-4 w-4" />
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em]">
+                  Teaching Details
+                </p>
               </div>
-
-              <div className={sectionCardClass}>
-                <div className="flex items-center gap-2 text-secondary">
-                  <Wallet className="h-4 w-4" />
-                  <p className="text-[11px] font-bold uppercase tracking-[0.18em]">
-                    Teaching Details
-                  </p>
-                </div>
-                <div className="mt-5 grid gap-5 md:grid-cols-2">
-                  <InfoBlock
-                    label="Hourly Rate"
-                    value={
-                      <p className="text-sm font-semibold text-primary">
-                        {profile.hourlyRate > 0 ? `$${profile.hourlyRate}/hr` : "Not added yet"}
-                      </p>
-                    }
-                  />
-                  <InfoBlock
-                    label="Experience"
-                    value={
-                      <p className="text-sm font-semibold text-primary">
-                        {profile.experienceYears > 0
-                          ? `${profile.experienceYears} year${profile.experienceYears === 1 ? "" : "s"}`
-                          : "Not added yet"}
-                      </p>
-                    }
-                  />
-                  <InfoBlock
-                    label="Categories"
-                    value={
-                      <DetailList
-                        items={selectedCategoryNames}
-                        emptyLabel="No categories selected yet."
-                      />
-                    }
-                  />
-                  <InfoBlock
-                    label="Subjects"
-                    value={
-                      <DetailList
-                        items={selectedSubjectNames}
-                        emptyLabel="No subjects selected yet."
-                        tone="neutral"
-                      />
-                    }
-                  />
-                </div>
+              <div className="mt-5 grid gap-5 md:grid-cols-2">
+                <InfoBlock
+                  label="Hourly Rate"
+                  value={
+                    <p className="text-sm font-semibold text-primary">
+                      {profile.hourlyRate > 0 ? `$${profile.hourlyRate}/hr` : "Not added yet"}
+                    </p>
+                  }
+                />
+                <InfoBlock
+                  label="Experience"
+                  value={
+                    <p className="text-sm font-semibold text-primary">
+                      {profile.experienceYears > 0
+                        ? `${profile.experienceYears} year${profile.experienceYears === 1 ? "" : "s"}`
+                        : "Not added yet"}
+                    </p>
+                  }
+                />
+                <InfoBlock
+                  label="Categories"
+                  value={
+                    <DetailList
+                      items={selectedCategoryNames}
+                      emptyLabel="No categories selected yet."
+                    />
+                  }
+                />
+                <InfoBlock
+                  label="Subjects"
+                  value={
+                    <DetailList
+                      items={selectedSubjectNames}
+                      emptyLabel="No subjects selected yet."
+                      tone="neutral"
+                    />
+                  }
+                />
               </div>
             </div>
 
@@ -645,7 +610,7 @@ export default function TutorProfileSettings() {
                   <div className="space-y-5">
                     <section className={sectionCardClass}>
                       <div className="mb-5 flex items-center gap-2 text-secondary">
-                        <UserRound className="h-4 w-4" />
+                        <PencilLine className="h-4 w-4" />
                         <p className="text-[11px] font-bold uppercase tracking-[0.18em]">
                           Basic Info
                         </p>

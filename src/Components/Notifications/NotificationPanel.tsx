@@ -26,7 +26,7 @@ export default function NotificationPanel({
   viewAllHref,
 }: NotificationPanelProps) {
   return (
-    <div className="absolute right-0 top-[calc(100%+0.75rem)] z-40 w-[min(92vw,24rem)] rounded-3xl border border-outline-variant/20 bg-surface-container-lowest shadow-[0px_18px_48px_rgba(0,0,0,0.18)]">
+    <div className="fixed left-1/2 top-[4.75rem] z-40 w-[calc(100vw-1rem)] max-w-sm -translate-x-1/2 rounded-3xl border border-outline-variant/20 bg-surface-container-lowest shadow-[0px_18px_48px_rgba(0,0,0,0.18)] sm:absolute sm:left-auto sm:right-0 sm:top-[calc(100%+0.75rem)] sm:w-[min(92vw,24rem)] sm:max-w-none sm:translate-x-0">
       <div className="flex items-center justify-between gap-3 border-b border-outline-variant/15 px-5 py-4">
         <div>
           <h3 className="font-headline text-lg font-extrabold text-primary">
@@ -49,7 +49,7 @@ export default function NotificationPanel({
         </button>
       </div>
 
-      <div className="max-h-[26rem] space-y-3 overflow-y-auto p-4">
+      <div className="max-h-[min(26rem,calc(100vh-7rem))] space-y-3 overflow-y-auto p-4 sm:max-h-[26rem]">
         {isLoading ? (
           <div className="flex min-h-[220px] items-center justify-center">
             <div className="flex flex-col items-center gap-3">
