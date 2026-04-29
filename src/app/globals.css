@@ -236,6 +236,19 @@ html.dark .dashboard-nav-active {
   color: var(--secondary);
 }
 
+.theme-demo-alert {
+  border: 1px solid color-mix(in srgb, var(--error) 48%, white);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--error-container) 92%, white),
+    color-mix(in srgb, var(--error-container) 84%, white)
+  );
+  color: #8f1212;
+  box-shadow:
+    0 10px 24px rgba(186, 26, 26, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
 .theme-hero-capsule {
   background: rgba(0, 107, 92, 0.12);
   color: #006b5c;
@@ -254,6 +267,19 @@ html.dark .theme-primary-soft-surface {
 html.dark .theme-secondary-soft {
   background: rgba(104, 250, 221, 0.16);
   color: var(--secondary-fixed);
+}
+
+html.dark .theme-demo-alert {
+  border-color: rgba(255, 180, 171, 0.34);
+  background: linear-gradient(
+    180deg,
+    rgba(147, 0, 10, 0.34),
+    rgba(105, 0, 5, 0.3)
+  );
+  color: #ffd2cc;
+  box-shadow:
+    0 14px 32px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 

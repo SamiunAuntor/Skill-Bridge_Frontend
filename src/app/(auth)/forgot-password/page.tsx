@@ -11,7 +11,7 @@ export default function ForgotPasswordPage() {
         </p>
       </div>
 
-      <div className="rounded-xl border border-red-300/70 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
+      <div className="theme-demo-alert rounded-xl px-4 py-3 text-sm font-medium">
         Demo deployment note: password reset email delivery is currently unavailable
         on the free hosting tier because outbound SMTP/Nodemailer mail is not
         supported yet.

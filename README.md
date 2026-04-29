@@ -15,6 +15,8 @@ This repository focuses on the **presentation layer, client-side UX, route prote
 
 - **Live App:** https://skill-bridge-frontend-sooty.vercel.app/
 - **Backend API:** https://skill-bridge-backend-vn0x.onrender.com/
+- **Frontend Repository:** https://github.com/SamiunAuntor/Skill-Bridge_Frontend
+- **Backend Repository:** https://github.com/SamiunAuntor/Skill-Bridge_Backend
 
 ## ✨ Frontend at a Glance
 
@@ -808,6 +810,8 @@ These demo notes keep the UI honest while allowing self-serve review by users, i
 |---|---|
 | Frontend App | https://skill-bridge-frontend-sooty.vercel.app/ |
 | Backend API | https://skill-bridge-backend-vn0x.onrender.com/ |
+| Frontend Repository | https://github.com/SamiunAuntor/Skill-Bridge_Frontend |
+| Backend Repository | https://github.com/SamiunAuntor/Skill-Bridge_Backend |
 
 ### Frontend hosting summary
 

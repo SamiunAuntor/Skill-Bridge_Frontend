@@ -20,7 +20,7 @@ export default function VerifyPendingPage() {
           login page. If you don&apos;t see the message, check spam or resend
           below.
         </p>
-        <p className="rounded-xl border border-red-300/70 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
+        <p className="theme-demo-alert rounded-xl px-4 py-3 text-sm font-medium">
           Demo deployment note: email verification is currently being bypassed
           because the free hosting tier cannot send outbound SMTP/Nodemailer
           mail yet.
