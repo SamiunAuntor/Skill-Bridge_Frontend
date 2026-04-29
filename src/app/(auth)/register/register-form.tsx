@@ -23,10 +23,14 @@ const registerSchema = z.object({
     .string()
     .min(8, "Password must be at least 8 characters")
     .max(128, "Password is too long"),
+  confirmPassword: z.string().min(1, "Please confirm your password"),
   role: z.enum(REGISTER_ROLES),
   terms: z.boolean().refine((v) => v === true, {
     message: "Please accept the Honor Code and Privacy Protocols.",
   }),
+}).refine((values) => values.password === values.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
@@ -39,6 +43,7 @@ const fieldClass = (invalid: boolean) =>
 export default function RegisterForm() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
     register,
@@ -215,6 +220,32 @@ export default function RegisterForm() {
           <p className="text-xs text-on-surface-variant">
             At least 8 characters.
           </p>
+        </div>
+
+        <div className="space-y-2">
+          <label
+            className="block text-sm font-medium text-on-surface"
+            htmlFor="confirm_password"
+          >
+            Confirm Password
+          </label>
+          <div className="relative">
+            <input
+              id="confirm_password"
+              autoComplete="new-password"
+              className={`${fieldClass(!!errors.confirmPassword)} pr-12`}
+              placeholder="********"
+              type={showConfirmPassword ? "text" : "password"}
+              {...register("confirmPassword")}
+            />
+            <PasswordVisibilityToggle
+              visible={showConfirmPassword}
+              onToggle={() => setShowConfirmPassword((v) => !v)}
+            />
+          </div>
+          {errors.confirmPassword && (
+            <p className="text-sm text-red-700">{errors.confirmPassword.message}</p>
+          )}
         </div>
 
         <div
