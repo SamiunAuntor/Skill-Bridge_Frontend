@@ -1,419 +1,821 @@
-# SkillBridge Frontend
+# 🎓 SkillBridge Frontend
 
-> **Connect with Expert Tutors, Learn Anything** 🎓
+**A modern tutoring marketplace frontend for discovering tutors, booking live sessions, paying securely, and managing role-based dashboards.**
 
-A modern, responsive Next.js application that connects learners with expert tutors. Students can browse tutor profiles, view availability, and book sessions instantly. Built with TypeScript, Tailwind CSS, and Next.js App Router for a seamless user experience.
+SkillBridge Frontend is the user-facing application of the SkillBridge platform. It is built with **Next.js App Router**, **React 19**, and **TypeScript**, and it delivers the complete product experience for:
 
-**[Live Demo](https://skillbridge.vercel.app)** | **[Backend API](https://github.com/SamiunAuntor/Skill-Bridge_Backend)** | **[Backend Repo](#backend-repository)**
+- visitors exploring the platform
+- students booking tutors
+- tutors managing profiles, availability, reviews, and finances
+- admins managing users, academic data, bookings, and platform reviews
 
----
+This repository focuses on the **presentation layer, client-side UX, route protection, payment UI, theme system, dashboard experience, and API integration** with the SkillBridge backend.
 
-## 📋 Table of Contents
+## 🌐 Live Links
 
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
-- [Project Structure](#project-structure)
-- [Authentication](#authentication)
-- [Deployment](#deployment)
-- [Related Repositories](#related-repositories)
-- [Contributing](#contributing)
-- [License](#license)
+- **Live App:** https://skill-bridge-frontend-sooty.vercel.app/
+- **Backend API:** https://skill-bridge-backend-vn0x.onrender.com/
 
----
+## ✨ Frontend at a Glance
 
-## ✨ Features
+| Area | Highlights |
+|---|---|
+| Public Experience | Landing page, tutor discovery, subject discovery, about page |
+| Auth | Login, registration, verify-pending, forgot password, reset password |
+| Student Tools | Sessions, notifications, profile, payment results |
+| Tutor Tools | Profile management, availability, reviews, finances, sessions |
+| Admin Tools | Users, bookings, categories, subjects, degrees, platform reviews |
+| Payments | Stripe Elements checkout, hold expiry handling, success/failure pages |
+| UX | Dark/light mode, responsive layout, notification panel, error fallbacks |
 
-### 🌐 Public Features
-- Browse and search tutors by subject, rating, and price
-- Advanced filtering by category
-- View detailed tutor profiles with reviews and ratings
-- Landing page with featured tutors and statistics
-- Responsive design optimized for all devices
+## 🧰 Main Tech Stack
 
-### 👨‍🎓 Student Features
-- User registration and login with email verification
-- Book tutoring sessions with available time slots
-- View upcoming and past bookings
-- Leave reviews and ratings for tutors
-- Manage profile and preferences
-- Real-time booking status updates
+| Technology | Purpose |
+|---|---|
+| **Next.js 16** | App Router, SSR, ISR, rewrites, layouts |
+| **React 19** | Interactive UI and client components |
+| **TypeScript** | Type-safe application code |
+| **Tailwind CSS 4** | Styling and layout system |
+| **React Hook Form** | Form state handling |
+| **Zod** | Frontend validation and parsing |
+| **Better Auth** | Session-aware auth integration with backend |
+| **Stripe Elements** | Secure payment form rendering |
+| **Lucide React** | Icon system |
+| **SweetAlert2** | Dialogs and confirmations |
+| **Recharts** | Dashboard charts |
+| **Swiper** | Carousel-based UI sections |
 
-### 👨‍🏫 Tutor Features
-- Create and customize tutor profile
-- Set and manage availability slots
-- View teaching sessions and student details
-- Track ratings and student reviews
-- Dashboard with session statistics
-- Manage subjects and expertise areas
+## 📚 Table of Contents
 
-### 🛡️ Admin Features
-- Comprehensive user management (ban/unban)
-- Manage all bookings and sessions
-- Category, subject, and degree management
-- Platform analytics and statistics
-- User activity monitoring
-- System oversight and moderation
+- [1. Product Overview](#1-product-overview)
+- [2. Core Features](#2-core-features)
+- [3. Detailed Feature Breakdown](#3-detailed-feature-breakdown)
+- [4. User Roles and Access Model](#4-user-roles-and-access-model)
+- [5. Frontend Architecture](#5-frontend-architecture)
+- [6. Rendering Strategy](#6-rendering-strategy)
+- [7. Authentication and Session Flow](#7-authentication-and-session-flow)
+- [8. Booking and Payment Flow](#8-booking-and-payment-flow)
+- [9. Stripe Integration](#9-stripe-integration)
+- [10. Upload and Media Flow](#10-upload-and-media-flow)
+- [11. Notification Experience](#11-notification-experience)
+- [12. Theme System and UI Notes](#12-theme-system-and-ui-notes)
+- [13. Validation Strategy](#13-validation-strategy)
+- [14. Tech Stack Table](#14-tech-stack-table)
+- [15. External Services](#15-external-services)
+- [16. Project Structure](#16-project-structure)
+- [17. Route Map](#17-route-map)
+- [18. Frontend Environment Variables](#18-frontend-environment-variables)
+- [19. Local Installation Guide](#19-local-installation-guide)
+- [20. Scripts](#20-scripts)
+- [21. API Integration Overview](#21-api-integration-overview)
+- [22. Current Demo Limitations](#22-current-demo-limitations)
+- [23. Deployment Notes](#23-deployment-notes)
 
-### 🎨 UI/UX Features
-- Light/dark mode toggle
-- Clean, modern design system
-- Fully responsive layout
-- Consistent spacing and typography
-- Smooth animations and transitions
-- Accessible components
+## 1. Product Overview
 
----
+SkillBridge is a tutoring marketplace that connects students with tutors across academic and technical subjects. The frontend is responsible for:
 
-## 🛠️ Tech Stack
+- presenting the marketing and discovery experience
+- collecting form input from visitors, students, tutors, and admins
+- protecting role-based dashboard routes
+- guiding users through booking and payment flows
+- visualizing sessions, reviews, notifications, and platform content
+- coordinating all user-facing interactions with the backend API
 
-### Frontend Framework
-- **Next.js 16.2.3** - React framework with App Router, SSR/SSG
-- **TypeScript** - Static type checking for safer code
-- **React 19** - UI library with latest hooks
+The application is structured around three major route groups:
 
-### Styling
-- **Tailwind CSS** - Utility-first CSS framework
-- **CSS Variables** - Design system with custom properties
-- **Material Symbols** - Icon library
+- **Public routes** for landing, tutors, subjects, and about pages
+- **Auth routes** for login, registration, verification, and password recovery
+- **Dashboard routes** for student, tutor, and admin experiences
 
-### State Management & HTTP
-- **React Hooks** - Built-in state management
-- **Fetch API** - HTTP client for API calls
-- **SWR** - Data fetching with caching and revalidation
+## 2. Core Features
 
-### Authentication
-- **Better Auth** - Authentication library
-- **JWT Tokens** - Secure token-based auth
-- **Cookies** - Persistent sessions
+### Public Platform Features
 
-### Form & Validation
-- **React Hook Form** - Efficient form handling
-- **Zod** - Schema validation
-- **SweetAlert2** - User feedback and confirmations
+- Responsive landing page with hero, stats, featured tutors, subjects, trust, and CTA sections
+- Tutor search and discovery
+- Tutor detail pages with bookable availability
+- Subject discovery and subject detail pages
+- Public platform reviews and trust content
 
-### Additional Libraries
-- **Swiper** - Touch slider carousel
-- **Lucide React** - Modern icon library
-- **Date-fns** - Date manipulation and formatting
+### Authentication Features
 
-### Development Tools
-- **TypeScript** - Type safety
-- **ESLint** - Code quality
-- **PostCSS** - CSS transformations
+- Email/password login
+- Registration with role selection
+- Verify-pending experience
+- Forgot-password form
+- Reset-password form
+- Session-aware navbar and dashboard shell
 
----
+### Student Features
 
-## 🚀 Getting Started
+- Student dashboard home
+- Student profile editing
+- Session list
+- Notification center
+- Tutor booking and payment
+- Review submission and review editing after sessions
+
+### Tutor Features
+
+- Tutor dashboard home
+- Tutor profile display and edit flow
+- Availability management
+- Sessions page
+- Reviews page
+- Finances page
+- Tutor notifications
+
+### Admin Features
+
+- Dashboard overview
+- Users moderation
+- Bookings visibility
+- Categories CRUD
+- Subjects CRUD
+- Degrees CRUD
+- Platform review moderation
+
+### Platform UX Features
+
+- Responsive layouts
+- Light and dark theme support
+- Notification bell with mobile-safe dropdown
+- Protected dashboards with server-side redirects
+- Payment success/failure/result states
+- Public-page fallback rendering when live backend data is unavailable
+
+## 3. Detailed Feature Breakdown
+
+### 3.1 Landing Page
+
+The landing page is built from reusable sections:
+
+- `Hero`
+- `StatsSection`
+- `FeaturedTutorsSection`
+- `SubjectsSection`
+- `TrustSection`
+- `CtaSection`
+
+The page fetches public backend data through `getLandingPageData()` and uses safe fallback data when the backend request fails. This keeps the home page renderable even when public API data is temporarily unavailable.
+
+### 3.2 Tutor Discovery
+
+Tutor discovery supports:
+
+- search text
+- query-based filtering
+- category-related filtering
+- sorting options
+- navigation to detailed tutor pages
+
+These pages are designed to help students explore tutors before committing to a booking.
+
+### 3.3 Tutor Detail and Booking Entry
+
+Tutor detail pages combine:
+
+- tutor summary
+- public education information
+- subject expertise
+- availability slots
+- student booking sidebar
+- reviews and trust content
+
+This page is the main booking conversion point in the product.
+
+### 3.4 Subject Discovery
+
+Subjects appear in:
+
+- landing page feature sections
+- the dedicated `/subjects` page
+- individual subject detail pages
+
+The subject card system is reusable and theme-aware, and the subject pages help users explore tutoring domains before entering the tutor discovery flow.
+
+### 3.5 Student Dashboard
+
+Student dashboard pages provide:
+
+- dashboard overview
+- personal profile settings
+- sessions list
+- notifications
+
+Students also interact with review creation/editing after valid sessions.
+
+### 3.6 Tutor Dashboard
+
+Tutor dashboard pages provide:
+
+- dashboard summary
+- profile management
+- availability scheduling
+- sessions list
+- reviews visibility
+- finances overview
+- notifications
+
+The tutor profile UX currently uses a read-only presentation with a dedicated edit entry point instead of always-on live editing.
+
+### 3.7 Admin Dashboard
+
+Admin tools expose:
+
+- platform overview
+- users management
+- bookings listing
+- categories CRUD
+- subjects CRUD
+- degrees CRUD
+- platform review moderation
+
+These pages are implemented in the frontend as role-scoped dashboard pages backed by admin API clients.
+
+### 3.8 Notifications
+
+Notification experience includes:
+
+- unread notification badge
+- dashboard bell dropdown
+- full notifications page
+- mark single notification as read
+- mark all notifications as read
+
+### 3.9 Payments
+
+The payment flow supports:
+
+- loading checkout status from backend
+- rendering Stripe Elements securely
+- resuming valid checkout state
+- handling expired hold sessions
+- redirecting users through success and failure pages
+- re-verifying payment state after checkout
+
+## 4. User Roles and Access Model
+
+The platform uses three application roles:
+
+| Role | Purpose |
+|---|---|
+| `student` | books sessions, manages profile, reviews tutors |
+| `tutor` | manages profile, availability, sessions, reviews, finances |
+| `admin` | moderates users and platform academic/content data |
+
+### Frontend Access Behavior
+
+- Public routes are open to everyone.
+- Dashboard routes are protected on the server.
+- Each dashboard role has its own layout boundary.
+- Wrong-role access is redirected to the correct dashboard root.
+- Missing session redirects users to `/login?next=/dashboard`.
+
+## 5. Frontend Architecture
+
+The frontend is built around **Next.js App Router** with a mix of server and client components.
+
+### Main architectural ideas
+
+- **Server-side route protection** for dashboard access
+- **Client components for interaction-heavy views**
+- **Reusable API clients** inside `src/lib`
+- **Component groups** organized by domain
+- **Feature-specific route trees** under the App Router
+
+### Main source areas
+
+| Folder | Responsibility |
+|---|---|
+| `src/app` | route tree, layouts, page entry points |
+| `src/Components` | UI components grouped by domain |
+| `src/lib` | API clients, auth helpers, utility logic, validation |
+| `src/types` | shared TypeScript types |
+| `src/assets` | local visual assets |
+
+## 6. Rendering Strategy
+
+The app uses a hybrid rendering model.
+
+### Server-rendered areas
+
+- dashboard route protection
+- public page data fetch entry points
+- route-level composition for App Router pages
+
+### Client-rendered areas
+
+- forms
+- modals
+- payment form
+- theme toggle
+- notification interactions
+- dashboard widgets with user interaction
+
+### ISR / Revalidation
+
+The public landing page currently uses:
+
+- `revalidate = 60`
+
+This allows the public page to refresh cached data periodically without requiring a fully dynamic render for every request.
+
+## 7. Authentication and Session Flow
+
+### Current Auth UX
+
+- register
+- login
+- logout
+- verify-pending
+- forgot password
+- reset password
+
+### Session Model
+
+- the backend owns the session
+- browser requests include cookies
+- dashboard route protection happens on the server
+- client state updates through auth change events
+
+### Important Current Behavior
+
+Because the current deployment does not reliably deliver outbound email on the free tier:
+
+- **verify-pending** shows a red demo notice
+- **forgot-password** shows a red demo notice
+- **registration still routes through the normal verify-pending UX**
+- **signup is currently demo-friendly because backend runtime temporarily marks new accounts as verified**
+
+This keeps the product self-serve for demos while preserving the email-related screens and feature structure for later production hardening.
+
+## 8. Booking and Payment Flow
+
+### High-level Booking Flow
+
+1. Student opens a tutor detail page.
+2. Student chooses a subject.
+3. Student chooses an availability slot.
+4. Frontend triggers backend payment intent creation.
+5. Backend creates a temporary booking hold.
+6. User is taken to `/payment/checkout/[bookingId]`.
+7. Stripe Elements renders the payment UI.
+8. Success or failure pages confirm the final state.
+
+### Frontend Payment Pages
+
+| Route | Purpose |
+|---|---|
+| `/payment/checkout/[bookingId]` | secure payment entry |
+| `/payment/success` | payment verification and confirmation |
+| `/payment/failed` | cancelled/failed state |
+
+### Important UX Behaviors
+
+- checkout status is reloaded from backend
+- expired holds show a clear fallback state
+- cancelled sessions redirect safely
+- already-paid sessions continue to confirmation
+- processing states are retried before final result rendering
+
+## 9. Stripe Integration
+
+Stripe integration on the frontend is centered around:
+
+- `@stripe/react-stripe-js`
+- `@stripe/stripe-js`
+- a Stripe publishable key from environment variables
+- a checkout session payload returned by backend
+
+### Main payment components
+
+| File | Purpose |
+|---|---|
+| `src/Components/Payment/PaymentCheckoutClient.tsx` | loads checkout state and renders Stripe Elements |
+| `src/Components/Payment/PaymentElementForm.tsx` | card/payment form interaction |
+| `src/Components/Payment/PaymentResultClient.tsx` | re-checks final payment status |
+| `src/lib/payment-api.ts` | payment API communication |
+| `src/lib/payment-checkout.ts` | stored checkout session helpers |
+| `src/lib/stripe.ts` | Stripe client bootstrap |
+
+### Why this matters in docs
+
+The frontend does not confirm money movement by itself. It displays states based on backend-confirmed payment data and Stripe Elements interaction.
+
+## 10. Upload and Media Flow
+
+The frontend integrates with Cloudinary-backed backend uploads.
+
+### Media-related frontend responsibilities
+
+- gather selected files
+- send files to upload endpoints
+- receive URLs/public IDs back from backend
+- update profile-related forms and stored values
+
+### Frontend env usage
+
+The frontend exposes only the public-facing Cloudinary and Stripe values needed for client-side behavior.
+
+## 11. Notification Experience
+
+The notification system is visible in two main places:
+
+- dashboard header bell dropdown
+- dedicated notifications pages in student/tutor dashboards
+
+### Notification features
+
+- unread count
+- recent list
+- read-one action
+- read-all action
+- responsive dropdown behavior
+
+### Current UX note
+
+The mobile notification dropdown was recently adjusted to avoid viewport cutoff in smaller screens.
+
+## 12. Theme System and UI Notes
+
+The app supports both light and dark themes.
+
+### Theme-related building blocks
+
+- CSS variables in `globals.css`
+- a dedicated theme toggle component
+- theme-aware reusable classes
+- client-side theme switching
+
+### UI direction
+
+The platform uses a soft, rounded, dashboard-oriented visual system with:
+
+- large cards
+- rounded buttons
+- accent capsules
+- role-specific dashboards
+- high-contrast headings
+
+## 13. Validation Strategy
+
+Frontend validation is handled in two layers:
+
+### 13.1 Form Validation
+
+Forms use:
+
+- `react-hook-form`
+- `zod`
+- `@hookform/resolvers`
+
+### 13.2 Utility/Data Parsing
+
+Shared validation utilities live in:
+
+- `src/lib/validation/app-schemas.ts`
+
+Current schema coverage includes:
+
+- tutor search params
+- subjects search params
+- platform review input
+- student profile update shape
+- availability slot input
+- stored payment checkout session parsing
+
+### Auth forms with validation
+
+- login
+- register
+- forgot password
+- reset password
+- verify-pending actions
+
+## 14. Tech Stack Table
+
+### Frontend technologies
+
+| Category | Technology | Role in Project |
+|---|---|---|
+| Framework | Next.js 16.2.3 | App Router, layouts, pages, rewrites |
+| UI Library | React 19.2.4 | interactive interface |
+| Language | TypeScript | typed application code |
+| Styling | Tailwind CSS 4 | layout, spacing, design system |
+| Form State | React Hook Form | form control |
+| Validation | Zod | client validation and parsing |
+| Icons | Lucide React | iconography |
+| Alerts | SweetAlert2 | dialogs and warnings |
+| Charts | Recharts | analytics and dashboard charts |
+| Carousel | Swiper | sliders and showcase sections |
+| Auth Integration | Better Auth client usage | auth-related actions |
+| Payment UI | Stripe Elements | secure payment form rendering |
+
+## 15. External Services
+
+| Service | Used For | Frontend Role |
+|---|---|---|
+| SkillBridge Backend API | all business logic and persistence | route consumption via `/api/*` |
+| Stripe | payment form and card handling | checkout UI |
+| Cloudinary | media flow | image-related client config |
+| Better Auth | auth workflows | forgot/reset/verify interactions |
+
+## 16. Project Structure
+
+```text
+skill-bridge_frontend/
+|- public/
+|- scripts/
+|  |- smoke-tests.mjs
+|- src/
+|  |- app/
+|  |  |- globals.css
+|  |  |- layout.tsx
+|  |  |- not-found.tsx
+|  |  |- icon.png
+|  |  |- (main)/
+|  |  |  |- layout.tsx
+|  |  |  |- loading.tsx
+|  |  |  |- error.tsx
+|  |  |  |- page.tsx
+|  |  |  |- about/page.tsx
+|  |  |  |- tutors/page.tsx
+|  |  |  |- tutors/[id]/page.tsx
+|  |  |  |- subjects/page.tsx
+|  |  |  |- subjects/[slug]/page.tsx
+|  |  |  |- payment/checkout/[bookingId]/page.tsx
+|  |  |  |- payment/success/page.tsx
+|  |  |  |- payment/failed/page.tsx
+|  |  |- (auth)/
+|  |  |  |- layout.tsx
+|  |  |  |- login/page.tsx
+|  |  |  |- login/login-form.tsx
+|  |  |  |- register/page.tsx
+|  |  |  |- register/register-form.tsx
+|  |  |  |- forgot-password/page.tsx
+|  |  |  |- forgot-password/forgot-password-form.tsx
+|  |  |  |- reset-password/page.tsx
+|  |  |  |- reset-password/reset-password-form.tsx
+|  |  |  |- verify-pending/page.tsx
+|  |  |  |- verify-pending/verify-pending-actions.tsx
+|  |  |- (dashboard)/
+|  |  |  |- dashboard/layout.tsx
+|  |  |  |- dashboard/loading.tsx
+|  |  |  |- dashboard/page.tsx
+|  |  |  |- dashboard/student/
+|  |  |  |  |- layout.tsx
+|  |  |  |  |- page.tsx
+|  |  |  |  |- notifications/page.tsx
+|  |  |  |  |- profile/page.tsx
+|  |  |  |  |- sessions/page.tsx
+|  |  |  |- dashboard/tutor/
+|  |  |  |  |- layout.tsx
+|  |  |  |  |- page.tsx
+|  |  |  |  |- availability/page.tsx
+|  |  |  |  |- finances/page.tsx
+|  |  |  |  |- notifications/page.tsx
+|  |  |  |  |- profile/page.tsx
+|  |  |  |  |- reviews/page.tsx
+|  |  |  |  |- sessions/page.tsx
+|  |  |  |- dashboard/admin/
+|  |  |  |  |- layout.tsx
+|  |  |  |  |- page.tsx
+|  |  |  |  |- bookings/page.tsx
+|  |  |  |  |- categories/page.tsx
+|  |  |  |  |- degrees/page.tsx
+|  |  |  |  |- platform-reviews/page.tsx
+|  |  |  |  |- subjects/page.tsx
+|  |  |  |  |- users/page.tsx
+|  |- Components/
+|  |  |- Admin/
+|  |  |- Auth/
+|  |  |- Dashboard/
+|  |  |- LandingPage/
+|  |  |- Layout/
+|  |  |- Notifications/
+|  |  |- Payment/
+|  |  |- Reviews/
+|  |  |- Shared/
+|  |  |- Subjects/
+|  |  |- Theme/
+|  |  |- Tutors/
+|  |- lib/
+|  |  |- auth/
+|  |  |- validation/
+|  |  |- admin-api.ts
+|  |  |- api-client.ts
+|  |  |- api-url.ts
+|  |  |- booking-api.ts
+|  |  |- booking-server.ts
+|  |  |- notification-api.ts
+|  |  |- payment-api.ts
+|  |  |- payment-checkout.ts
+|  |  |- public-api.ts
+|  |  |- public-page-fallbacks.ts
+|  |  |- student-profile-api.ts
+|  |  |- stripe.ts
+|  |  |- tutor-api.ts
+|  |  |- tutor-profile-api.ts
+|  |  |- upload-image.ts
+|  |- types/
+|  |- assets/
+|- .env.example
+|- next.config.ts
+|- package.json
+|- README.md
+```
+
+## 17. Route Map
+
+### Public Routes
+
+| Route | Description |
+|---|---|
+| `/` | landing page |
+| `/about` | about platform |
+| `/tutors` | tutor discovery |
+| `/tutors/[id]` | tutor detail and booking entry |
+| `/subjects` | subjects listing |
+| `/subjects/[slug]` | subject detail |
+
+### Auth Routes
+
+| Route | Description |
+|---|---|
+| `/login` | sign-in page |
+| `/register` | registration page |
+| `/verify-pending` | verification guidance and resend actions |
+| `/forgot-password` | password reset request |
+| `/reset-password` | set a new password |
+
+### Payment Routes
+
+| Route | Description |
+|---|---|
+| `/payment/checkout/[bookingId]` | Stripe Elements checkout |
+| `/payment/success` | final payment result |
+| `/payment/failed` | failed/cancelled payment page |
+
+### Dashboard Routes
+
+| Route Group | Description |
+|---|---|
+| `/dashboard` | shared dashboard shell |
+| `/dashboard/student/*` | student pages |
+| `/dashboard/tutor/*` | tutor pages |
+| `/dashboard/admin/*` | admin pages |
+
+## 18. Frontend Environment Variables
+
+The frontend currently uses the following public environment variables.
+
+### `.env.example`
+
+```env
+NEXT_PUBLIC_CLOUDINARY_URL=
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=
+NEXT_PUBLIC_CLOUDINARY_API_KEY=
+
+# Payment Gateway
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+
+NEXT_PUBLIC_API_BASE_URL=http://localhost:5000
+NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:5000
+```
+
+### Variable Guide
+
+| Variable | Purpose |
+|---|---|
+| `NEXT_PUBLIC_CLOUDINARY_URL` | client-facing Cloudinary configuration |
+| `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name |
+| `NEXT_PUBLIC_CLOUDINARY_API_KEY` | Cloudinary public API key |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key for Elements |
+| `NEXT_PUBLIC_API_BASE_URL` | backend origin used by Next rewrites |
+| `NEXT_PUBLIC_BETTER_AUTH_URL` | alternate backend origin used by rewrites |
+
+### Important Production Note
+
+`next.config.ts` throws in production if neither `NEXT_PUBLIC_API_BASE_URL` nor `NEXT_PUBLIC_BETTER_AUTH_URL` is defined, because the frontend relies on rewrites for `/api/*` requests.
+
+## 19. Local Installation Guide
 
 ### Prerequisites
-- Node.js 18+ and npm/yarn installed
-- Backend API running (see [Backend Repository](#backend-repository))
 
-### Installation
+- Node.js 18+
+- npm
+- backend project running locally
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/SamiunAuntor/skill-bridge-frontend.git
-   cd skill-bridge-frontend
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-3. **Environment Configuration:**
-   Create a `.env.local` file in the root directory:
-   ```env
-   NEXT_PUBLIC_API_URL=http://localhost:5000/api
-   NEXT_PUBLIC_APP_URL=http://localhost:3000
-   ```
-
-4. **Start the development server:**
-   ```bash
-   npm run dev
-   ```
-
-5. **Open your browser:**
-   Navigate to [http://localhost:3000](http://localhost:3000)
-
----
-
-## 📁 Project Structure
-
-```
-src/
-├── app/                          # Next.js App Router pages
-│   ├── (auth)/                   # Authentication pages (login, register)
-│   ├── (dashboard)/              # Protected student/tutor dashboard
-│   ├── (main)/                   # Public pages (home, tutors, subjects)
-│   ├── layout.tsx                # Root layout with theme support
-│   └── globals.css               # Global styles
-│
-├── Components/                   # Reusable React components
-│   ├── Admin/                    # Admin panel components
-│   ├── Auth/                     # Authentication components
-│   ├── Dashboard/                # Dashboard components
-│   ├── LandingPage/              # Homepage sections
-│   ├── Layout/                   # Layout components (Navbar, Footer)
-│   ├── Tutors/                   # Tutor-related components
-│   └── Theme/                    # Theme toggle and providers
-│
-├── lib/                          # Utility functions and API clients
-│   ├── *-api.ts                  # API integration functions
-│   ├── auth/                     # Authentication utilities
-│   ├── format/                   # Formatting utilities
-│   └── dashboard-routes.ts       # Route configuration
-│
-├── types/                        # TypeScript type definitions
-│   ├── admin.ts                  # Admin-related types
-│   ├── auth.ts                   # Authentication types
-│   └── tutor.ts                  # Tutor-related types
-│
-├── assets/                       # Static assets (images, icons)
-│
-├── public/                       # Public static files
-│
-├── package.json                  # Project dependencies
-├── tsconfig.json                 # TypeScript configuration
-├── tailwind.config.ts            # Tailwind CSS configuration
-└── next.config.ts                # Next.js configuration
-```
-
----
-
-## 🔐 Authentication
-
-### How It Works
-The frontend implements a secure authentication system using:
-
-1. **JWT Tokens** - Access tokens for API requests
-2. **Refresh Tokens** - Automatic token renewal
-3. **HTTP-Only Cookies** - Secure token storage
-4. **Session Management** - User session persistence
-
-### Login Flow
-```
-User Input → Validation → API Call → Token Storage → Dashboard
-```
-
-### Protected Routes
-- Student Dashboard: `/dashboard/*`
-- Tutor Dashboard: `/tutor/*`
-- Admin Panel: `/admin/*`
-
-Unauthenticated users are automatically redirected to login.
-
----
-
-## 🎨 Design System
-
-### Color Palette
-- **Primary:** `#003358` - Main brand color
-- **Secondary:** `#006b5c` - Accent color
-- **Error:** `#ba1a1a` - Error states
-- **Success:** Green shades for confirmations
-
-### Typography
-- **Headlines:** Manrope font family
-- **Body:** Inter font family
-- **Sizes:** 12px - 28px scale
-
-### Spacing
-- Based on 4px grid system
-- Consistent padding and margins
-- Responsive breakpoints
-
----
-
-## 📝 Available Scripts
+### Install dependencies
 
 ```bash
-# Development
-npm run dev              # Start development server
-
-# Production
-npm run build            # Build for production
-npm start                # Start production server
-
-# Code Quality
-npm run lint             # Run ESLint
+npm install
 ```
 
----
+### Create local env file
 
-## 🌐 Deployment
+Create `.env.local` in the frontend project and copy values from `.env.example`.
 
-### Deploy to Vercel (Recommended)
+### Run development server
 
-1. **Push your code to GitHub:**
-   ```bash
-   git push origin main
-   ```
-
-2. **Connect to Vercel:**
-   - Visit [vercel.com](https://vercel.com)
-   - Sign in with GitHub
-   - Import the repository
-
-3. **Configure Environment Variables:**
-   - Add `NEXT_PUBLIC_API_URL` in Vercel dashboard
-   - Point to your backend API URL
-
-4. **Deploy:**
-   - Vercel automatically deploys on push to main
-
-### Deploy to Other Platforms
-
-**Render.com:**
-- Push to GitHub
-- Connect Render to GitHub
-- Set build command: `npm run build`
-- Set start command: `npm start`
-
-**Railway.app:**
-- Similar process to Render
-- Auto-deploys on GitHub push
-
----
-
-## 🔗 Related Repositories
-
-### Backend Repository
-- **Repository:** [Skill-Bridge_Backend](https://github.com/SamiunAuntor/Skill-Bridge_Backend)
-- **API Documentation:** See backend README for endpoint details
-- **Tech Stack:** Node.js, Express, Prisma, PostgreSQL
-
-**Backend Setup:** Follow the backend repository's README for database and API configuration.
-
----
-
-## 📊 API Integration
-
-The frontend communicates with the backend API through typed API clients in `/lib`:
-
-### Available API Modules
-- `public-api.ts` - Public endpoints (tutors, categories, subjects)
-- `auth-api.ts` - Authentication endpoints
-- `booking-api.ts` - Booking management
-- `student-profile-api.ts` - Student profile management
-- `tutor-profile-api.ts` - Tutor profile management
-- `admin-api.ts` - Admin operations
-
-### Example Usage
-```typescript
-import { createBooking } from "@/lib/booking-api";
-
-const booking = await createBooking({
-  tutorId: "123",
-  slotId: "456"
-});
+```bash
+npm run dev
 ```
 
----
+Open:
 
-## 🧪 Testing
+```text
+http://localhost:3000
+```
 
-### Manual Testing
-1. Register as a student
-2. Browse tutors and book a session
-3. Register as a tutor and set availability
-4. Login as admin and manage platform data
-5. Test dark mode toggle
-6. Test responsive design on mobile
+### Production build locally
 
-### Browser Compatibility
-- Chrome/Edge 90+
-- Firefox 88+
-- Safari 14+
-- Mobile browsers (iOS Safari, Chrome Mobile)
+```bash
+npm run build
+npm run start
+```
 
----
+## 20. Scripts
 
-## 🚨 Error Handling
+| Script | What It Does |
+|---|---|
+| `npm run dev` | starts Next.js development server |
+| `npm run build` | creates a production build |
+| `npm run start` | serves the production build |
+| `npm run lint` | runs ESLint |
+| `npm run test` | runs the small smoke-test script |
 
-The frontend implements comprehensive error handling:
+## 21. API Integration Overview
 
-- **Validation Errors** - Real-time field validation with messages
-- **API Errors** - User-friendly error notifications
-- **Loading States** - Clear loading indicators during requests
-- **Toast Notifications** - SweetAlert2 for user feedback
-- **Fallback UI** - Graceful degradation for network issues
+The frontend talks to the backend through domain-specific API clients in `src/lib`.
 
----
+### Main API client files
 
-## 🔒 Security Best Practices
+| File | Responsibility |
+|---|---|
+| `api-client.ts` | shared request/error handling |
+| `api-url.ts` | runtime API origin helpers |
+| `public-api.ts` | landing, subject, and public listing data |
+| `booking-api.ts` | sessions and booking-related requests |
+| `payment-api.ts` | payment status and checkout helpers |
+| `tutor-api.ts` | public tutor listing and detail data |
+| `tutor-profile-api.ts` | tutor profile editing |
+| `student-profile-api.ts` | student profile editing |
+| `notification-api.ts` | notifications |
+| `admin-api.ts` | admin pages |
+| `upload-image.ts` | upload/delete media |
 
-- **HTTPS Only** - Enforced on production
-- **CORS** - Properly configured for API calls
-- **XSS Protection** - Input sanitization and React's built-in protections
-- **CSRF Protection** - Token-based validation
-- **Secure Cookies** - HTTP-only, SameSite flags
-- **Role-Based Access** - Frontend route protection
+### Backend route groups consumed by the frontend
 
----
+| Endpoint Group | Frontend Usage |
+|---|---|
+| `/api/auth/*` | login, register, session, logout, password reset |
+| `/api/public/*` | landing and subject pages |
+| `/api/tutors/*` | tutor discovery and tutor profile |
+| `/api/students/*` | student profile updates |
+| `/api/availability/*` | tutor availability and public slot display |
+| `/api/bookings/*` | sessions and session actions |
+| `/api/payments/*` | create/verify Stripe checkout state |
+| `/api/notifications/*` | notification feed and unread count |
+| `/api/reviews/*` | tutor reviews |
+| `/api/platform-reviews/*` | public platform reviews |
+| `/api/admin/*` | admin dashboards and CRUD sections |
+| `/api/uploads/*` | media uploads |
 
-## 📱 Browser Support
+## 22. Current Demo Limitations
 
-| Browser | Version | Status |
-|---------|---------|--------|
-| Chrome | 90+ | ✅ Full Support |
-| Firefox | 88+ | ✅ Full Support |
-| Safari | 14+ | ✅ Full Support |
-| Edge | 90+ | ✅ Full Support |
-| Mobile Safari | 14+ | ✅ Full Support |
-| Chrome Mobile | 90+ | ✅ Full Support |
+The deployed frontend is suitable for showcasing the system, but it is not pretending to be a fully paid production environment yet.
 
----
+### Current known demo-specific conditions
 
-## 🤝 Contributing
+- outbound email delivery is not reliably available on the free deployment
+- verify-pending and forgot-password pages show a red demo notice
+- registration flow still routes through the normal verification screen
+- newly created users are made demo-usable by backend runtime verification bypass
+- payment and notification workflows still depend on backend runtime stability
 
-1. **Fork the repository**
-2. **Create a feature branch:** `git checkout -b feature/amazing-feature`
-3. **Commit changes:** `git commit -m 'Add amazing feature'`
-4. **Push to branch:** `git push origin feature/amazing-feature`
-5. **Open a Pull Request**
+### Why this matters
 
-### Coding Standards
-- Follow TypeScript best practices
-- Use ESLint configuration
-- Write meaningful commit messages
-- Update documentation as needed
+These demo notes keep the UI honest while allowing self-serve review by users, instructors, or investors.
 
----
+## 23. Deployment Notes
 
-## 📝 License
+### Current deployment targets
 
-This project is licensed under the ISC License - see the LICENSE file for details.
+| Service | Link |
+|---|---|
+| Frontend App | https://skill-bridge-frontend-sooty.vercel.app/ |
+| Backend API | https://skill-bridge-backend-vn0x.onrender.com/ |
 
----
+### Frontend hosting summary
 
-## 👨‍💻 Author
-
-**Samiul Islam Auntor**
-- GitHub: [@SamiunAuntor](https://github.com/SamiunAuntor)
-- Email: samiul@skillbridge.com
-
----
-
-## 📞 Support
-
-For issues, questions, or suggestions:
-1. Check existing GitHub issues
-2. Create a new issue with detailed description
-3. Include steps to reproduce bugs
-
----
-
-## 🙏 Acknowledgments
-
-- **Next.js** - React framework and documentation
-- **Tailwind CSS** - CSS framework
-- **Better Auth** - Authentication library
-- **Prisma** - Database ORM
-- **All Contributors** - Who helped make this project better
+- hosted on **Vercel**
+- uses **Next.js production build**
+- relies on **Next rewrites** to forward `/api/*` to backend
+- expects valid public env values at build/deploy time
 
 ---
 
-**Built with ❤️ for learners and tutors worldwide** 🌍
+If you are reviewing SkillBridge from the frontend side, this repository is the best place to understand the user journey, UX architecture, route structure, and integration surface with Stripe, Cloudinary, Better Auth, and the SkillBridge backend.
