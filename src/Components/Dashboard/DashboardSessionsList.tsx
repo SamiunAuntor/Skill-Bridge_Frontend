@@ -54,7 +54,7 @@ export default function DashboardSessionsList() {
   const [sessions, setSessions] = useState<DashboardSessionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
-  const [isReviewSubmitting, startReviewTransition] = useTransition();
+  const [isReviewSubmitting, setIsReviewSubmitting] = useState(false);
   const [stats, setStats] = useState({
     upcoming: 0,
     completed: 0,
@@ -296,67 +296,58 @@ export default function DashboardSessionsList() {
       return;
     }
 
-    startReviewTransition(() => {
-      void (async () => {
-        try {
-          if (currentMode === "edit" && currentReview) {
-            const result = await updateReview(currentReview.id, payload);
+    void (async () => {
+      setIsReviewSubmitting(true);
 
-            setReviewModalState((current) => ({
-              ...current,
-              review: result.review,
-              errorMessage: null,
-            }));
-
-            await Swal.fire({
-              icon: "success",
-              title: "Review updated",
-              text: "Your feedback has been updated successfully.",
-              confirmButtonColor: "#1d3b66",
-            });
-          } else {
-            const result = await createReview({
-              bookingId: currentSessionItem.bookingId,
-              rating: payload.rating,
-              comment: payload.comment,
-            });
-
-            setSessions((current) =>
-              current.map((sessionItem) =>
-                sessionItem.bookingId === currentSessionItem.bookingId
-                  ? {
-                      ...sessionItem,
-                      reviewId: result.review.id,
-                      canLeaveReview: false,
-                    }
-                  : sessionItem
-              )
-            );
-
-            setReviewModalState((current) => ({
-              ...current,
-              review: result.review,
-              mode: "edit",
-              errorMessage: null,
-            }));
-
-            await Swal.fire({
-              icon: "success",
-              title: "Review submitted",
-              text: "Thanks for sharing your feedback.",
-              confirmButtonColor: "#1d3b66",
-            });
-          }
+      try {
+        if (currentMode === "edit" && currentReview) {
+          await updateReview(currentReview.id, payload);
 
           closeReviewModal();
-        } catch (error) {
-          setReviewModalState((current) => ({
-            ...current,
-            errorMessage: toFriendlyError(error),
-          }));
+
+          await Swal.fire({
+            icon: "success",
+            title: "Review updated",
+            text: "Your feedback has been updated successfully.",
+            confirmButtonColor: "#1d3b66",
+          });
+        } else {
+          const result = await createReview({
+            bookingId: currentSessionItem.bookingId,
+            rating: payload.rating,
+            comment: payload.comment,
+          });
+
+          setSessions((current) =>
+            current.map((sessionItem) =>
+              sessionItem.bookingId === currentSessionItem.bookingId
+                ? {
+                    ...sessionItem,
+                    reviewId: result.review.id,
+                    canLeaveReview: false,
+                  }
+                : sessionItem
+            )
+          );
+
+          closeReviewModal();
+
+          await Swal.fire({
+            icon: "success",
+            title: "Review submitted",
+            text: "Thanks for sharing your feedback.",
+            confirmButtonColor: "#1d3b66",
+          });
         }
-      })();
-    });
+      } catch (error) {
+        setReviewModalState((current) => ({
+          ...current,
+          errorMessage: toFriendlyError(error),
+        }));
+      } finally {
+        setIsReviewSubmitting(false);
+      }
+    })();
   }
 
   if (loading) {
