@@ -104,9 +104,7 @@ export default function StudentProfileSettings() {
             resourceType: pendingUploadedImage.resourceType,
             deleteToken: pendingUploadedImage.deleteToken,
           });
-        } catch (rollbackError) {
-          console.warn("Unable to remove replaced uploaded image.", rollbackError);
-        }
+        } catch {}
       }
 
       setProfileImageUrl(uploaded.secureUrl);
@@ -179,9 +177,7 @@ export default function StudentProfileSettings() {
             resourceType: pendingUploadedImage.resourceType,
             deleteToken: pendingUploadedImage.deleteToken,
           });
-        } catch (rollbackError) {
-          console.warn("Unable to roll back unsaved uploaded image.", rollbackError);
-        }
+        } catch {}
 
         setProfileImageUrl(initialProfileImageUrl);
         setPendingUploadedImage(null);

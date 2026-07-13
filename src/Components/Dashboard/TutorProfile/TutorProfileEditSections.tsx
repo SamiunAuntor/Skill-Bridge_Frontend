@@ -118,9 +118,7 @@ export function BasicProfileForm({
                       resourceType: pendingUploadedImage.resourceType,
                       deleteToken: pendingUploadedImage.deleteToken,
                     });
-                  } catch (rollbackError) {
-                    console.warn("Unable to remove replaced uploaded image.", rollbackError);
-                  }
+                  } catch {}
                 }
 
                 setPendingUploadedImage(result);

@@ -184,9 +184,7 @@ export default function TutorProfileSettings() {
         publicId: uploadedImage.publicId,
         resourceType: uploadedImage.resourceType,
         deleteToken: uploadedImage.deleteToken,
-      }).catch((cleanupError) => {
-        console.warn("Unable to clean up pending uploaded image.", cleanupError);
-      });
+      }).catch(() => undefined);
     };
   }, []);
 
@@ -278,8 +276,8 @@ export default function TutorProfileSettings() {
         resourceType: pendingUploadedImage.resourceType,
         deleteToken: pendingUploadedImage.deleteToken,
       });
-    } catch (rollbackError) {
-      console.warn("Unable to remove unsaved uploaded image.", rollbackError);
+    } catch {
+      // The profile remains usable even if remote cleanup fails.
     } finally {
       setPendingUploadedImage(null);
     }
