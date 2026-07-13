@@ -13,7 +13,8 @@ export type DashboardSection =
   | "categories"
   | "subjects"
   | "degrees"
-  | "platform-reviews";
+  | "platform-reviews"
+  | "contact-submissions";
 
 export function getRoleDashboardRoot(role: UserRole): string {
   switch (role) {
