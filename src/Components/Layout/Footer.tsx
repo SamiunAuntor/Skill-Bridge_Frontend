@@ -29,6 +29,14 @@ const footerColumns = [
       { label: "Create Account", href: "/register" },
     ],
   },
+  {
+    title: "Company",
+    links: [
+      { label: "About", href: "/about" },
+      { label: "Privacy Policy", href: "/privacy" },
+      { label: "Terms & Conditions", href: "/terms" },
+    ],
+  },
 ];
 
 export default function Footer() {
@@ -116,7 +124,7 @@ export default function Footer() {
 
   return (
     <footer className="w-full border-t border-[#c1c7d0]/10 bg-[#003358] pt-16 text-white dark:bg-[#001d33] dark:text-[#d0e4ff]">
-      <div className="mx-auto grid w-11/12 max-w-7xl grid-cols-1 gap-12 md:grid-cols-4">
+      <div className="mx-auto grid w-11/12 max-w-7xl grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-5">
         <div className="col-span-1">
           <span className="mb-4 block text-xl font-bold text-white">
             SkillBridge
