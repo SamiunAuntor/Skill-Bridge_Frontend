@@ -1,9 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, Send } from "lucide-react";
-import { useState } from "react";
+import { Send } from "lucide-react";
 import { useForm } from "react-hook-form";
+import Swal from "sweetalert2";
 import { z } from "zod";
 import { submitContact } from "@/lib/contact-api";
 
@@ -20,8 +20,6 @@ const inputClass = (invalid: boolean) =>
   `w-full rounded-xl border bg-surface-container-low px-4 py-3 text-on-surface outline-none transition focus:ring-2 focus:ring-primary/20 ${invalid ? "border-error" : "border-outline-variant/30 focus:border-primary"}`;
 
 export default function ContactForm() {
-  const [success, setSuccess] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -33,14 +31,27 @@ export default function ContactForm() {
   });
 
   const onSubmit = handleSubmit(async (values) => {
-    setSubmitError(null);
-    setSuccess(false);
     try {
       await submitContact(values);
       reset();
-      setSuccess(true);
+      await Swal.fire({
+        icon: "success",
+        title: "Message received",
+        text: "Thanks for contacting SkillBridge. We will review your message soon.",
+        confirmButtonText: "Done",
+        confirmButtonColor: "#1d3b66",
+      });
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : "Unable to send your message.");
+      await Swal.fire({
+        icon: "error",
+        title: "Message not sent",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Unable to send your message right now.",
+        confirmButtonText: "Try again",
+        confirmButtonColor: "#1d3b66",
+      });
     }
   });
 
@@ -48,28 +59,22 @@ export default function ContactForm() {
     <form onSubmit={onSubmit} noValidate className="space-y-5">
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label="Name" id="contact-name" error={errors.name?.message}>
-          <input id="contact-name" autoComplete="name" className={inputClass(!!errors.name)} {...register("name")} />
+          <input id="contact-name" required autoComplete="name" className={inputClass(!!errors.name)} {...register("name")} />
         </Field>
         <Field label="Email" id="contact-email" error={errors.email?.message}>
-          <input id="contact-email" type="email" autoComplete="email" className={inputClass(!!errors.email)} {...register("email")} />
+          <input id="contact-email" required type="email" autoComplete="email" className={inputClass(!!errors.email)} {...register("email")} />
         </Field>
       </div>
       <Field label="Subject" id="contact-subject" error={errors.subject?.message}>
-        <input id="contact-subject" className={inputClass(!!errors.subject)} {...register("subject")} />
+        <input id="contact-subject" required className={inputClass(!!errors.subject)} {...register("subject")} />
       </Field>
       <Field label="Message" id="contact-message" error={errors.message?.message}>
-        <textarea id="contact-message" rows={7} className={`${inputClass(!!errors.message)} resize-y`} {...register("message")} />
+        <textarea id="contact-message" required rows={7} className={`${inputClass(!!errors.message)} resize-y`} {...register("message")} />
       </Field>
       <div className="absolute -left-[10000px]" aria-hidden="true">
         <label htmlFor="contact-website">Website</label>
         <input id="contact-website" tabIndex={-1} autoComplete="off" {...register("website")} />
       </div>
-      {success ? (
-        <p role="status" className="flex items-center gap-2 rounded-xl bg-secondary/15 px-4 py-3 text-sm font-semibold text-secondary">
-          <CheckCircle2 className="h-5 w-5" /> Message received. We will review it soon.
-        </p>
-      ) : null}
-      {submitError ? <p role="alert" className="rounded-xl bg-error-container px-4 py-3 text-sm text-on-error-container">{submitError}</p> : null}
       <button type="submit" disabled={isSubmitting} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 font-bold text-on-primary transition hover:opacity-90 disabled:opacity-60 sm:w-auto">
         <Send className="h-4 w-4" /> {isSubmitting ? "Sending..." : "Send message"}
       </button>
@@ -80,7 +85,10 @@ export default function ContactForm() {
 function Field({ label, id, error, children }: { label: string; id: string; error?: string; children: React.ReactNode }) {
   return (
     <div className="space-y-2">
-      <label htmlFor={id} className="block text-sm font-semibold text-on-surface">{label}</label>
+      <label htmlFor={id} className="block text-sm font-semibold text-on-surface">
+        {label} <span className="text-error" aria-hidden="true">*</span>
+        <span className="sr-only"> (required)</span>
+      </label>
       {children}
       {error ? <p role="alert" className="text-sm text-error">{error}</p> : null}
     </div>
