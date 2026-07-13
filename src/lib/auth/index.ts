@@ -105,6 +105,17 @@ export async function resetPasswordWithAppAuth(input: {
   });
 }
 
+export async function changePasswordWithAppAuth(input: {
+  currentPassword: string;
+  newPassword: string;
+}): Promise<void> {
+  await authRequest<null>("/api/auth/change-password", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  notifyAuthChanged();
+}
+
 export async function getAppAuthSession(): Promise<AppAuthSession> {
   try {
     const result = await authRequest<AppAuthSession>("/api/auth/me", {

@@ -173,7 +173,7 @@ export default function LoginForm() {
                 key={account.role}
                 type="button"
                 onClick={() => void handleDemoLogin(account)}
-                disabled={isSubmitting}
+                disabled={isSubmitting || isSigningIn}
                 className="flex min-h-12 items-center justify-center gap-2 rounded-md border border-outline-variant/30 bg-surface-container-lowest px-3 py-3 font-headline font-bold text-primary shadow-sm transition-all hover:-translate-y-0.5 hover:border-secondary hover:bg-secondary hover:text-on-secondary disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Icon aria-hidden="true" className="h-5 w-5" />
