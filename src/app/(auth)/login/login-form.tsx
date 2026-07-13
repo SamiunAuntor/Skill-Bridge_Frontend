@@ -83,6 +83,8 @@ export default function LoginForm() {
     }
   }, [resetOk, session?.user, sessionPending, verified]);
 
+  const [isSigningIn, setIsSigningIn] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -95,6 +97,7 @@ export default function LoginForm() {
   });
 
   async function signIn(values: { email: string; password: string }) {
+    setIsSigningIn(true);
     try {
       await loginWithAppAuth(values);
       void showAuthSuccessToast(
@@ -118,6 +121,8 @@ export default function LoginForm() {
         return;
       }
       await showAuthErrorToast("Sign-in failed", message);
+    } finally {
+      setIsSigningIn(false);
     }
   }
 
@@ -239,10 +244,10 @@ export default function LoginForm() {
 
         <button
           className="signature-cta w-full rounded-md py-4 font-headline text-lg font-bold tracking-tight text-on-primary transition-all duration-300 hover:shadow-lg disabled:opacity-60"
-          disabled={isSubmitting}
+          disabled={isSubmitting || isSigningIn}
           type="submit"
         >
-          {isSubmitting ? "Signing in..." : "Sign In"}
+          {isSigningIn ? "Signing in..." : "Sign In"}
         </button>
       </form>
 
