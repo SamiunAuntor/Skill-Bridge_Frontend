@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, Eye, Inbox, Mail, Search, UserRound, X } from "lucide-react";
+import { CalendarDays, ChevronDown, Eye, Inbox, Mail, Search, UserRound, X } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Swal from "sweetalert2";
@@ -64,13 +64,23 @@ export default function AdminContactSubmissionsPage() {
 
   useEffect(() => { void load(); }, [load]);
 
-  async function changeStatus(item: ContactSubmission, next: ContactStatus) {
+  async function changeStatus(item: ContactSubmission, next: ContactStatus, notify = true) {
     if (item.status === next) return;
     setUpdatingId(item.id);
     try {
       const updated = await updateAdminContactStatus(item.id, next);
       setItems((current) => current.map((entry) => entry.id === item.id ? updated : entry));
       setSelected((current) => current?.id === item.id ? updated : current);
+      if (notify) {
+        await Swal.fire({
+          icon: "success",
+          title: "Status updated",
+          text: `The message is now marked as ${next}.`,
+          confirmButtonColor: "#1d3b66",
+          timer: 1800,
+          timerProgressBar: true,
+        });
+      }
     } catch (reason) {
       await Swal.fire({ icon: "error", title: "Status update failed", text: reason instanceof Error ? reason.message : "Unable to update this message.", confirmButtonColor: "#1d3b66" });
     } finally { setUpdatingId(null); }
@@ -78,7 +88,7 @@ export default function AdminContactSubmissionsPage() {
 
   async function view(item: ContactSubmission) {
     setSelected(item);
-    if (item.status === "new") await changeStatus(item, "read");
+    if (item.status === "new") await changeStatus(item, "read", false);
   }
 
   return (
@@ -91,8 +101,14 @@ export default function AdminContactSubmissionsPage() {
       <section className="rounded-[1.5rem] border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-[0_18px_40px_rgba(0,51,88,0.06)]">
         <form onSubmit={(event: FormEvent) => { event.preventDefault(); updateQuery({ q: input.trim(), page: 1 }); }} className="grid gap-3 lg:grid-cols-[1fr_auto_auto_auto]">
           <div className="relative"><Search className="absolute left-3 top-3.5 h-4 w-4 text-on-surface-variant" /><input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Search sender, subject, or message" className="h-11 w-full rounded-xl border border-outline-variant/30 bg-surface-container-low pl-10 pr-4 text-sm text-on-surface outline-none focus:border-primary" /></div>
-          <select value={query.status} onChange={(e) => updateQuery({ status: e.target.value as typeof query.status, page: 1 })} className="h-11 rounded-xl border border-outline-variant/30 bg-surface-container-low px-3 text-sm text-on-surface"><option value="all">All statuses</option>{statuses.map((value) => <option key={value} value={value}>{value[0].toUpperCase() + value.slice(1)}</option>)}</select>
-          <select value={query.sortBy} onChange={(e) => updateQuery({ sortBy: e.target.value as "newest" | "oldest", page: 1 })} className="h-11 rounded-xl border border-outline-variant/30 bg-surface-container-low px-3 text-sm text-on-surface"><option value="newest">Newest first</option><option value="oldest">Oldest first</option></select>
+          <div className="relative">
+            <ChevronDown aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant" />
+            <select value={query.status} onChange={(e) => updateQuery({ status: e.target.value as typeof query.status, page: 1 })} className="h-11 appearance-none rounded-xl border border-outline-variant/30 bg-surface-container-low pl-9 pr-4 text-sm text-on-surface"><option value="all">All statuses</option>{statuses.map((value) => <option key={value} value={value}>{value[0].toUpperCase() + value.slice(1)}</option>)}</select>
+          </div>
+          <div className="relative">
+            <ChevronDown aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant" />
+            <select value={query.sortBy} onChange={(e) => updateQuery({ sortBy: e.target.value as "newest" | "oldest", page: 1 })} className="h-11 appearance-none rounded-xl border border-outline-variant/30 bg-surface-container-low pl-9 pr-4 text-sm text-on-surface"><option value="newest">Newest first</option><option value="oldest">Oldest first</option></select>
+          </div>
           <button className="h-11 rounded-xl bg-primary px-5 text-sm font-bold text-on-primary">Search</button>
         </form>
         <div className="mt-5 overflow-x-auto">
