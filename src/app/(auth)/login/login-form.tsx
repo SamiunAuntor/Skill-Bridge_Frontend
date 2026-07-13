@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { GraduationCap, ShieldCheck, UserRound } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -22,9 +23,29 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+const demoAccounts = [
+  {
+    role: "Admin",
+    email: "auntorsamiun@gmail.com",
+    password: "Auntor123",
+    icon: ShieldCheck,
+  },
+  {
+    role: "Tutor",
+    email: "tutor1100@gmail.com",
+    password: "Tutor1100",
+    icon: GraduationCap,
+  },
+  {
+    role: "Student",
+    email: "student101@gmail.com",
+    password: "Student101",
+    icon: UserRound,
+  },
+] as const;
+
 const fieldClass = (invalid: boolean) =>
-  `h-14 w-full rounded-md border-none bg-surface-container-highest px-4 text-base leading-normal text-on-surface placeholder:leading-normal focus:ring-2 focus:ring-surface-tint/40 ${
-    invalid ? "ring-2 ring-red-400/70" : ""
+  `h-14 w-full rounded-md border-none bg-surface-container-highest px-4 text-base leading-normal text-on-surface placeholder:leading-normal focus:ring-2 focus:ring-surface-tint/40 ${invalid ? "ring-2 ring-red-400/70" : ""
   }`;
 
 export default function LoginForm() {
@@ -65,13 +86,15 @@ export default function LoginForm() {
   const {
     register,
     handleSubmit,
+    setValue,
+    clearErrors,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
 
-  const onSubmit = handleSubmit(async (values) => {
+  async function signIn(values: { email: string; password: string }) {
     try {
       await loginWithAppAuth(values);
       void showAuthSuccessToast(
@@ -96,7 +119,26 @@ export default function LoginForm() {
       }
       await showAuthErrorToast("Sign-in failed", message);
     }
+  }
+
+  const onSubmit = handleSubmit(async (values) => {
+    await signIn(values);
   });
+
+  async function handleDemoLogin(account: (typeof demoAccounts)[number]) {
+    setValue("email", account.email, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+    setValue("password", account.password, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+    clearErrors();
+    await signIn({ email: account.email, password: account.password });
+  }
 
   return (
     <>
@@ -106,6 +148,39 @@ export default function LoginForm() {
           Continue your learning journey with SkillBridge.
         </p>
       </div>
+
+      <section
+        aria-labelledby="quick-login-heading"
+        className="rounded-2xl border border-dashed border-secondary/70 bg-secondary/5 p-5 sm:p-6"
+      >
+        <h2
+          id="quick-login-heading"
+          className="text-center font-headline text-lg font-extrabold uppercase tracking-[0.12em] text-secondary sm:text-xl"
+        >
+          Quick Login
+        </h2>
+        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {demoAccounts.map((account) => {
+            const Icon = account.icon;
+
+            return (
+              <button
+                key={account.role}
+                type="button"
+                onClick={() => void handleDemoLogin(account)}
+                disabled={isSubmitting}
+                className="flex min-h-12 items-center justify-center gap-2 rounded-md border border-outline-variant/30 bg-surface-container-lowest px-3 py-3 font-headline font-bold text-primary shadow-sm transition-all hover:-translate-y-0.5 hover:border-secondary hover:bg-secondary hover:text-on-secondary disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Icon aria-hidden="true" className="h-5 w-5" />
+                {account.role}
+              </button>
+            );
+          })}
+        </div>
+        <p className="mt-3 text-center text-xs leading-5 text-on-surface-variant">
+          Select a role to sign in with its demo account.
+        </p>
+      </section>
 
       <form className="space-y-6" onSubmit={onSubmit} noValidate>
         <div className="space-y-2">
